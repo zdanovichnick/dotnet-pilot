@@ -1,0 +1,26 @@
+{
+  "name": "dotnet-pilot-marketplace",
+  "owner": {
+    "name": "Nick Zdanovych",
+    "email": "zdanovichnick@gmail.com"
+  },
+  "plugins": [
+    {
+      "name": "dotnet-pilot-core",
+      "source": "./",
+      "description": "Load-bearing .NET safety tools for Claude Code — Roslyn semantic analysis, DI/architecture/EF guards, and .NET-aware scaffolders. Optional workflow companion: dotnet-pilot-workflow.",
+      "version": "1.0.0",
+      "keywords": [
+        "dotnet",
+        "csharp",
+        "agents",
+        "quality-gates",
+        "ef-core",
+        "aspnet",
+        "clean-architecture",
+        "roslyn",
+        "mcp-roslyn"
+      ]
+    }
+  ]
+}

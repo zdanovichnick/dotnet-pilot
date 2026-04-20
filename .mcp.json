@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "roslyn": {
+      "command": "dnp-roslyn",
+      "args": [],
+      "env": {
+        "DNP_ROSLYN_LOG_LEVEL": "Warning",
+        "DNP_ROSLYN_MIN_VERSION": "0.3"
+      }
+    }
+  }
+}
