@@ -1,0 +1,23 @@
+<svg width="660" height="288" viewBox="0 0 660 288" xmlns="http://www.w3.org/2000/svg">
+  <!-- bg -->
+  <rect width="660" height="288" rx="8" fill="#0d1117"/>
+  <!-- title bar -->
+  <rect width="660" height="44" rx="8" fill="#161b22"/>
+  <rect y="36" width="660" height="8" fill="#161b22"/>
+  <!-- border -->
+  <rect width="660" height="288" rx="8" fill="none" stroke="#30363d" stroke-width="1"/>
+  <!-- traffic lights -->
+  <circle cx="20" cy="22" r="6" fill="#ff5f56"/>
+  <circle cx="40" cy="22" r="6" fill="#ffbd2e"/>
+  <circle cx="60" cy="22" r="6" fill="#27c93f"/>
+  <!-- window title -->
+  <text x="330" y="27" text-anchor="middle" fill="#8b949e" font-size="12" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace">bash</text>
+  <text y="60" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#58a6ff">$ </tspan><tspan fill="#e6edf3">/DotnetPilot:dotnet:check-solution</tspan></text>
+  <text y="104" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#8b949e">  Solution Health: </tspan><tspan fill="#e6edf3">MyApp.slnx</tspan></text>
+  <text y="148" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#8b949e">  Build        </tspan><tspan fill="#3fb950">✓ PASS  </tspan><tspan fill="#8b949e">0 errors, 3 warnings</tspan></text>
+  <text y="170" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#8b949e">  Tests        </tspan><tspan fill="#3fb950">✓ PASS  </tspan><tspan fill="#8b949e">47 passed, 0 failed</tspan></text>
+  <text y="192" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#8b949e">  NuGet        </tspan><tspan fill="#d29922">⚠ WARN  </tspan><tspan fill="#8b949e">1 outdated, 0 vulnerable</tspan></text>
+  <text y="214" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#8b949e">  DI Wiring    </tspan><tspan fill="#3fb950">✓ PASS  </tspan><tspan fill="#8b949e">12 services, 0 missing</tspan></text>
+  <text y="236" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#8b949e">  Architecture </tspan><tspan fill="#3fb950">✓ PASS  </tspan><tspan fill="#8b949e">no layer violations</tspan></text>
+  <text y="258" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#8b949e">  References   </tspan><tspan fill="#3fb950">✓ PASS  </tspan><tspan fill="#8b949e">no circular refs</tspan></text>
+</svg>

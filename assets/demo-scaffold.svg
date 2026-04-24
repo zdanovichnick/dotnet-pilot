@@ -1,0 +1,26 @@
+<svg width="760" height="354" viewBox="0 0 760 354" xmlns="http://www.w3.org/2000/svg">
+  <!-- bg -->
+  <rect width="760" height="354" rx="8" fill="#0d1117"/>
+  <!-- title bar -->
+  <rect width="760" height="44" rx="8" fill="#161b22"/>
+  <rect y="36" width="760" height="8" fill="#161b22"/>
+  <!-- border -->
+  <rect width="760" height="354" rx="8" fill="none" stroke="#30363d" stroke-width="1"/>
+  <!-- traffic lights -->
+  <circle cx="20" cy="22" r="6" fill="#ff5f56"/>
+  <circle cx="40" cy="22" r="6" fill="#ffbd2e"/>
+  <circle cx="60" cy="22" r="6" fill="#27c93f"/>
+  <!-- window title -->
+  <text x="380" y="27" text-anchor="middle" fill="#8b949e" font-size="12" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace">bash</text>
+  <text y="60" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#58a6ff">$ </tspan><tspan fill="#e6edf3">/DotnetPilot:dotnet:scaffold-entity User --properties 'Name:string, Email:string'</tspan></text>
+  <text y="104" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">User.cs                      </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#79c0ff">Domain/Entities</tspan></text>
+  <text y="126" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">UserConfiguration.cs         </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#79c0ff">Infrastructure/Configurations</tspan></text>
+  <text y="148" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">ApplicationDbContext.cs      </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#8b949e">added DbSet&lt;User&gt;</tspan></text>
+  <text y="170" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">IUserRepository.cs           </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#79c0ff">Application/Interfaces</tspan></text>
+  <text y="192" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">UserRepository.cs            </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#79c0ff">Infrastructure/Repositories</tspan></text>
+  <text y="214" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">IUserService.cs              </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#79c0ff">Application/Interfaces</tspan></text>
+  <text y="236" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">UserService.cs               </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#79c0ff">Application/Services</tspan></text>
+  <text y="258" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">ServiceCollectionExtensions  </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#8b949e">2 DI registrations added</tspan></text>
+  <text y="280" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">20260420_AddUserTable         </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#8b949e">EF Core migration</tspan></text>
+  <text y="324" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#8b949e">  Build </tspan><tspan fill="#3fb950">✓ PASS</tspan><tspan fill="#8b949e">   Tests </tspan><tspan fill="#3fb950">✓ PASS</tspan><tspan fill="#8b949e">   DI </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+</svg>

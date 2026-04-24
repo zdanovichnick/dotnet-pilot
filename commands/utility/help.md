@@ -9,17 +9,13 @@ description: "List all DotnetPilot commands grouped by category."
 ## Output
 
 ```
-DotnetPilot v0.1.0 — Spec-driven .NET development orchestrator
+DotnetPilot v1.1.0 — .NET development assistant for Claude Code
 
 PIPELINE
-  /DotnetPilot:pipeline:init          Initialize for a .NET solution
-  /DotnetPilot:pipeline:discuss       Requirements gathering
-  /DotnetPilot:pipeline:research      NuGet/pattern research
-  /DotnetPilot:pipeline:plan          Create execution plans for a phase
-  /DotnetPilot:pipeline:execute       Execute plans with parallel waves
-  /DotnetPilot:pipeline:verify        Verify phase goal achievement
+  /DotnetPilot:pipeline:init          Initialize for a .NET solution (user-scoped .planning/)
+  /DotnetPilot:pipeline:next          Suggest next step based on repo state
+  /DotnetPilot:pipeline:verify        Verify readiness — build, tests, DI, architecture
   /DotnetPilot:pipeline:ship          Create PR from completed work
-  /DotnetPilot:pipeline:next          Auto-advance to next step
 
 DOTNET
   /DotnetPilot:dotnet:add-migration     Generate EF Core migration safely
