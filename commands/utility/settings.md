@@ -18,6 +18,7 @@ argument-hint: "[key] [value] — get or set a config value"
 
 | Key | Default | Description |
 |-----|---------|-------------|
+| `enableProjectModel` | false | Enable `.planning/` project state (PROJECT.md, ROADMAP.md, STATE.md). Set to `true` by `/DotnetPilot:pipeline:init`. |
 | `mode` | interactive | `interactive` or `auto` |
 | `dotnet.test_framework` | xunit | `xunit`, `nunit`, or `mstest` |
 | `dotnet.architecture_style` | clean | `clean`, `vertical-slices`, or `flat` |

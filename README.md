@@ -1,6 +1,6 @@
 # DotnetPilot
 
-Spec-driven development orchestrator for .NET — a [Claude Code](https://claude.ai/code) plugin that brings structured planning, agent delegation, and quality gates to .NET projects.
+.NET development assistant for [Claude Code](https://claude.ai/code) — Roslyn-backed DI verification, EF Core migration safety, clean-architecture enforcement, convention-aware scaffolders, and project lifecycle commands.
 
 ## Table of Contents
 
@@ -32,11 +32,9 @@ AI coding tools make these .NET mistakes constantly:
 - Skip `dotnet build` verification
 - Ignore existing patterns in your codebase
 
-DotnetPilot gives Claude Code **8 specialized .NET agents**, **5 advisory hooks**, and **17 commands** focused on things Claude doesn't do well out of the box: Roslyn-backed DI verification, EF Core migration safety, clean-architecture layer checks, and convention-aware scaffolders.
+DotnetPilot gives Claude Code **8 specialized .NET agents**, **5 advisory hooks**, and **20 commands** focused on things Claude doesn't do well out of the box: Roslyn-backed DI verification, EF Core migration safety, clean-architecture layer checks, convention-aware scaffolders, and a lightweight project lifecycle (`init` / `next` / `status`).
 
-> **v1.0.0 direction shift:** the previous spec-driven pipeline (`discuss`/`research`/`plan`/`execute`/`verify`) and its 5 supporting agents have been retired. Use **Plan Mode** + `TaskCreate` for multi-step work — they evolve with Claude Code and don't drift. DotnetPilot now stays narrow: `.NET`-specific safety and scaffolding only.
->
-> Lightweight workflow bits (`/DotnetPilot:pipeline:init`, `/DotnetPilot:pipeline:next`, `/DotnetPilot:utility:status`) moved to the optional [dotnet-pilot-workflow](https://github.com/zdanovichnick/dotnet-pilot-workflow) companion plugin. See [What DotnetPilot does NOT do](#what-dotnetpilot-does-not-do) below.
+> **v1.0.0 direction shift:** the previous spec-driven pipeline (`discuss`/`research`/`plan`/`execute`/`verify`) and its 5 supporting agents have been retired. Use **Plan Mode** + `TaskCreate` for multi-step work — they evolve with Claude Code and don't drift. DotnetPilot now stays narrow: `.NET`-specific safety, scaffolding, and lightweight project state.
 
 ## Requirements
 
@@ -168,21 +166,11 @@ dotnet tool install -g DotnetPilot.Mcp.Roslyn   # requires v0.3+
 
 The plugin's `.mcp.json` automatically starts the `dnp-roslyn` server when Claude Code loads.
 
-### Step 3 (optional): Install `dotnet-pilot-workflow`
-
-Only needed if you want a committed-ish `PROJECT.md` / `ROADMAP.md` / solution-map cache and the `pipeline:init`, `pipeline:next`, `utility:status` commands. It stores state in a user-scoped directory (`~/.claude/projects/<flat-path>/.planning/`), so it never pollutes repos.
-
-```
-/plugin marketplace add zdanovichnick/dotnet-pilot-workflow
-/plugin install dotnet-pilot-workflow@dotnet-pilot-workflow
-/reload-plugins
-```
-
-### Step 4: Enable Context7
+### Step 3: Enable Context7
 
 In Claude Code, enable the Context7 MCP server at the account level. `dnp-planner`'s `tools:` whitelist references `mcp__context7__*` for live NuGet / ASP.NET Core / EF Core documentation.
 
-### Step 5: Verify setup
+### Step 4: Verify setup
 
 Open Claude Code in your .NET project directory and run:
 
@@ -190,7 +178,7 @@ Open Claude Code in your .NET project directory and run:
 /DotnetPilot:utility:help
 ```
 
-You should see 17 commands if core-only, or 20 if the workflow plugin is also installed. Then run:
+You should see 20 commands. Then run:
 
 ```
 /DotnetPilot:dotnet:check-solution
@@ -204,9 +192,8 @@ This validates that your solution builds, tests pass, and the Roslyn server can 
 
 ```
 PIPELINE — light-touch lifecycle:
-  ship
-  (init / next moved to dotnet-pilot-workflow; discuss/research/plan/execute/verify
-   retired in v1.0.0 — use Plan Mode + TaskCreate)
+  init, next, ship
+  (discuss/research/plan/execute/verify retired in v1.0.0 — use Plan Mode + TaskCreate)
 
 DOTNET — targeted scaffolding & tooling:
   add-migration, scaffold-api, add-service, add-project,
@@ -216,8 +203,7 @@ QUALITY — checks & reviews:
   pre-commit, review, audit-nuget, audit-architecture
 
 UTILITY — housekeeping:
-  settings, help, quick, map-solution
-  (status moved to dotnet-pilot-workflow)
+  settings, help, quick, map-solution, status
 ```
 
 All commands are invoked as `/DotnetPilot:<category>:<command>`, for example `/DotnetPilot:pipeline:init` or `/DotnetPilot:dotnet:scaffold-entity User`.
@@ -230,7 +216,7 @@ Open Claude Code in your .NET solution directory:
 /DotnetPilot:pipeline:init
 ```
 
-This scans your solution and creates a `.planning/` directory with:
+This scans your solution and creates a user-scoped `.planning/` directory with:
 - Your solution structure (projects, frameworks, EF contexts)
 - Architecture style detection (clean, vertical slices, flat)
 - Test framework detection (xUnit, NUnit, MSTest)
@@ -267,23 +253,39 @@ Runs a single task with build verification but skips the full planning pipeline.
 
 ## Pipeline commands
 
-Only one pipeline command ships in `dotnet-pilot-core`. The others moved to the optional [dotnet-pilot-workflow](https://github.com/zdanovichnick/dotnet-pilot-workflow) plugin.
+### Init
 
-### Ship (core)
+```
+/DotnetPilot:pipeline:init [--refresh]
+```
+
+Scans your solution and creates a user-scoped `.planning/` directory (at `~/.claude/projects/<flat-repo-path>/.planning/`) with:
+- `config.json` — detected .NET settings (framework, architecture style, test framework, EF contexts)
+- `solution-map.json` — full project structure cache
+- `PROJECT.md`, `REQUIREMENTS.md`, `ROADMAP.md`, `STATE.md` — empty templates
+
+Then asks three questions (via `AskUserQuestion`): what are you building, who is it for, and what constraints exist. Answers are written into `PROJECT.md`.
+
+Use `--refresh` to re-scan the solution without overwriting existing project docs.
+
+### Next
+
+```
+/DotnetPilot:pipeline:next
+```
+
+Read-only advisory: reads `.planning/STATE.md`, checks git status and build health, then suggests the next logical command. Never executes anything automatically.
+
+### Ship
 
 ```
 /DotnetPilot:pipeline:ship [--draft]
 ```
 
 Creates a pull request via `gh pr create`:
-
 - Runs final `dotnet build`, `dotnet test`, DI-completeness (via `dnp-di-wiring-checker`), and architecture checks (via `dnp-architect`)
-- Generates a PR body from the commits since the base branch with a .NET-specific checklist
+- Generates a PR body from commits since the base branch with a .NET-specific checklist
 - Returns the PR URL
-
-### Init / Next / Status (workflow plugin)
-
-`/DotnetPilot:pipeline:init`, `/DotnetPilot:pipeline:next`, and `/DotnetPilot:utility:status` live in `dotnet-pilot-workflow`. Install that plugin if you want a user-scoped `.planning/` directory with PROJECT.md and a cached solution map. All three commands are stateful advisories — they don't do work, they just track it.
 
 > The former `discuss`/`research`/`plan`/`execute`/`verify` commands were retired — they duplicated Plan Mode + TaskCreate and drifted as Claude evolved. For multi-step work, use Plan Mode directly; for a .NET-aware task breakdown to feed into `TaskCreate`, spawn `dnp-planner`.
 
@@ -436,11 +438,10 @@ Validates clean architecture rules: forbidden project references, package placem
 | Command | Usage |
 |---------|-------|
 | `settings` | `/DotnetPilot:utility:settings [key] [value]` — view/modify config |
+| `status` | `/DotnetPilot:utility:status` — show pipeline state (phase, progress, last activity) |
 | `help` | `/DotnetPilot:utility:help` — lists all commands |
 | `quick` | `/DotnetPilot:utility:quick <task>` — one-off task bypassing the pipeline |
 | `map-solution` | `/DotnetPilot:utility:map-solution` — re-scan and update solution-map.json |
-
-`status` and `next` moved to the `dotnet-pilot-workflow` companion plugin (they depend on `.planning/` state).
 
 ## Agents
 
@@ -501,7 +502,7 @@ All hooks respect the toggle settings in `.planning/config.json` under the `hook
 
 ## Configuration
 
-If you've installed `dotnet-pilot-workflow` and run `/DotnetPilot:pipeline:init`, configuration lives in `<user-scope>/.planning/config.json`. `dotnet-pilot-core` reads only the `hooks.*` and `dotnet.*` sections (the legacy pipeline keys are ignored):
+After running `/DotnetPilot:pipeline:init`, configuration lives in `~/.claude/projects/<flat-repo-path>/.planning/config.json`. DotnetPilot reads the `hooks.*` and `dotnet.*` sections (the legacy pipeline keys are ignored):
 
 ```json
 {
@@ -736,8 +737,6 @@ Code Review: 8 files changed
 
 **Scenario:** A new developer joins and needs to understand the project structure, patterns, and conventions before contributing.
 
-> Requires the optional `dotnet-pilot-workflow` plugin for `/DotnetPilot:pipeline:init` and `/DotnetPilot:utility:status`.
-
 ```
 > /DotnetPilot:pipeline:init
 
@@ -829,9 +828,9 @@ NuGet Audit: ECommerce.slnx
 
 | Command | Arguments | Description |
 |---------|-----------|-------------|
-| `pipeline:init` | `[--refresh]` | Discover solution; create `.planning/` if the `dotnet-pilot-workflow` plugin is installed |
-| `pipeline:ship` | `[--draft]` | Create pull request (build + tests + DI + architecture check, then `gh pr create`) |
+| `pipeline:init` | `[--refresh]` | Discover solution; create user-scoped `.planning/` with config, solution map, and project docs |
 | `pipeline:next` | | Read-only advisory suggesting the next sensible command based on repo state |
+| `pipeline:ship` | `[--draft]` | Create pull request (build + tests + DI + architecture check, then `gh pr create`) |
 
 ### Dotnet
 
@@ -860,20 +859,16 @@ NuGet Audit: ECommerce.slnx
 | Command | Arguments | Description |
 |---------|-----------|-------------|
 | `utility:settings` | `[key] [value]` | View/modify config |
+| `utility:status` | | Show pipeline state (phase, progress, last activity) |
 | `utility:help` | | List all commands |
 | `utility:quick` | `<task description>` | One-off task bypass |
 | `utility:map-solution` | | Re-scan solution structure |
-
-`utility:status` moved to `dotnet-pilot-workflow`.
 
 ## Troubleshooting
 
 ### "DotnetPilot not initialized"
 
-`dotnet-pilot-core` commands don't require initialization — just install and go. If a
-workflow command (`pipeline:init`, `pipeline:next`, `utility:status`) reports this, install
-the `dotnet-pilot-workflow` plugin and run `/DotnetPilot:pipeline:init` once per .NET
-solution to create the user-scoped `.planning/` directory.
+Most commands don't require initialization — just install and go. If `pipeline:next` or `utility:status` reports this, run `/DotnetPilot:pipeline:init` once per .NET solution to create the user-scoped `.planning/` directory.
 
 ### "Failed to reconnect to plugin:dotnet-pilot:roslyn"
 
@@ -926,8 +921,9 @@ DotnetPilot aborts after 5 consecutive build failures. Check:
 - **v0.1** — Core pipeline + agents + hooks
 - **v0.2** — Roslyn MCP server: DI analysis, solution structure, file-level queries, architecture checker
 - **v0.3** — Roslyn: EF Core model introspection, verbose logging to stderr
-- **v0.4** — Scope narrowed to load-bearing .NET safety tools. Retired the spec-driven pipeline (`discuss`/`research`/`plan`/`execute`/`verify`) and its 5 supporting agents. Pinned model IDs, hardened hooks (version guard, labeled advisories, C# 12 primary-constructor support), added hook fixture test harness. Optional workflow features moved to the separate `dotnet-pilot-workflow` plugin (current).
-- **v0.5** — Blazor patterns and agents
+- **v0.4** — Scope narrowed to load-bearing .NET safety tools. Retired the spec-driven pipeline (`discuss`/`research`/`plan`/`execute`/`verify`) and its 5 supporting agents. Pinned model IDs, hardened hooks (version guard, labeled advisories, C# 12 primary-constructor support), added hook fixture test harness.
+- **v1.1.0** — Merged `pipeline:init`, `pipeline:next`, and `utility:status` into core. User-scoped `.planning/` path (no repo pollution). Hooks resolve config from both repo-local and user-scoped locations for backward compatibility (current).
+- **v1.2** — Blazor patterns and agents
 - **v0.6** — MAUI/mobile support
 
 ## Author

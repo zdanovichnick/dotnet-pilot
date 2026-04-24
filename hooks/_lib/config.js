@@ -1,14 +1,11 @@
 // Shared config resolution for DotnetPilot hooks.
 //
-// In v1.0.0 the `dotnet-pilot-workflow` plugin owns the `.planning/` directory
-// and writes it under a user-scoped path: `~/.claude/projects/<flattened>/`.
+// `.planning/` lives under a user-scoped path: `~/.claude/projects/<flattened>/`.
 // Legacy installs (and manual setups) keep `.planning/` inside the repo.
 //
-// Hooks look repo-local first (existing behavior preserved), then fall back to
-// user-scoped. That way:
+// Hooks look repo-local first, then fall back to user-scoped:
 //   - Legacy users see zero change.
-//   - New users (with dotnet-pilot-workflow installed) have their config picked
-//     up automatically once they run `/DotnetPilot:pipeline:init`.
+//   - New users have config picked up automatically after `/DotnetPilot:pipeline:init`.
 
 const fs = require('fs');
 const os = require('os');
@@ -62,10 +59,17 @@ function resolvePlanningDir(cwd) {
   return null;
 }
 
+function projectModelEnabled(cwd) {
+  const config = loadConfig(cwd);
+  if (!config) return false;
+  return config.enableProjectModel === true;
+}
+
 module.exports = {
   flattenCwd,
   resolveConfigPath,
   loadConfig,
   hookEnabled,
+  projectModelEnabled,
   resolvePlanningDir,
 };

@@ -8,8 +8,8 @@
     {
       "name": "dotnet-pilot-core",
       "source": "./",
-      "description": "Load-bearing .NET safety tools for Claude Code — Roslyn semantic analysis, DI/architecture/EF guards, and .NET-aware scaffolders. Optional workflow companion: dotnet-pilot-workflow.",
-      "version": "1.0.0",
+      "description": "Spec-driven .NET development for Claude Code — Roslyn analysis, DI/architecture/EF guards, .NET scaffolders, and optional project-model lifecycle (pipeline:init, pipeline:next, utility:status).",
+      "version": "1.1.0",
       "keywords": [
         "dotnet",
         "csharp",
