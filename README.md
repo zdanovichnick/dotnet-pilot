@@ -51,7 +51,7 @@ Type these inside a Claude Code session:
 
 ```
 /plugin marketplace add https://github.com/zdanovichnick/dotnet-pilot
-/plugin install dotnet-pilot@dotnet-pilot
+/plugin install dotnet-pilot-core@dotnet-pilot-marketplace
 /reload-plugins
 ```
 
@@ -76,7 +76,7 @@ Permanent install — type inside a Claude Code session (user scope, persists ac
 Then activate it:
 
 ```
-/plugin install dotnet-pilot@dotnet-pilot
+/plugin install dotnet-pilot-core@dotnet-pilot-marketplace
 /reload-plugins
 ```
 
