@@ -43,6 +43,8 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 
 ### Step 1 — Install the plugin
 
+**From GitHub (standard)**
+
 ```
 /plugin marketplace add https://github.com/zdanovichnick/dotnet-pilot
 /plugin install dotnet-pilot@dotnet-pilot
@@ -52,6 +54,39 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 <div align="center">
 <img src="assets/demo-install.svg" alt="installation steps" width="680"/>
 </div>
+
+**From a local clone**
+
+Use this when you cloned the repo and want to run your own build, or contribute changes.
+
+Permanent install (user scope — persists across sessions):
+
+```
+# Windows
+/plugin marketplace add D:\Projects\POC\dotnet-pilot
+
+# macOS / Linux
+/plugin marketplace add /Users/you/projects/dotnet-pilot
+```
+
+Then activate it:
+
+```
+/plugin install dotnet-pilot@dotnet-pilot
+/reload-plugins
+```
+
+Session-only (no install — plugin is active only while this Claude Code process is running):
+
+```bash
+# Windows
+claude --plugin-dir "D:\Projects\POC\dotnet-pilot"
+
+# macOS / Linux
+claude --plugin-dir "/Users/you/projects/dotnet-pilot"
+```
+
+> After editing plugin source (commands, agents, hooks), run `/reload-plugins` to pick up changes without restarting.
 
 ### Step 2 — Install the Roslyn MCP server
 
