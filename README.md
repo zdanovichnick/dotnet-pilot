@@ -43,7 +43,11 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 
 ### Step 1 — Install the plugin
 
+> **Slash commands vs CLI flags** — commands that start with `/plugin` and `/reload-plugins` are typed inside the **Claude Code interactive session** (the chat prompt). They are not bash/shell commands. The only shell command for plugins is `claude --plugin-dir <path>` (session-only flag).
+
 **From GitHub (standard)**
+
+Type these inside a Claude Code session:
 
 ```
 /plugin marketplace add https://github.com/zdanovichnick/dotnet-pilot
@@ -59,14 +63,14 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 
 Use this when you cloned the repo and want to run your own build, or contribute changes.
 
-Permanent install (user scope — persists across sessions):
+Permanent install — type inside a Claude Code session (user scope, persists across sessions):
 
 ```
-# Windows
-/plugin marketplace add D:\Projects\POC\dotnet-pilot
+# Windows  (slash command — type in Claude Code chat)
+/plugin marketplace add C:\path\to\dotnet-pilot
 
-# macOS / Linux
-/plugin marketplace add /Users/you/projects/dotnet-pilot
+# macOS / Linux  (slash command — type in Claude Code chat)
+/plugin marketplace add /path/to/dotnet-pilot
 ```
 
 Then activate it:
@@ -80,10 +84,10 @@ Session-only (no install — plugin is active only while this Claude Code proces
 
 ```bash
 # Windows
-claude --plugin-dir "D:\Projects\POC\dotnet-pilot"
+claude --plugin-dir "C:\path\to\dotnet-pilot"
 
 # macOS / Linux
-claude --plugin-dir "/Users/you/projects/dotnet-pilot"
+claude --plugin-dir "/path/to/dotnet-pilot"
 ```
 
 > After editing plugin source (commands, agents, hooks), run `/reload-plugins` to pick up changes without restarting.
