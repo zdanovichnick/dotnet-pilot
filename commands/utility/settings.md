@@ -11,7 +11,7 @@ argument-hint: "[key] [value] — get or set a config value"
 
 - **View all:** `/DotnetPilot:utility:settings` — display current config
 - **Get value:** `/DotnetPilot:utility:settings dotnet.test_framework` — show specific key
-- **Set value:** `/DotnetPilot:utility:settings workflow.research false` — disable research
+- **Set value:** `/DotnetPilot:utility:settings hooks.di_check false` — disable DI advisory
 - **Reset:** `/DotnetPilot:utility:settings --reset` — reset to defaults
 
 ## Common Settings
@@ -22,8 +22,5 @@ argument-hint: "[key] [value] — get or set a config value"
 | `mode` | interactive | `interactive` or `auto` |
 | `dotnet.test_framework` | xunit | `xunit`, `nunit`, or `mstest` |
 | `dotnet.architecture_style` | clean | `clean`, `vertical-slices`, or `flat` |
-| `workflow.research` | true | Enable research phase |
-| `workflow.plan_check` | true | Enable plan quality review |
 | `workflow.build_after_task` | true | Run dotnet build after each task |
-| `parallelization.enabled` | true | Enable parallel plan execution |
 | `hooks.di_check` | true | Enable DI registration advisory |

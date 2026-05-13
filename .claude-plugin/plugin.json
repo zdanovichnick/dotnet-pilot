@@ -1,7 +1,7 @@
 {
   "name": "dotnet-pilot-core",
   "version": "1.1.0",
-  "description": "Spec-driven .NET development for Claude Code — Roslyn analysis, DI/architecture/EF guards, .NET scaffolders, and optional project-model lifecycle (pipeline:init, pipeline:next, utility:status).",
+  "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, convention-aware scaffolders, and project lifecycle commands.",
   "author": {
     "name": "Nick Zdanovych",
     "email": "zdanovichnick@gmail.com"

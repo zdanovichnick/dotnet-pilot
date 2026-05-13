@@ -43,23 +43,20 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 
 ### Step 1 — Install the plugin
 
-> **Slash commands vs CLI flags** — commands that start with `/plugin` and `/reload-plugins` are typed inside the **Claude Code interactive session** (the chat prompt). They are not bash/shell commands. The only shell command for plugins is `claude --plugin-dir <path>` (session-only flag).
-
-**From GitHub (standard)**
-
-Type these inside a Claude Code session:
+Type this inside a Claude Code session:
 
 ```
-/plugin marketplace add https://github.com/zdanovichnick/dotnet-pilot
-/plugin install dotnet-pilot-core@dotnet-pilot-marketplace
-/reload-plugins
+/install dotnet-pilot
 ```
+
+That's it — the plugin is installed from the official [Claude Platform](https://platform.claude.com).
 
 <div align="center">
 <img src="assets/demo-install.svg" alt="installation steps" width="680"/>
 </div>
 
-**From a local clone**
+<details>
+<summary><strong>Alternative: install from a local clone</strong></summary>
 
 Use this when you cloned the repo and want to run your own build, or contribute changes.
 
@@ -91,6 +88,8 @@ claude --plugin-dir "/path/to/dotnet-pilot"
 ```
 
 > After editing plugin source (commands, agents, hooks), run `/reload-plugins` to pick up changes without restarting.
+
+</details>
 
 ### Step 2 — Install the Roslyn MCP server
 

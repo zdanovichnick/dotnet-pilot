@@ -4,9 +4,7 @@ description: "List all DotnetPilot commands grouped by category."
 
 # DotnetPilot Help
 
-`/DotnetPilot:utility:help` displays all available commands.
-
-## Output
+Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
 DotnetPilot v1.1.0 — .NET development assistant for Claude Code
