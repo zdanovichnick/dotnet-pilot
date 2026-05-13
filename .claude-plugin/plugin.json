@@ -1,5 +1,5 @@
 {
-  "name": "dotnet-pilot-core",
+  "name": "dotnet-pilot",
   "version": "1.1.0",
   "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, convention-aware scaffolders, and project lifecycle commands.",
   "author": {

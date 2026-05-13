@@ -111,7 +111,7 @@ Use these native Claude Code primitives instead — they evolve with Claude Code
 
 For teams that want lightweight persistent state (a PROJECT.md, a roadmap, a solution map cache) install the optional `dotnet-pilot-workflow` plugin. It owns the `.planning/` directory lifecycle and the `pipeline:init`/`pipeline:ship`/`pipeline:next` commands.
 
-`dotnet-pilot-core` (this plugin) reads `.planning/config.json` if present to respect per-project hook toggles, but does not require it.
+`dotnet-pilot` (this plugin) reads `.planning/config.json` if present to respect per-project hook toggles, but does not require it.
 
 ## .NET Conventions
 
@@ -148,7 +148,7 @@ refactor(Application): extract validation into pipeline behavior
 ## Configuration Reference
 
 `.planning/config.json` is owned by the optional `dotnet-pilot-workflow` plugin.
-`dotnet-pilot-core` reads the `hooks.*` and `dotnet.*` sections if the file exists.
+`dotnet-pilot` reads the `hooks.*` and `dotnet.*` sections if the file exists.
 
 Minimum schema for core:
 

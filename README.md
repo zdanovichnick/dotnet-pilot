@@ -73,7 +73,7 @@ Permanent install — type inside a Claude Code session (user scope, persists ac
 Then activate it:
 
 ```
-/plugin install dotnet-pilot-core@dotnet-pilot-marketplace
+/plugin install dotnet-pilot@dotnet-pilot-marketplace
 /reload-plugins
 ```
 
