@@ -3,3 +3,6 @@ node_modules/
 Thumbs.db
 .planning/
 /.vs
+.claude/hook_state/
+.claude/.context_cache/
+.claude/settings.local.json

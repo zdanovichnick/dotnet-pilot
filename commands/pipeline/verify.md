@@ -7,7 +7,7 @@ description: "Verify readiness before shipping — build, tests, DI completeness
 `/DotnetPilot:pipeline:verify` is the "ready to ship?" gate between active development
 and `/DotnetPilot:pipeline:ship`. Run it when you think the feature is done.
 
-> **Delegates to**: `dnp-di-wiring-checker` (Haiku 4.5) and `dnp-architect` (Opus 4.6).
+> **Delegates to**: `dnp-di-wiring-checker` (Haiku 4.5) and `dnp-architect` (Opus 4.7).
 
 ## Difference from `quality:pre-commit`
 

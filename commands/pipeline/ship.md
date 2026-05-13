@@ -7,7 +7,7 @@ argument-hint: "[--draft to create a draft PR]"
 
 `/DotnetPilot:pipeline:ship` creates a pull request for the current branch.
 
-> **Delegates to** (optional pre-flight): `dnp-di-wiring-checker` (Haiku 4.5) and `dnp-architect` (Opus 4.6). The `gh pr create` call runs in the caller's context.
+> **Delegates to** (optional pre-flight): `dnp-di-wiring-checker` (Haiku 4.5) and `dnp-architect` (Opus 4.7). The `gh pr create` call runs in the caller's context.
 
 ## Execution
 

@@ -11,7 +11,7 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 - `.claude-plugin/plugin.json` — plugin manifest (name, version, mcpServers pointer)
 - `.claude-plugin/marketplace.json` — marketplace listing for plugin distribution
 - `.mcp.json` — MCP server declarations (roslyn server `dnp-roslyn` configured)
-- `agents/dnp-*.md` — 13 subagents with YAML frontmatter (`name`, `description`, `tools`, `model`, `permissionMode`). The `tools` field uses Claude Code's scoped syntax (e.g. `Bash(dotnet:*)`)
+- `agents/dnp-*.md` — 8 subagents with YAML frontmatter (`name`, `description`, `tools`, `model`, `permissionMode`). The `tools` field uses Claude Code's scoped syntax (e.g. `Bash(dotnet:*)`)
 - `commands/<category>/<name>.md` — slash commands invoked as `/DotnetPilot:<category>:<name>`. Categories: `pipeline`, `dotnet`, `quality`, `utility`
 - `hooks/hooks.json` + `hooks/dnp-*.{js,sh}` — PreToolUse/PostToolUse hooks. JS hooks read a JSON event from stdin, exit 0 with optional `additionalContext` on stdout for advisory feedback, or non-zero to block
 - `skills/<name>/SKILL.md` — skill packs loaded on demand (aspnet-api-patterns, ef-core-patterns, testing-dotnet, clean-architecture, blazor-patterns, dotnet-project-init)
@@ -30,10 +30,9 @@ There is no automated test suite. To verify changes:
 1. `echo '<json>' | node hooks/<hook>.js` — smoke-test a hook with a crafted event
 2. Install the plugin from a test .NET project directory:
    ```
-   /plugin marketplace add ./path-to-dotnet-pilot
-   /plugin install dotnet-pilot@dotnet-pilot
-   /reload-plugins
+   /install dotnet-pilot
    ```
+   Or from a local clone: `/plugin marketplace add ./path-to-dotnet-pilot` then `/plugin install dotnet-pilot@dotnet-pilot-marketplace`
 3. Exercise the command/agent in the test project
 4. Check `plugin.json` version bump and keep `README.md` tables in sync with `agents/` and `commands/` directories
 
@@ -61,13 +60,13 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 ### Planning & verification
 | Agent | Model | Role |
 |-------|-------|------|
-| `dnp-planner` | claude-opus-4-6 | Emits a .NET-aware, DI-conscious task list that maps 1:1 to `TaskCreate` entries |
+| `dnp-planner` | claude-opus-4-7 | Emits a .NET-aware, DI-conscious task list that maps 1:1 to `TaskCreate` entries |
 | `dnp-verifier` | claude-sonnet-4-6 | Goal-backward verification: build, tests, DI completeness, migration state, architecture rules |
 
 ### Expert domain knowledge
 | Agent | Model | Role |
 |-------|-------|------|
-| `dnp-architect` | claude-opus-4-6 | Solution architecture, clean-arch layer enforcement, project-reference validation |
+| `dnp-architect` | claude-opus-4-7 | Solution architecture, clean-arch layer enforcement, project-reference validation |
 | `dnp-test-writer` | claude-sonnet-4-6 | xUnit/NUnit TDD agent — mocking, WebApplicationFactory, convention-aware assertions |
 
 ### Mechanical (fast, focused)

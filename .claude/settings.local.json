@@ -1,11 +1,12 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(grep -E \"\\\\.\\(js|sh\\)$\")",
+      "Bash(git *)"
+    ]
+  },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "roslyn"
-  ],
-  "permissions": {
-    "allow": [
-      "Bash(grep -E \"\\\\.\\(js|sh\\)$\")"
-    ]
-  }
+  ]
 }
