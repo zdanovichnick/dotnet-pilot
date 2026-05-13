@@ -4,7 +4,7 @@
 
 Roslyn-backed DI verification · EF Core migration safety · Clean-architecture enforcement · Convention-aware scaffolders
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/zdanovichnick/dotnet-pilot/blob/master/LICENSE) [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/code) [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](https://github.com/zdanovichnick/dotnet-pilot/blob/master)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/code) [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](.)
 
 *21 commands · 8 specialized agents · 5 advisory hooks*
 
@@ -22,7 +22,7 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 | Skips `dotnet build` verification | Build hook verifies after every scaffold |
 | Ignores existing patterns in your codebase | Every scaffolder reads your conventions before writing code |
 
-[![check-solution demo](https://github.com/zdanovichnick/dotnet-pilot/raw/master/assets/demo-check-solution.svg)](https://github.com/zdanovichnick/dotnet-pilot/blob/master/assets/demo-check-solution.svg)
+![check-solution demo](./assets/demo-check-solution.svg)
 
 ---
 
@@ -30,37 +30,48 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 
 ### Step 1 — Install the plugin
 
-Run this command inside a **Claude Code** session (type it in the chat):
-
 ```
-/plugin install github:zdanovichnick/dotnet-pilot
-```
-
-Or from your terminal:
-
-```bash
-claude plugin install github:zdanovichnick/dotnet-pilot
+/plugin marketplace add zdanovichnick/dotnet-pilot
+/plugin install dotnet-pilot@dotnet-pilot-marketplace
+/reload-plugins
 ```
 
-That's it — no marketplace setup required. The plugin installs at user scope and is available across all your projects.
+![installation steps](./assets/demo-install.svg)
 
-**Keeping it up to date**
+**Verify it worked:**
 
 ```
-/plugin update dotnet-pilot
+/DotnetPilot:utility:help            → should list 21 commands
+/DotnetPilot:dotnet:check-solution   → validates build, tests, DI, architecture
 ```
 
-> **Note:** `dotnet-pilot` is also published to Anthropic's official marketplace (`platform.claude.com/plugins`) and will eventually be available via `/plugin install dotnet-pilot@claude-plugins-official`. Until propagation completes, use the GitHub install above.
+**Keeping it up to date.** GitHub-sourced marketplaces have auto-update **disabled by default**. Enable it once via the `/plugin` UI (Marketplaces tab → `dotnet-pilot-marketplace` → Enable auto-update), or pull updates manually:
+
+```
+/plugin marketplace update dotnet-pilot-marketplace
+```
+
+To persist auto-update across machines, add this to `.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "dotnet-pilot-marketplace": { "autoUpdate": true }
+  }
+}
+```
+
+> Once the plugin lands in `claude-plugins-official`, the install collapses to `/plugin install dotnet-pilot` — auto-update on by default.
 
 **Alternative: install from a local clone**
 
-Use this when you want to run your own build or contribute changes.
+Use this when you cloned the repo and want to run your own build, or contribute changes.
 
-```bash
-# Windows — type in Claude Code chat
+```
+# Windows  (type in Claude Code chat)
 /plugin marketplace add C:\path\to\dotnet-pilot
 
-# macOS / Linux — type in Claude Code chat
+# macOS / Linux
 /plugin marketplace add /path/to/dotnet-pilot
 ```
 
@@ -71,9 +82,9 @@ Then activate:
 /reload-plugins
 ```
 
-Session-only (no install — active only while this Claude Code process is running):
+Session-only (plugin active only while this Claude Code process is running):
 
-```bash
+```
 # Windows
 claude --plugin-dir "C:\path\to\dotnet-pilot"
 
@@ -81,11 +92,11 @@ claude --plugin-dir "C:\path\to\dotnet-pilot"
 claude --plugin-dir "/path/to/dotnet-pilot"
 ```
 
----
+> After editing plugin source (commands, agents, hooks), run `/reload-plugins` to pick up changes without restarting.
 
 ### Step 2 — Install the Roslyn MCP server
 
-```bash
+```
 dotnet tool install -g DotnetPilot.Mcp.Roslyn   # first install
 dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # update to the latest release
 ```
@@ -117,7 +128,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 
 ### Scaffold a full entity in one command
 
-[![scaffold-entity demo](https://github.com/zdanovichnick/dotnet-pilot/raw/master/assets/demo-scaffold.svg)](https://github.com/zdanovichnick/dotnet-pilot/blob/master/assets/demo-scaffold.svg)
+![scaffold-entity demo](./assets/demo-scaffold.svg)
 
 ### Or go even faster with the shorthand
 
@@ -131,7 +142,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 
 ## 🗺️ Architecture
 
-[![DotnetPilot architecture diagram](https://github.com/zdanovichnick/dotnet-pilot/raw/master/assets/architecture.svg)](https://github.com/zdanovichnick/dotnet-pilot/blob/master/assets/architecture.svg)
+![DotnetPilot architecture diagram](./assets/architecture.svg)
 
 **Flow:** Developer invokes a `/DotnetPilot:*` command → the command spawns the right agent → the agent calls the Roslyn MCP server for semantic C# analysis (DI completeness, architecture violations, EF Core models, symbol references). Hooks run automatically on file writes and git events, feeding advisory feedback back to the command layer — they never block by default.
 
@@ -154,7 +165,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | --- | --- | --- |
 | `dotnet:scaffold-entity` | `scaffold-entity <name> [--properties '...']` | Create a full entity stack: entity class, EF configuration, repository, service, DI registration, and migration |
 | `dotnet:scaffold-api` | `scaffold-api <entity> [--minimal]` | Scaffold API controller or minimal API endpoint with DTOs, validation, DI registration, and OpenAPI attributes |
-| `dotnet:add-service` | `add-service <name> [--lifetime scoped|transient|singleton]` | Create a service with interface, implementation, DI registration, and test scaffold |
+| `dotnet:add-service` | `add-service <name> [--lifetime scoped\|transient\|singleton]` | Create a service with interface, implementation, DI registration, and test scaffold |
 | `dotnet:add-endpoint` | `add-endpoint <controller> <method> <route> [--with-dto]` | Add an endpoint to an existing controller or endpoint group |
 | `dotnet:add-migration` | `add-migration <name> [--context <Name>]` | Plan and generate an EF Core migration safely — validates chain, detects breaking changes, targets correct DbContext |
 | `dotnet:add-project` | `add-project <name> <type>` | Add a new project to the solution with correct references and layer placement |
@@ -166,7 +177,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | Command | Usage | What it does |
 | --- | --- | --- |
 | `quality:pre-commit` | `/DotnetPilot:quality:pre-commit` | Pre-commit quality gate — build, test, format check, DI verification, and architecture audit |
-| `quality:review` | `review [--depth quick|standard|deep]` | Code review current changes with .NET-specific focus — async patterns, LINQ, naming, DI |
+| `quality:review` | `review [--depth quick\|standard\|deep]` | Code review current changes with .NET-specific focus — async patterns, LINQ, naming, DI |
 | `quality:audit-nuget` | `/DotnetPilot:quality:audit-nuget` | NuGet vulnerability scan, version consistency check, and upgrade recommendations |
 | `quality:audit-architecture` | `/DotnetPilot:quality:audit-architecture` | Scan for clean architecture layer violations — forbidden project references, DI issues, package placement |
 
@@ -246,6 +257,16 @@ Created 9 files:
   Migration: 20260420_AddCategoryTable
 
 Build: PASS · Tests: PASS · DI: PASS
+
+> /DotnetPilot:dotnet:scaffold-api Category
+
+Created 4 files:
+  src/ECommerce.Api/DTOs/CreateCategoryRequest.cs
+  src/ECommerce.Api/DTOs/CategoryResponse.cs
+  src/ECommerce.Api/Controllers/CategoriesController.cs
+  src/ECommerce.Api/Validators/CreateCategoryRequestValidator.cs
+
+Build: PASS
 ```
 
 **2. Safely migrate a project with multiple DbContexts**
@@ -346,7 +367,7 @@ Architecture Audit: ECommerce.slnx
 
 ## ⚙️ Configuration
 
-After `/DotnetPilot:pipeline:init`, configuration lives at `~/.claude/projects/<flat-repo-path>/.planning/config.json`. DotnetPilot reads the `hooks.*` and `dotnet.*` sections:
+After `/DotnetPilot:pipeline:init`, configuration lives at `~/.claude/projects/<flat-repo-path>/.planning/config.json`.
 
 ```json
 {
@@ -374,7 +395,7 @@ After `/DotnetPilot:pipeline:init`, configuration lives at `~/.claude/projects/<
 }
 ```
 
-Use `/DotnetPilot:utility:settings <key> <value>` to change values without editing JSON directly. Common tweaks:
+Use `/DotnetPilot:utility:settings <key> <value>` to change values without editing JSON directly.
 
 | Setting | Change to | Reason |
 | --- | --- | --- |
@@ -428,21 +449,17 @@ DotnetPilot wins only for **.NET-specific behavior**: Roslyn semantics, EF migra
 
 **"Failed to reconnect to plugin:dotnet-pilot:roslyn"**
 
-`dnp-roslyn` couldn't find a `.sln` or `.slnx` file in the current directory. It only works when Claude Code is opened inside a .NET solution folder.
+`dnp-roslyn` couldn't find a `.sln` or `.slnx` file in the current directory. Navigate to your solution directory and restart Claude Code there.
 
-```bash
+```
 dnp-roslyn doctor    # shows solution detection status
 ```
-
-Navigate to your solution directory and restart Claude Code there. This error is harmless when browsing the plugin source itself — other features still work.
 
 **"DotnetPilot not initialized"**
 
 Most commands work without init. If `pipeline:next` or `utility:status` reports this, run `/DotnetPilot:pipeline:init` once to create the `.planning/` directory.
 
 **Hooks are too noisy**
-
-Disable per-hook in `.planning/config.json`:
 
 ```json
 { "hooks": { "di_check": false, "project_scope_guard": false } }
@@ -456,7 +473,7 @@ DotnetPilot aborts after 5 consecutive build failures. Check that `dotnet build`
 
 **"Context7 tools not available"**
 
-Context7 must be enabled at the account level in Claude Code settings. Research and planning agents need it for live documentation.
+Context7 must be enabled at the account level in Claude Code settings.
 
 ---
 
@@ -486,43 +503,36 @@ Context7 must be enabled at the account level in Claude Code settings. Research 
 | [jq](https://jqlang.github.io/jq/) | any | Better JSON parsing in commit-format hook (optional) |
 | [GitHub CLI](https://cli.github.com/) | any | Required only for `pipeline:ship` (optional) |
 
-**Installation commands for each dependency**
-
 **.NET SDK**
-
-```bash
+```
 winget install Microsoft.DotNet.SDK.10   # Windows
 brew install dotnet-sdk                  # macOS
 sudo apt-get install -y dotnet-sdk-10.0  # Ubuntu/Debian
 ```
 
 **Node.js**
-
-```bash
+```
 winget install OpenJS.NodeJS   # Windows
 brew install node              # macOS
 sudo apt-get install -y nodejs # Ubuntu/Debian
 ```
 
 **dnp-roslyn**
-
-```bash
+```
 dotnet tool install -g DotnetPilot.Mcp.Roslyn
-dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # keep in sync with plugin updates
-dnp-roslyn version                               # sanity check
+dotnet tool update  -g DotnetPilot.Mcp.Roslyn
+dnp-roslyn version
 ```
 
 **jq (optional)**
-
-```bash
+```
 winget install jqlang.jq   # Windows
 brew install jq            # macOS
 sudo apt-get install -y jq # Ubuntu/Debian
 ```
 
 **GitHub CLI (optional)**
-
-```bash
+```
 winget install GitHub.cli  # Windows
 brew install gh            # macOS
 sudo apt-get install -y gh # Ubuntu/Debian
