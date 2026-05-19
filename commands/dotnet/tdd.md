@@ -29,7 +29,7 @@ If `--complexity` is omitted, auto-detect:
 
 ## Execution
 
-1. Parse the task description and optional `--complexity` flag.
+1. Parse the task description and optional `--complexity` flag. If no task description was provided, use `AskUserQuestion` to gather it — never ask via plain text.
 2. Auto-detect complexity if not specified (see routing table above).
 3. Detect solution conventions: test framework, mocking library, assertion style, architecture pattern.
 4. Spawn the selected TDD agent with:

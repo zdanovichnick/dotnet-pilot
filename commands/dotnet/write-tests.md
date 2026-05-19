@@ -21,7 +21,7 @@ argument-hint: "<class-or-method> [--integration] [--style unit|integration|e2e]
 
 ## Execution
 
-1. Identify the target: class, method, or namespace from the argument.
+1. Identify the target: class, method, or namespace from the argument. If no target was provided, use `AskUserQuestion` to gather it — never ask via plain text.
 2. Read the target code and its dependencies (constructor injection, interfaces).
 3. Detect the test project and its conventions:
    - Framework: xUnit / NUnit / MSTest
