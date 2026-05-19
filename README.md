@@ -6,7 +6,7 @@ Roslyn-backed DI verification · EF Core migration safety · Clean-architecture 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/code) [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](.)
 
-*21 commands · 10 specialized agents · 6 hooks (5 advisory + 1 sync)*
+*23 commands · 10 specialized agents · 6 hooks (5 advisory + 1 sync)*
 
 ---
 
@@ -41,7 +41,7 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 **Verify it worked:**
 
 ```
-/DotnetPilot:utility:help            → should list 21 commands
+/DotnetPilot:utility:help            → should list 23 commands
 /DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
@@ -110,7 +110,7 @@ In Claude Code, enable the **Context7** MCP server at the account level — plan
 ### Step 4 — Verify
 
 ```
-/DotnetPilot:utility:help            → should list 21 commands
+/DotnetPilot:utility:help            → should list 23 commands
 /DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
@@ -171,6 +171,8 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | `dotnet:add-endpoint` | `add-endpoint <controller> <method> <route> [--with-dto]` | Add an endpoint to an existing controller or endpoint group |
 | `dotnet:add-migration` | `add-migration <name> [--context <Name>]` | Plan and generate an EF Core migration safely — validates chain, detects breaking changes, targets correct DbContext |
 | `dotnet:add-project` | `add-project <name> <type>` | Add a new project to the solution with correct references and layer placement |
+| `dotnet:write-tests` | `write-tests <class-or-method> [--style unit\|integration\|e2e]` | Generate tests for existing code — unit, integration, or WebApplicationFactory tests |
+| `dotnet:tdd` | `tdd <task> [--complexity easy\|hard]` | Implement a feature using TDD — writes failing tests first, then production code |
 | `dotnet:run-tests` | `run-tests [project] [--coverage] [--filter ...]` | Run tests with coverage reporting and failure diagnosis |
 | `dotnet:health-check` | `health-check [--fix]` | Validate full solution health — build, tests, NuGet, project references, DI completeness |
 

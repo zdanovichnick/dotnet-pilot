@@ -8,7 +8,7 @@ Print the following block **exactly as-is** — do not summarize, paraphrase, or
 
 ```
 DotnetPilot v2.0.0 — .NET development plugin for Claude Code
-21 commands · 10 agents · 6 hooks
+23 commands · 10 agents · 6 hooks
 
 PROJECT — project lifecycle
   project:init               Initialize for a .NET solution — discover projects, create
@@ -31,6 +31,10 @@ DOTNET — scaffolding & solution management
                              chain, detects breaking changes, targets correct DbContext
   dotnet:add-project         Add a new project to the solution with correct references
                              and layer placement
+  dotnet:write-tests         Generate tests for existing code — unit, integration, or
+                             WebApplicationFactory tests
+  dotnet:tdd                 Implement a feature using TDD — writes failing tests first,
+                             then production code
   dotnet:run-tests           Run tests with coverage reporting and failure diagnosis
   dotnet:health-check        Validate full solution health — build, tests, NuGet, project
                              references, DI completeness
