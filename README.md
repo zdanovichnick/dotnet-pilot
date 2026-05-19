@@ -483,6 +483,20 @@ Or: `/DotnetPilot:utility:settings hooks.di_check false`
 
 DotnetPilot aborts after 5 consecutive build failures. Check that `dotnet build` works manually, then run `/DotnetPilot:dotnet:health-check --fix` for auto-repair.
 
+**Commands missing after update (e.g. `dotnet:tdd` not found)**
+
+Claude Code caches the plugin at install time. After a major version update, `/reload-plugins` may not pick up new command files. Full reset:
+
+```
+/plugin uninstall dotnet-pilot
+/plugin marketplace remove dotnet-pilot-marketplace
+/plugin marketplace add zdanovichnick/dotnet-pilot
+/plugin install dotnet-pilot@dotnet-pilot-marketplace
+/reload-plugins
+```
+
+Verify: `/DotnetPilot:utility:help` — should list 23 commands including `dotnet:tdd` and `dotnet:write-tests`.
+
 **"Context7 tools not available"**
 
 Context7 must be enabled at the account level in Claude Code settings.
