@@ -2,9 +2,9 @@
 description: "Scan for clean architecture layer violations — forbidden project references, DI issues, package placement."
 ---
 
-# Audit Architecture
+# Check Architecture
 
-`/DotnetPilot:quality:audit-architecture` validates architectural integrity.
+`/DotnetPilot:quality:check-architecture` validates architectural integrity.
 
 > **Delegates to**: `dnp-architect` (claude-opus-4-7).
 

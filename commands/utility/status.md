@@ -1,14 +1,14 @@
 ---
-description: "Show current pipeline state — phase, progress, recent activity."
+description: "Show current project state — phase, progress, recent activity."
 ---
 
-# Pipeline Status
+# Project Status
 
-`/DotnetPilot:pipeline:status` displays the current state of the DotnetPilot pipeline.
+`/DotnetPilot:utility:status` displays the current state of the DotnetPilot project.
 
 ## Execution
 
-1. Check if `.planning/` exists. If not: "DotnetPilot not initialized. Run `/DotnetPilot:pipeline:init`."
+1. Check if `.planning/` exists. If not: "DotnetPilot not initialized. Run `/DotnetPilot:project:init`."
 
 2. Read `.planning/STATE.md` frontmatter and body.
 

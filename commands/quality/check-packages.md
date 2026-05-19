@@ -1,10 +1,10 @@
 ---
-description: "NuGet vulnerability scan, version consistency check, and upgrade recommendations."
+description: "Package vulnerability scan, version consistency check, and upgrade recommendations."
 ---
 
-# Audit NuGet
+# Check Packages
 
-`/DotnetPilot:quality:audit-nuget` scans NuGet packages across the solution.
+`/DotnetPilot:quality:check-packages` scans NuGet packages across the solution.
 
 > **Delegates to**: `dnp-nuget-auditor` (claude-haiku-4-5-20251001).
 

@@ -51,7 +51,7 @@ Build a directed graph. Any edge violating the layer rules above is a violation.
 
 ### Architecture Report
 
-Output format for `/DotnetPilot:quality:audit-architecture`:
+Output format for `/DotnetPilot:quality:check-architecture`:
 
 ```markdown
 ## Architecture Audit

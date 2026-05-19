@@ -7,22 +7,22 @@ description: "List all DotnetPilot commands grouped by category."
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v1.1.0 — .NET development plugin for Claude Code
-21 commands · 8 agents · 5 advisory hooks
+DotnetPilot v2.0.0 — .NET development plugin for Claude Code
+21 commands · 10 agents · 6 hooks
 
-PIPELINE — project lifecycle
-  pipeline:init              Initialize for a .NET solution — discover projects, create
+PROJECT — project lifecycle
+  project:init               Initialize for a .NET solution — discover projects, create
                              .planning/, generate PROJECT.md and solution map
-  pipeline:next              Auto-detect and suggest the next step based on current state
-  pipeline:verify            Verify readiness before shipping — build, tests, DI
+  project:next               Auto-detect and suggest the next step based on current state
+  project:verify             Verify readiness before shipping — build, tests, DI
                              completeness, and architecture check
-  pipeline:ship              Create a pull request — runs final checks and invokes
+  project:ship               Create a pull request — runs final checks and invokes
                              gh pr create
 
 DOTNET — scaffolding & solution management
-  dotnet:scaffold-entity     Create a full entity stack: entity class, EF configuration,
+  dotnet:create-entity       Create a full entity stack: entity class, EF configuration,
                              repository, service, DI registration, and migration
-  dotnet:scaffold-api        Scaffold API controller or minimal API endpoint with DTOs,
+  dotnet:create-api          Create API controller or minimal API endpoint with DTOs,
                              validation, DI registration, and OpenAPI attributes
   dotnet:add-service         Create a service with interface, implementation, DI
                              registration, and test scaffold
@@ -32,26 +32,26 @@ DOTNET — scaffolding & solution management
   dotnet:add-project         Add a new project to the solution with correct references
                              and layer placement
   dotnet:run-tests           Run tests with coverage reporting and failure diagnosis
-  dotnet:check-solution      Validate full solution health — build, tests, NuGet, project
+  dotnet:health-check        Validate full solution health — build, tests, NuGet, project
                              references, DI completeness
 
 QUALITY — safety checks
-  quality:pre-commit         Pre-commit quality gate — build, test, format check, DI
-                             verification, and architecture audit
+  quality:commit-check       Commit quality gate — build, test, format check, DI
+                             verification, and architecture check
   quality:review             Code review current changes with .NET-specific focus — async
                              patterns, LINQ, naming, DI
-  quality:audit-nuget        NuGet vulnerability scan, version consistency check, and
+  quality:check-packages     Package vulnerability scan, version consistency check, and
                              upgrade recommendations
-  quality:audit-architecture Scan for clean architecture layer violations — forbidden
+  quality:check-architecture Scan for clean architecture layer violations — forbidden
                              project references, DI issues, package placement
 
 UTILITY — housekeeping
   utility:help               Show this help text
-  utility:quick              Quick one-off task — bypass the full pipeline for small changes
-  utility:status             Show current pipeline state — phase, progress, recent activity
+  utility:quick-fix          Quick fix — bypass the full pipeline for small changes
+  utility:status             Show current project state — phase, progress, recent activity
   utility:settings           View and modify DotnetPilot configuration
-  utility:map-solution       Map the .NET solution structure — projects, references,
+  utility:show-solution      Show the .NET solution structure — projects, references,
                              packages, namespaces, layers
 
-Usage: /DotnetPilot:<command>   e.g. /DotnetPilot:dotnet:scaffold-entity Product
+Usage: /DotnetPilot:<command>   e.g. /DotnetPilot:dotnet:create-entity Product
 ```

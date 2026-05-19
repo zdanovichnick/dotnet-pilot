@@ -1,10 +1,10 @@
 ---
-description: "Auto-detect and suggest the next pipeline step based on current state."
+description: "Auto-detect and suggest the next project step based on current state."
 ---
 
 # Next Step
 
-`/DotnetPilot:pipeline:next` reads `.planning/STATE.md` (if present) and suggests the
+`/DotnetPilot:project:next` reads `.planning/STATE.md` (if present) and suggests the
 appropriate next action.
 
 The legacy spec-driven pipeline (`discuss`/`research`/`plan`/`execute`/`verify`) has been
@@ -13,10 +13,10 @@ retired. For multi-step implementation work, use Claude Code's native **Plan Mod
 
 ## Decision Logic
 
-1. **No `.planning/` directory** → Run `/DotnetPilot:pipeline:init` to set up the project model.
+1. **No `.planning/` directory** → Run `/DotnetPilot:project:init` to set up the project model.
 2. **`.planning/` exists, no ROADMAP.md / PROJECT.md populated** → Open those files and fill them in, then re-run this command.
-3. **PROJECT.md / ROADMAP.md populated, uncommitted work in progress** → Use Plan Mode for the next feature, then `/DotnetPilot:quality:pre-commit`, then `/DotnetPilot:pipeline:ship`.
-4. **All phases complete, tests pass, no uncommitted work** → Run `/DotnetPilot:pipeline:ship`.
+3. **PROJECT.md / ROADMAP.md populated, uncommitted work in progress** → Use Plan Mode for the next feature, then `/DotnetPilot:quality:commit-check`, then `/DotnetPilot:project:ship`.
+4. **All phases complete, tests pass, no uncommitted work** → Run `/DotnetPilot:project:ship`.
 
 ## Execution
 

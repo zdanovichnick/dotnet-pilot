@@ -1,11 +1,11 @@
 ---
-description: "Quick one-off task — bypass the full pipeline for small changes."
+description: "Quick fix — bypass the full pipeline for small changes."
 argument-hint: "<task description>"
 ---
 
 # Quick Task
 
-`/DotnetPilot:utility:quick` executes a single task without the full planning pipeline. Good for small fixes, refactors, and configuration changes.
+`/DotnetPilot:utility:quick-fix` executes a single task without the full planning pipeline. Good for small fixes, refactors, and configuration changes.
 
 ## Execution
 

@@ -1,11 +1,11 @@
 ---
-description: "Scaffold API controller or minimal API endpoint with DTOs, validation, DI registration, and OpenAPI attributes."
+description: "Create API controller or minimal API endpoint with DTOs, validation, DI registration, and OpenAPI attributes."
 argument-hint: "<entity-name> [--minimal for minimal API style]"
 ---
 
-# Scaffold API
+# Create API
 
-`/DotnetPilot:dotnet:scaffold-api` generates a complete API endpoint for an entity.
+`/DotnetPilot:dotnet:create-api` generates a complete API endpoint for an entity.
 
 > **Delegates to**: `dnp-api-scaffolder` (claude-haiku-4-5-20251001).
 

@@ -3,9 +3,9 @@ description: "Validate full solution health — build, tests, NuGet, project ref
 argument-hint: "[--fix to auto-fix simple issues]"
 ---
 
-# Check Solution
+# Health Check
 
-`/DotnetPilot:dotnet:check-solution` runs a comprehensive health check on the .NET solution.
+`/DotnetPilot:dotnet:health-check` runs a comprehensive health check on the .NET solution.
 
 > **Delegates to**: `dnp-nuget-auditor` (Haiku 4.5) and `dnp-di-wiring-checker` (Haiku 4.5); orchestration runs in the caller's context.
 

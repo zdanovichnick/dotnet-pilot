@@ -4,15 +4,15 @@ description: "Verify readiness before shipping — build, tests, DI completeness
 
 # Verify
 
-`/DotnetPilot:pipeline:verify` is the "ready to ship?" gate between active development
-and `/DotnetPilot:pipeline:ship`. Run it when you think the feature is done.
+`/DotnetPilot:project:verify` is the "ready to ship?" gate between active development
+and `/DotnetPilot:project:ship`. Run it when you think the feature is done.
 
 > **Delegates to**: `dnp-di-wiring-checker` (Haiku 4.5) and `dnp-architect` (Opus 4.7).
 
-## Difference from `quality:pre-commit`
+## Difference from `quality:commit-check`
 
-`quality:pre-commit` is file-level and runs before every commit (format check included).
-`pipeline:verify` is feature-level: it skips the format check, adds an architecture deep-scan
+`quality:commit-check` is file-level and runs before every commit (format check included).
+`project:verify` is feature-level: it skips the format check, adds an architecture deep-scan
 via `dnp-architect`, and reports a clear go/no-go for shipping.
 
 ## Execution
@@ -49,7 +49,7 @@ Verification Results
   [PASS] Architecture: no violations
   [PASS] EF Migrations: chain valid
 
-Ready to ship. Run /DotnetPilot:pipeline:ship.
+Ready to ship. Run /DotnetPilot:project:ship.
 ```
 
-If any check fails, stop and list what needs fixing before `/pipeline:ship` is called.
+If any check fails, stop and list what needs fixing before `/project:ship` is called.

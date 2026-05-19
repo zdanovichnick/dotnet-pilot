@@ -42,4 +42,4 @@ Pass this checklist verbatim to the reviewer so the output is .NET-aware:
 - Constructor injection over property/service-locator; interface-based dependencies.
 - Specific exception types (no `catch (Exception)` without rethrow); ProblemDetails for API errors.
 - Controller attributes: `[ApiController]`, `[ProducesResponseType]`, route consistency.
-- For DI lifetime concerns or architecture violations, run `/DotnetPilot:dotnet:check-solution` instead — the Roslyn-backed checks are more accurate than line-by-line review.
+- For DI lifetime concerns or architecture violations, run `/DotnetPilot:dotnet:health-check` instead — the Roslyn-backed checks are more accurate than line-by-line review.

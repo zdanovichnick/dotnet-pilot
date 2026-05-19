@@ -12,7 +12,7 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 - `.claude-plugin/marketplace.json` — marketplace listing for plugin distribution
 - `.mcp.json` — MCP server declarations (roslyn server `dnp-roslyn` configured)
 - `agents/dnp-*.md` — 8 subagents with YAML frontmatter (`name`, `description`, `tools`, `model`, `permissionMode`). The `tools` field uses Claude Code's scoped syntax (e.g. `Bash(dotnet:*)`)
-- `commands/<category>/<name>.md` — slash commands invoked as `/DotnetPilot:<category>:<name>`. Categories: `pipeline`, `dotnet`, `quality`, `utility`
+- `commands/<category>/<name>.md` — slash commands invoked as `/DotnetPilot:<category>:<name>`. Categories: `project`, `dotnet`, `quality`, `utility`
 - `hooks/hooks.json` + `hooks/dnp-*.{js,sh}` — PreToolUse/PostToolUse hooks. JS hooks read a JSON event from stdin, exit 0 with optional `additionalContext` on stdout for advisory feedback, or non-zero to block
 - `skills/<name>/SKILL.md` — skill packs loaded on demand (aspnet-api-patterns, ef-core-patterns, testing-dotnet, clean-architecture, blazor-patterns, dotnet-project-init)
 
@@ -55,7 +55,7 @@ When the DotnetPilot plugin is active in a consumer project, these instructions 
 
 ## Agents
 
-As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-code-reviewer`, `dnp-security-auditor`, `dnp-plan-checker`, `dnp-executor`) are retired in favor of stock Claude capabilities. The remaining 8 agents focus on things Claude doesn't do well out of the box.
+As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-code-reviewer`, `dnp-security-auditor`, `dnp-plan-checker`, `dnp-executor`) are retired in favor of stock Claude capabilities. The remaining 10 agents focus on things Claude doesn't do well out of the box.
 
 ### Planning & verification
 | Agent | Model | Role |
@@ -67,7 +67,9 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 | Agent | Model | Role |
 |-------|-------|------|
 | `dnp-architect` | claude-opus-4-7 | Solution architecture, clean-arch layer enforcement, project-reference validation |
-| `dnp-test-writer` | claude-sonnet-4-6 | xUnit/NUnit TDD agent — mocking, WebApplicationFactory, convention-aware assertions |
+| `dnp-test-writer` | claude-sonnet-4-6 | Test writer — xUnit/NUnit with mocking, WebApplicationFactory, convention-aware assertions |
+| `dnp-tdd-developer-easy` | claude-haiku-4-5-20251001 | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
+| `dnp-tdd-developer-hard` | claude-sonnet-4-6 | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
 
 ### Mechanical (fast, focused)
 | Agent | Model | Role |
@@ -108,7 +110,7 @@ Use these native Claude Code primitives instead — they evolve with Claude Code
 
 ## State directory (optional — requires `dotnet-pilot-workflow` companion plugin)
 
-For teams that want lightweight persistent state (a PROJECT.md, a roadmap, a solution map cache) install the optional `dotnet-pilot-workflow` plugin. It owns the `.planning/` directory lifecycle and the `pipeline:init`/`pipeline:ship`/`pipeline:next` commands.
+For teams that want lightweight persistent state (a PROJECT.md, a roadmap, a solution map cache) install the optional `dotnet-pilot-workflow` plugin. It owns the `.planning/` directory lifecycle and the `project:init`/`project:ship`/`project:next` commands.
 
 `dotnet-pilot` (this plugin) reads `.planning/config.json` if present to respect per-project hook toggles, but does not require it.
 

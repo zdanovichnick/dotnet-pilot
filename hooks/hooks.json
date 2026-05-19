@@ -30,6 +30,16 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "Read|Write|Edit|MultiEdit|Bash|Grep|Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-sync-global-claude-md.js\"",
+            "timeout": 5
+          }
+        ]
+      },
+      {
         "matcher": "Write|Edit",
         "hooks": [
           {

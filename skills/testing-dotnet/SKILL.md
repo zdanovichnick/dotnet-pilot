@@ -5,7 +5,7 @@ description: .NET testing patterns — xUnit conventions, integration tests with
 
 # .NET Testing Patterns
 
-Reference for test generation. Used by `dnp-test-writer` and `dnp-planner`.
+Reference for test generation. Used by `dnp-test-writer`, `dnp-tdd-developer-easy`, `dnp-tdd-developer-hard`, and `dnp-planner`.
 
 ## Test Organization
 

@@ -6,7 +6,7 @@ Roslyn-backed DI verification · EF Core migration safety · Clean-architecture 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/code) [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](.)
 
-*21 commands · 8 specialized agents · 5 advisory hooks*
+*21 commands · 10 specialized agents · 6 hooks (5 advisory + 1 sync)*
 
 ---
 
@@ -42,7 +42,7 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 
 ```
 /DotnetPilot:utility:help            → should list 21 commands
-/DotnetPilot:dotnet:check-solution   → validates build, tests, DI, architecture
+/DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
 **Keeping it up to date.** GitHub-sourced marketplaces have auto-update **disabled by default**. Enable it once via the `/plugin` UI (Marketplaces tab → `dotnet-pilot-marketplace` → Enable auto-update), or pull updates manually:
@@ -111,7 +111,7 @@ In Claude Code, enable the **Context7** MCP server at the account level — plan
 
 ```
 /DotnetPilot:utility:help            → should list 21 commands
-/DotnetPilot:dotnet:check-solution   → validates build, tests, DI, architecture
+/DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
 ---
@@ -121,7 +121,7 @@ In Claude Code, enable the **Context7** MCP server at the account level — plan
 ### Initialize your project (once per solution)
 
 ```
-/DotnetPilot:pipeline:init
+/DotnetPilot:project:init
 ```
 
 Scans your solution, detects architecture style / test framework / EF contexts, and creates a user-scoped `.planning/` directory. Then asks three questions: what are you building, who is it for, what constraints exist.
@@ -133,8 +133,8 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 ### Or go even faster with the shorthand
 
 ```
-/DotnetPilot:dotnet:scaffold-entity Category --properties 'Name:string, SortOrder:int'
-/DotnetPilot:dotnet:scaffold-api Category
+/DotnetPilot:dotnet:create-entity Category --properties 'Name:string, SortOrder:int'
+/DotnetPilot:dotnet:create-api Category
 /DotnetPilot:dotnet:add-migration AddCategoryTable
 ```
 
@@ -146,56 +146,58 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 
 **Flow:** Developer invokes a `/DotnetPilot:*` command → the command spawns the right agent → the agent calls the Roslyn MCP server for semantic C# analysis (DI completeness, architecture violations, EF Core models, symbol references). Hooks run automatically on file writes and git events, feeding advisory feedback back to the command layer — they never block by default.
 
+> **v2.0.0 breaking change:** Commands were renamed for clarity. `pipeline:*` → `project:*`, `scaffold-*` → `create-*`, `audit-*` → `check-*`, and several others. See the tables below for full mapping.
+
 ---
 
 ## 📋 Commands
 
-### Pipeline — project lifecycle
+### Project — project lifecycle
 
 | Command | Usage | What it does |
 | --- | --- | --- |
-| `pipeline:init` | `/DotnetPilot:pipeline:init [--refresh]` | Initialize for a .NET solution — discover projects, create `.planning/` directory, generate PROJECT.md and solution map |
-| `pipeline:next` | `/DotnetPilot:pipeline:next` | Auto-detect and suggest the next pipeline step based on current state |
-| `pipeline:verify` | `/DotnetPilot:pipeline:verify` | Verify readiness before shipping — build, tests, DI completeness, and architecture check |
-| `pipeline:ship` | `/DotnetPilot:pipeline:ship [--draft]` | Create a pull request for completed work — runs final checks and invokes `gh pr create` |
+| `project:init` | `/DotnetPilot:project:init [--refresh]` | Initialize for a .NET solution — discover projects, create `.planning/` directory, generate PROJECT.md and solution map |
+| `project:next` | `/DotnetPilot:project:next` | Auto-detect and suggest the next project step based on current state |
+| `project:verify` | `/DotnetPilot:project:verify` | Verify readiness before shipping — build, tests, DI completeness, and architecture check |
+| `project:ship` | `/DotnetPilot:project:ship [--draft]` | Create a pull request for completed work — runs final checks and invokes `gh pr create` |
 
 ### Dotnet — scaffolding & solution management
 
 | Command | Usage | What it does |
 | --- | --- | --- |
-| `dotnet:scaffold-entity` | `scaffold-entity <name> [--properties '...']` | Create a full entity stack: entity class, EF configuration, repository, service, DI registration, and migration |
-| `dotnet:scaffold-api` | `scaffold-api <entity> [--minimal]` | Scaffold API controller or minimal API endpoint with DTOs, validation, DI registration, and OpenAPI attributes |
+| `dotnet:create-entity` | `create-entity <name> [--properties '...']` | Create a full entity stack: entity class, EF configuration, repository, service, DI registration, and migration |
+| `dotnet:create-api` | `create-api <entity> [--minimal]` | Create API controller or minimal API endpoint with DTOs, validation, DI registration, and OpenAPI attributes |
 | `dotnet:add-service` | `add-service <name> [--lifetime scoped\|transient\|singleton]` | Create a service with interface, implementation, DI registration, and test scaffold |
 | `dotnet:add-endpoint` | `add-endpoint <controller> <method> <route> [--with-dto]` | Add an endpoint to an existing controller or endpoint group |
 | `dotnet:add-migration` | `add-migration <name> [--context <Name>]` | Plan and generate an EF Core migration safely — validates chain, detects breaking changes, targets correct DbContext |
 | `dotnet:add-project` | `add-project <name> <type>` | Add a new project to the solution with correct references and layer placement |
 | `dotnet:run-tests` | `run-tests [project] [--coverage] [--filter ...]` | Run tests with coverage reporting and failure diagnosis |
-| `dotnet:check-solution` | `check-solution [--fix]` | Validate full solution health — build, tests, NuGet, project references, DI completeness |
+| `dotnet:health-check` | `health-check [--fix]` | Validate full solution health — build, tests, NuGet, project references, DI completeness |
 
 ### Quality — safety checks
 
 | Command | Usage | What it does |
 | --- | --- | --- |
-| `quality:pre-commit` | `/DotnetPilot:quality:pre-commit` | Pre-commit quality gate — build, test, format check, DI verification, and architecture audit |
+| `quality:commit-check` | `/DotnetPilot:quality:commit-check` | Commit quality gate — build, test, format check, DI verification, and architecture check |
 | `quality:review` | `review [--depth quick\|standard\|deep]` | Code review current changes with .NET-specific focus — async patterns, LINQ, naming, DI |
-| `quality:audit-nuget` | `/DotnetPilot:quality:audit-nuget` | NuGet vulnerability scan, version consistency check, and upgrade recommendations |
-| `quality:audit-architecture` | `/DotnetPilot:quality:audit-architecture` | Scan for clean architecture layer violations — forbidden project references, DI issues, package placement |
+| `quality:check-packages` | `/DotnetPilot:quality:check-packages` | Package vulnerability scan, version consistency check, and upgrade recommendations |
+| `quality:check-architecture` | `/DotnetPilot:quality:check-architecture` | Scan for clean architecture layer violations — forbidden project references, DI issues, package placement |
 
 ### Utility — housekeeping
 
 | Command | Usage | What it does |
 | --- | --- | --- |
 | `utility:help` | `/DotnetPilot:utility:help` | Show all commands with descriptions |
-| `utility:quick` | `quick <task description>` | Quick one-off task — bypass the full pipeline for small changes |
-| `utility:status` | `/DotnetPilot:utility:status` | Show current pipeline state — phase, progress, recent activity |
+| `utility:quick-fix` | `quick-fix <task description>` | Quick fix — bypass the full pipeline for small changes |
+| `utility:status` | `/DotnetPilot:utility:status` | Show current project state — phase, progress, recent activity |
 | `utility:settings` | `settings [key] [value]` | View and modify DotnetPilot configuration |
-| `utility:map-solution` | `/DotnetPilot:utility:map-solution` | Map the .NET solution structure — projects, references, packages, namespaces, layers |
+| `utility:show-solution` | `/DotnetPilot:utility:show-solution` | Show the .NET solution structure — projects, references, packages, namespaces, layers |
 
 ---
 
 ## 🤖 Agents
 
-Commands are thin orchestrators — all heavy work happens in one of these 8 agents, each with scoped tool access and a pinned model ID.
+Commands are thin orchestrators — all heavy work happens in one of these 10 agents, each with scoped tool access and a pinned model ID.
 
 ### Planning & verification
 
@@ -209,7 +211,9 @@ Commands are thin orchestrators — all heavy work happens in one of these 8 age
 | Agent | Model | Role |
 | --- | --- | --- |
 | `dnp-architect` | Opus 4.7 | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation |
-| `dnp-test-writer` | Sonnet 4.6 | TDD agent — xUnit/NUnit with mocking, `WebApplicationFactory` integration tests, convention-aware assertions |
+| `dnp-test-writer` | Sonnet 4.6 | Test writer — xUnit/NUnit with mocking, `WebApplicationFactory` integration tests, convention-aware assertions |
+| `dnp-tdd-developer-easy` | Haiku 4.5 | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
+| `dnp-tdd-developer-hard` | Sonnet 4.6 | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
 
 ### Mechanical agents (fast, focused)
 
@@ -220,16 +224,19 @@ Commands are thin orchestrators — all heavy work happens in one of these 8 age
 | `dnp-di-wiring-checker` | Haiku 4.5 | Cross-references constructor injection against DI registrations — finds missing services and captive dependencies |
 | `dnp-nuget-auditor` | Haiku 4.5 | Scans for vulnerable, outdated, and version-inconsistent NuGet packages across the solution |
 
+> `dnp-test-writer` writes tests only (given existing production code). `dnp-tdd-developer-*` agents own the full TDD loop: write failing test → implement production code → refactor — and handle DI registration, architecture verification, and build checks as part of the cycle.
+>
 > Models are pinned to dated IDs so agent behavior doesn't drift when Anthropic releases new versions.
 
 ---
 
 ## 🪝 Hooks
 
-Hooks run automatically during Claude Code sessions. They are **advisory by default** — they warn but don't block, and they respect per-project toggle settings in `.planning/config.json`.
+Hooks run automatically during Claude Code sessions. Advisory hooks warn but don't block, and they respect per-project toggle settings in `.planning/config.json`. The sync hook keeps the global `CLAUDE.md` up to date with the plugin's rule set.
 
-| Hook | Trigger | What it checks |
+| Hook | Trigger | What it does |
 | --- | --- | --- |
+| **Global CLAUDE.md Sync** | Before any tool use (once per version) | Injects/updates the DotnetPilot rule block in `~/.claude/CLAUDE.md` — runs once after plugin install/update, then fast-path skips |
 | **DI Registration Check** | After writing/editing `.cs` files | New services missing DI registration |
 | **Migration Guard** | Before writing/editing migration files | Warns when manually editing EF migration files |
 | **Project Scope Guard** | After writing/editing any file | Warns when editing outside the current phase's focused projects |
@@ -243,7 +250,7 @@ Hooks run automatically during Claude Code sessions. They are **advisory by defa
 **1. Scaffold a CRUD entity end-to-end in 30 seconds**
 
 ```
-> /DotnetPilot:dotnet:scaffold-entity Category --properties 'Name:string, Description:string?, SortOrder:int'
+> /DotnetPilot:dotnet:create-entity Category --properties 'Name:string, Description:string?, SortOrder:int'
 
 Created 9 files:
   src/ECommerce.Domain/Entities/Category.cs
@@ -258,7 +265,7 @@ Created 9 files:
 
 Build: PASS · Tests: PASS · DI: PASS
 
-> /DotnetPilot:dotnet:scaffold-api Category
+> /DotnetPilot:dotnet:create-api Category
 
 Created 4 files:
   src/ECommerce.Api/DTOs/CreateCategoryRequest.cs
@@ -273,6 +280,7 @@ Build: PASS
 
 ```
 > /DotnetPilot:dotnet:add-migration AddCompanyNameToTenant
+
 
 Multiple DbContexts detected. Which one?
   1. ApplicationDbContext (Infrastructure, 12 entities)
@@ -295,7 +303,7 @@ Committed: feat(Infrastructure): add migration AddCompanyNameToTenant
 **3. Catch architecture violations before they ship**
 
 ```
-> /DotnetPilot:quality:audit-architecture
+> /DotnetPilot:quality:check-architecture
 
 Architecture Audit: ECommerce.slnx
   Style: clean
@@ -310,7 +318,7 @@ Architecture Audit: ECommerce.slnx
 **4. Find and fix missing DI registrations**
 
 ```
-> /DotnetPilot:dotnet:check-solution
+> /DotnetPilot:dotnet:health-check
 
   DI Wiring:    FAIL (15 services, 2 missing)
 
@@ -318,7 +326,7 @@ Architecture Audit: ECommerce.slnx
     IPaymentGateway      → consumed by OrderService (Application/Services/OrderService.cs:14)
     INotificationService → consumed by OrderCompletedHandler (Application/Handlers/...:9)
 
-> /DotnetPilot:dotnet:check-solution --fix
+> /DotnetPilot:dotnet:health-check --fix
 
   Fixed ServiceCollectionExtensions.cs:
     + services.AddScoped<IPaymentGateway, StripePaymentGateway>();
@@ -330,7 +338,7 @@ Architecture Audit: ECommerce.slnx
 **5. Pre-commit quality gate**
 
 ```
-> /DotnetPilot:quality:pre-commit
+> /DotnetPilot:quality:commit-check
 
   [PASS] Build:        0 errors
   [PASS] Tests:        72 passed
@@ -345,6 +353,7 @@ Architecture Audit: ECommerce.slnx
 
 ```
 > /DotnetPilot:quality:review --depth deep
+
 
   [HIGH]   UserService.cs:45
            Async method calls .Result on a Task — deadlocks under ASP.NET Core.
@@ -367,7 +376,7 @@ Architecture Audit: ECommerce.slnx
 
 ## ⚙️ Configuration
 
-After `/DotnetPilot:pipeline:init`, configuration lives at `~/.claude/projects/<flat-repo-path>/.planning/config.json`.
+After `/DotnetPilot:project:init`, configuration lives at `~/.claude/projects/<flat-repo-path>/.planning/config.json`.
 
 ```json
 {
@@ -396,6 +405,7 @@ After `/DotnetPilot:pipeline:init`, configuration lives at `~/.claude/projects/<
 ```
 
 Use `/DotnetPilot:utility:settings <key> <value>` to change values without editing JSON directly.
+
 
 | Setting | Change to | Reason |
 | --- | --- | --- |
@@ -457,7 +467,7 @@ dnp-roslyn doctor    # shows solution detection status
 
 **"DotnetPilot not initialized"**
 
-Most commands work without init. If `pipeline:next` or `utility:status` reports this, run `/DotnetPilot:pipeline:init` once to create the `.planning/` directory.
+Most commands work without init. If `project:next` or `utility:status` reports this, run `/DotnetPilot:project:init` once to create the `.planning/` directory.
 
 **Hooks are too noisy**
 
@@ -469,7 +479,7 @@ Or: `/DotnetPilot:utility:settings hooks.di_check false`
 
 **Build keeps failing after scaffolding**
 
-DotnetPilot aborts after 5 consecutive build failures. Check that `dotnet build` works manually, then run `/DotnetPilot:dotnet:check-solution --fix` for auto-repair.
+DotnetPilot aborts after 5 consecutive build failures. Check that `dotnet build` works manually, then run `/DotnetPilot:dotnet:health-check --fix` for auto-repair.
 
 **"Context7 tools not available"**
 
@@ -486,8 +496,9 @@ Context7 must be enabled at the account level in Claude Code settings.
 | v0.3 | ✅ shipped | Roslyn: EF Core model introspection, verbose stderr logging |
 | v1.0.0 | ✅ shipped | Scope narrowed; retired spec-driven pipeline; pinned model IDs; hardened hooks; hook test harness |
 | v1.1.0 | ✅ shipped | `pipeline:init/next/status` merged to core; `pipeline:verify` added; user-scoped `.planning/` path; planner & architect upgraded to Opus 4.7; plugin published to Claude Platform as `dotnet-pilot` |
-| v1.2 | 🔜 planned | Blazor patterns skill + `dnp-blazor-component` agent |
-| v1.3 | 🔜 planned | MAUI / mobile support |
+| v2.0.0 | ✅ shipped | **Breaking:** commands renamed for clarity — `pipeline:*` → `project:*`, `scaffold-*` → `create-*`, `audit-*` → `check-*`, `pre-commit` → `commit-check`, `quick` → `quick-fix`, `map-solution` → `show-solution`, `check-solution` → `health-check` |
+| v2.1 | 🔜 planned | Blazor patterns skill + `dnp-blazor-component` agent |
+| v2.2 | 🔜 planned | MAUI / mobile support |
 
 ---
 
@@ -501,7 +512,7 @@ Context7 must be enabled at the account level in Claude Code settings.
 | [dnp-roslyn](https://github.com/zdanovichnick/dotnet-pilot-mcp-roslyn) | v0.3+ | Roslyn MCP for semantic C# analysis |
 | [Context7](https://github.com/upstash/context7) | latest | Live docs for planning agents (recommended) |
 | [jq](https://jqlang.github.io/jq/) | any | Better JSON parsing in commit-format hook (optional) |
-| [GitHub CLI](https://cli.github.com/) | any | Required only for `pipeline:ship` (optional) |
+| [GitHub CLI](https://cli.github.com/) | any | Required only for `project:ship` (optional) |
 
 **.NET SDK**
 ```

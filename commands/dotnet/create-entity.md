@@ -3,9 +3,9 @@ description: "Create a full entity stack: entity class, EF configuration, reposi
 argument-hint: "<entity-name> [--properties 'Name:string, Age:int, Email:string']"
 ---
 
-# Scaffold Entity
+# Create Entity
 
-`/DotnetPilot:dotnet:scaffold-entity` creates the complete vertical slice for a domain entity.
+`/DotnetPilot:dotnet:create-entity` creates the complete vertical slice for a domain entity.
 
 > **Delegates to**: `dnp-ef-migration-planner` (Haiku 4.5) for the migration step; uses `mcp__roslyn__get_solution_structure` to resolve project paths. Other steps run in the caller's context.
 
@@ -22,4 +22,4 @@ argument-hint: "<entity-name> [--properties 'Name:string, Age:int, Email:string'
    - **DI registration:** Register repository and service
    - **Migration:** Run `dotnet ef migrations add Add<Entity>Table`
 3. Verify each step builds
-4. Suggest: `/DotnetPilot:dotnet:scaffold-api <entity>` to add API endpoints
+4. Suggest: `/DotnetPilot:dotnet:create-api <entity>` to add API endpoints

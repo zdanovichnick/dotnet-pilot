@@ -1,10 +1,10 @@
 ---
-description: "Map the .NET solution structure — projects, references, packages, namespaces, layers."
+description: "Show the .NET solution structure — projects, references, packages, namespaces, layers."
 ---
 
-# Map Solution
+# Show Solution
 
-`/DotnetPilot:utility:map-solution` scans the solution and updates `solution-map.json`.
+`/DotnetPilot:utility:show-solution` scans the solution and updates `solution-map.json`.
 
 ## Execution
 

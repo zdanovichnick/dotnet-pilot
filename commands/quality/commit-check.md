@@ -1,10 +1,10 @@
 ---
-description: "Pre-commit quality gate — build, test, format check, DI verification, and architecture audit."
+description: "Commit quality gate — build, test, format check, DI verification, and architecture check."
 ---
 
-# Pre-Commit
+# Commit Check
 
-`/DotnetPilot:quality:pre-commit` runs all quality checks before committing.
+`/DotnetPilot:quality:commit-check` runs all quality checks before committing.
 
 > **Delegates to**: `dnp-di-wiring-checker` (Haiku 4.5); optionally the stock `code-reviewer` agent on large changesets.
 
@@ -47,7 +47,7 @@ delegates to the stock `code-reviewer` agent with .NET focus).
 ## Report
 
 ```
-Pre-Commit Results
+Commit Check Results
   [PASS] Build: 0 errors
   [PASS] Tests: 24 passed
   [WARN] Format: 2 files need formatting
