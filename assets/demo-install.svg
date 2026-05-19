@@ -101,7 +101,7 @@
       <text x="18" y="124" fill="#6a9955">✓  Fetching plugin from zdanovichnick/dotnet-pilot ...</text>
     </g>
     <g class="line7">
-      <text x="18" y="143" fill="#6a9955">✓  Plugin "dotnet-pilot" v1.1.0 installed (21 commands · 8 agents · 5 hooks)</text>
+      <text x="18" y="143" fill="#6a9955">✓  Plugin "dotnet-pilot" v2.0.0 installed (23 commands · 10 agents · 6 hooks)</text>
     </g>
 
     <!-- Step 3: reload -->
@@ -119,8 +119,8 @@
     <g class="line10">
       <rect x="0" y="215" width="680" height="54" rx="5" fill="url(#successGrad)" stroke="#1a4731" stroke-width="1"/>
       <text x="14" y="234" fill="#4ec9b0" font-size="13">✓  DotnetPilot active</text>
-      <text x="14" y="252" fill="#6a9955" font-size="12">   /DotnetPilot:utility:help → 21 commands listed</text>
-      <text x="400" y="252" fill="#6a9955" font-size="12">/DotnetPilot:dotnet:check-solution → ready</text>
+      <text x="14" y="252" fill="#6a9955" font-size="12">   /DotnetPilot:utility:help → 23 commands listed</text>
+      <text x="400" y="252" fill="#6a9955" font-size="12">/DotnetPilot:dotnet:health-check → ready</text>
     </g>
 
     <!-- Cursor prompt -->
@@ -134,5 +134,5 @@
   <!-- Corner badge -->
   <rect x="596" y="28" width="128" height="20" rx="10" fill="#1a2a1a" stroke="#28c840" stroke-width="0.75"/>
   <circle cx="613" cy="38" r="3.5" fill="#28c840" filter="url(#glow)"/>
-  <text x="622" y="42" font-family="'Cascadia Code', monospace" font-size="10.5" fill="#28c840">v1.1.0  installed</text>
+  <text x="622" y="42" font-family="'Cascadia Code', monospace" font-size="10.5" fill="#28c840">v2.0.0  installed</text>
 </svg>

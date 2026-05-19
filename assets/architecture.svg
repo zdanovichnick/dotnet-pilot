@@ -28,10 +28,10 @@
 <text x="309.2" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">scaffold · migrate · service</text>
 <rect x="410.8" y="118" width="160" height="52" rx="6" fill="#0d1a2d" stroke="#58a6ff99" stroke-width="1"/>
 <text x="490.8" y="137" fill="#58a6ff" font-size="13" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Quality</text>
-<text x="490.8" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">pre-commit · review · audit</text>
+<text x="490.8" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">commit-check · review · check-*</text>
 <rect x="592.4" y="118" width="160" height="52" rx="6" fill="#0d1a2d" stroke="#58a6ff99" stroke-width="1"/>
 <text x="672.4" y="137" fill="#58a6ff" font-size="13" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Utility</text>
-<text x="672.4" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">help · quick · status</text>
+<text x="672.4" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">help · quick-fix · status</text>
 <line x1="400" y1="197" x2="400" y2="212" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrowE)"/>
 <text x="406" y="210" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="start">advisory</text>
 <rect x="26" y="216" width="748" height="68" rx="8" fill="#1c1600" stroke="#e3b34166" stroke-width="1"/>

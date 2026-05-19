@@ -22,7 +22,7 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 | Skips `dotnet build` verification | Build hook verifies after every scaffold |
 | Ignores existing patterns in your codebase | Every scaffolder reads your conventions before writing code |
 
-![check-solution demo](./assets/demo-check-solution.svg)
+![health-check demo](./assets/demo-health-check.svg)
 
 ---
 
@@ -126,9 +126,9 @@ In Claude Code, enable the **Context7** MCP server at the account level — plan
 
 Scans your solution, detects architecture style / test framework / EF contexts, and creates a user-scoped `.planning/` directory. Then asks three questions: what are you building, who is it for, what constraints exist.
 
-### Scaffold a full entity in one command
+### Create a full entity in one command
 
-![scaffold-entity demo](./assets/demo-scaffold.svg)
+![create-entity demo](./assets/demo-create-entity.svg)
 
 ### Or go even faster with the shorthand
 
@@ -498,7 +498,7 @@ Context7 must be enabled at the account level in Claude Code settings.
 | v0.3 | ✅ shipped | Roslyn: EF Core model introspection, verbose stderr logging |
 | v1.0.0 | ✅ shipped | Scope narrowed; retired spec-driven pipeline; pinned model IDs; hardened hooks; hook test harness |
 | v1.1.0 | ✅ shipped | `pipeline:init/next/status` merged to core; `pipeline:verify` added; user-scoped `.planning/` path; planner & architect upgraded to Opus 4.7; plugin published to Claude Platform as `dotnet-pilot` |
-| v2.0.0 | ✅ shipped | **Breaking:** commands renamed for clarity — `pipeline:*` → `project:*`, `scaffold-*` → `create-*`, `audit-*` → `check-*`, `pre-commit` → `commit-check`, `quick` → `quick-fix`, `map-solution` → `show-solution`, `check-solution` → `health-check` |
+| v2.0.0 | ✅ shipped | **Breaking:** 12 commands renamed for clarity (`pipeline:*` → `project:*`, `scaffold-*` → `create-*`, `audit-*` → `check-*`, and others). New: `dotnet:write-tests` and `dotnet:tdd` commands (21 → 23). New: global `CLAUDE.md` sync hook auto-injects .NET code-style rules on plugin install/update (5 → 6 hooks). Marketplace version synced. |
 | v2.1 | 🔜 planned | Blazor patterns skill + `dnp-blazor-component` agent |
 | v2.2 | 🔜 planned | MAUI / mobile support |
 

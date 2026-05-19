@@ -12,7 +12,7 @@
   <circle cx="60" cy="22" r="6" fill="#27c93f"/>
   <!-- window title -->
   <text x="380" y="27" text-anchor="middle" fill="#8b949e" font-size="12" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace">bash</text>
-  <text y="60" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#58a6ff">$ </tspan><tspan fill="#e6edf3">/DotnetPilot:dotnet:scaffold-entity User --properties 'Name:string, Email:string'</tspan></text>
+  <text y="60" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#58a6ff">$ </tspan><tspan fill="#e6edf3">/DotnetPilot:dotnet:create-entity User --properties 'Name:string, Email:string'</tspan></text>
   <text y="104" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">User.cs                      </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#79c0ff">Domain/Entities</tspan></text>
   <text y="126" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">UserConfiguration.cs         </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#79c0ff">Infrastructure/Configurations</tspan></text>
   <text y="148" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="22" fill="#3fb950">  ✓  </tspan><tspan fill="#e6edf3">ApplicationDbContext.cs      </tspan><tspan fill="#8b949e">→  </tspan><tspan fill="#8b949e">added DbSet&lt;User&gt;</tspan></text>
