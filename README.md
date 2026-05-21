@@ -6,7 +6,7 @@ Roslyn-backed DI verification · EF Core migration safety · Clean-architecture 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/code) [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](.)
 
-*23 commands · 10 specialized agents · 6 hooks (5 advisory + 1 sync)*
+*23 commands · 10 specialized agents · 7 hooks (5 advisory + 1 sync + 1 routing)*
 
 ---
 
@@ -244,6 +244,7 @@ Hooks run automatically during Claude Code sessions. Advisory hooks warn but don
 | **Project Scope Guard** | After writing/editing any file | Warns when editing outside the current phase's focused projects |
 | **Build Verify** | After `dotnet build` runs | Parses failures, tracks consecutive errors, aborts after 5 |
 | **Commit Format** | Before `git commit` | Enforces `type(scope): message` conventional commit format |
+| **Priority Router** | Before spawning an Agent | Detects .NET projects and injects DotnetPilot agent routing priority over generic equivalents |
 
 ---
 
@@ -513,8 +514,9 @@ Context7 must be enabled at the account level in Claude Code settings.
 | v1.0.0 | ✅ shipped | Scope narrowed; retired spec-driven pipeline; pinned model IDs; hardened hooks; hook test harness |
 | v1.1.0 | ✅ shipped | `pipeline:init/next/status` merged to core; `pipeline:verify` added; user-scoped `.planning/` path; planner & architect upgraded to Opus 4.7; plugin published to Claude Platform as `dotnet-pilot` |
 | v2.0.0 | ✅ shipped | **Breaking:** 12 commands renamed for clarity (`pipeline:*` → `project:*`, `scaffold-*` → `create-*`, `audit-*` → `check-*`, and others). New: `dotnet:write-tests` and `dotnet:tdd` commands (21 → 23). New: global `CLAUDE.md` sync hook auto-injects .NET code-style rules on plugin install/update (5 → 6 hooks). Marketplace version synced. |
-| v2.1 | 🔜 planned | Blazor patterns skill + `dnp-blazor-component` agent |
-| v2.2 | 🔜 planned | MAUI / mobile support |
+| v2.1.0 | ✅ shipped | New: `.NET priority routing` hook — auto-detects .NET projects and injects DotnetPilot agent routing priority before generic agents are spawned (6 → 7 hooks). |
+| v2.2 | 🔜 planned | Blazor patterns skill + `dnp-blazor-component` agent |
+| v2.3 | 🔜 planned | MAUI / mobile support |
 
 ---
 

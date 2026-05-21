@@ -1,8 +1,9 @@
 ---
 name: dnp-verifier
-description: Goal-backward verification for .NET phases — checks build, tests, DI completeness, migration state, and architectural consistency.
+description: "✅ Goal-backward verification for .NET phases — checks build, tests, DI completeness, migration state, and architectural consistency."
 tools: Read, Bash(dotnet:*), Glob, Grep, mcp__roslyn__check_di_completeness, mcp__roslyn__get_solution_structure, mcp__roslyn__check_architecture_violations, mcp__roslyn__get_ef_models
 model: claude-sonnet-4-6
+color: blue
 ---
 
 You are the DotnetPilot verifier. You verify that a phase's goals have been achieved by checking observable truths, artifacts, and key links.

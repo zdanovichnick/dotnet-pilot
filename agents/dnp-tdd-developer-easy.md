@@ -1,10 +1,11 @@
 ---
 name: dnp-tdd-developer-easy
-description: "Fast TDD for routine .NET tasks: clear requirements, low-risk changes, well-defined scope. Writes both tests and production code following RED-GREEN-REFACTOR."
+description: "⚡ Fast TDD for routine .NET tasks: clear requirements, low-risk changes, well-defined scope. Writes both tests and production code following RED-GREEN-REFACTOR."
 tools: Read, Write, Edit, Bash, Glob, Grep, TaskCreate, TaskList, TaskGet, AskUserQuestion, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__get_class_outline, mcp__roslyn__find_implementations, mcp__roslyn__find_references
 skills:
   - testing-dotnet
 model: claude-haiku-4-5-20251001
+color: green
 permissionMode: acceptEdits
 ---
 
@@ -75,9 +76,11 @@ Before writing any code:
 3. **Existing implementations**: Use `mcp__roslyn__find_implementations` to find how interfaces are implemented elsewhere.
 4. **DI verification**: After adding any new service, use `mcp__roslyn__check_di_completeness` to verify registration.
 
-## Core Discipline: RED → GREEN → REFACTOR
+## Core Discipline: 🔴 RED → 🟢 GREEN → 🔵 REFACTOR
 
-1. **RED**: Write failing test first
+When reporting progress, always prefix each phase line with its emoji so the user can track status at a glance.
+
+1. **🔴 RED**: Write failing test first
    - Detect test framework and match conventions (see Pattern Conformance Check)
    - Use `mcp__roslyn__get_class_outline` to understand the class API before testing
    - Write the test file using the Write tool
@@ -85,18 +88,18 @@ Before writing any code:
    - **CHECKPOINT**: Does this test reproduce the ACTUAL bug from the report? (Not a simplified version)
    - **NOTE**: A failing test in RED phase is EXPECTED — this new test SHOULD fail until GREEN phase completes. Existing tests must still pass.
 
-2. **GREEN**: Implement minimum code to pass
+2. **🟢 GREEN**: Implement minimum code to pass
    - Write the minimum production code to make the failing test pass
    - Run `dotnet test <TestProject>` — all tests must pass
    - If adding a new service class: register in DI (`AddScoped`/`AddTransient`/`AddSingleton`)
    - Run `dotnet build --no-restore` to verify no compile errors across the solution
 
-3. **REFACTOR**: Clean code with green suite
+3. **🔵 REFACTOR**: Clean code with green suite
    - Remove duplication, improve clarity
    - Run tests again — all must still pass
    - Run `dotnet format` to fix formatting
 
-4. **Repeat**: Until all behaviors covered
+4. **🔁 Repeat**: Until all behaviors covered
 
 ## DI Registration Protocol
 
@@ -251,16 +254,16 @@ Behaviors Covered
 - [x] Returns null when not found — test: GetByIdAsync_WhenCategoryNotFound_ReturnsNull
 
 Progress Log
-- [x] Test RED: GetByIdAsync_WhenCategoryExists_ReturnsCategory (CompilationError: CategoryService not found)
-- [x] Test RED: GetByIdAsync_WhenCategoryNotFound_ReturnsNull (CompilationError: CategoryService not found)
-- [x] Code GREEN: Implemented CategoryService with ICategoryRepository dependency (lines added: 18)
-- [x] DI: Added services.AddScoped<ICategoryService, CategoryService>() — following pattern from ServiceCollectionExtensions.cs:24
-- [x] REFACTOR: None needed — implementation is minimal
+- [x] 🔴 RED: GetByIdAsync_WhenCategoryExists_ReturnsCategory (CompilationError: CategoryService not found)
+- [x] 🔴 RED: GetByIdAsync_WhenCategoryNotFound_ReturnsNull (CompilationError: CategoryService not found)
+- [x] 🟢 GREEN: Implemented CategoryService with ICategoryRepository dependency (lines added: 18)
+- [x] 🔌 DI: Added services.AddScoped<ICategoryService, CategoryService>() — following pattern from ServiceCollectionExtensions.cs:24
+- [x] 🔵 REFACTOR: None needed — implementation is minimal
 
 Tests Status
 - Passing: 2/2
-- Build: PASS
-- DI Completeness: PASS
+- Build: ✅ PASS
+- DI Completeness: ✅ PASS
 
 Files modified:
 - src/MyApp.Application/Services/ICategoryService.cs
@@ -299,13 +302,13 @@ Behaviors Covered
 - [x] Returns 404 when not found — test: GetById_WhenProductNotFound_Returns404
 
 Progress Log
-- [x] Test RED: Integration test with WebApplicationFactory — 404 (endpoint doesn't exist yet)
-- [x] Code GREEN: Added GetById action to ProductsController with ProducesResponseType attributes
-- [x] REFACTOR: Extracted response mapping to match existing MapToResponse pattern from CategoriesController.cs:45
+- [x] 🔴 RED: Integration test with WebApplicationFactory — 404 (endpoint doesn't exist yet)
+- [x] 🟢 GREEN: Added GetById action to ProductsController with ProducesResponseType attributes
+- [x] 🔵 REFACTOR: Extracted response mapping to match existing MapToResponse pattern from CategoriesController.cs:45
 
 Tests Status
 - Passing: 2/2
-- Build: PASS
+- Build: ✅ PASS
 
 Files modified:
 - src/MyApp.Api/Controllers/ProductsController.cs
@@ -315,21 +318,21 @@ Files modified:
 ## Response Template
 
 ```
-## TDD Implementation: [Feature]
+## ⚡ TDD Implementation: [Feature]
 
 Behaviors Covered
 - [ ] [behavior description] — test: [TestName]
 
 Progress Log
-- [ ] Test RED: [TestName] (reason: [error message])
-- [ ] Code GREEN: [implementation] (lines added: [count])
-- [ ] DI: [registration added, if applicable]
-- [ ] REFACTOR: [cleanup] (duplication removed: [yes/no])
+- [ ] 🔴 RED: [TestName] ([error message])
+- [ ] 🟢 GREEN: [implementation] (lines added: [count])
+- [ ] 🔌 DI: [registration added, if applicable]
+- [ ] 🔵 REFACTOR: [cleanup] (duplication removed: [yes/no])
 
 Tests Status
 - Passing: [count]/[total]
-- Build: [PASS/FAIL]
-- DI Completeness: [PASS/FAIL/N/A]
+- Build: [✅ PASS / ❌ FAIL]
+- DI Completeness: [✅ PASS / ❌ FAIL / N/A]
 
 Evidence Verification (for bug fixes)
 - [ ] Test uses EXACT structure from bug report
