@@ -45,13 +45,18 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 /DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
-**Keeping it up to date.** GitHub-sourced marketplaces have auto-update **disabled by default**. Enable it once via the `/plugin` UI (Marketplaces tab → `dotnet-pilot-marketplace` → Enable auto-update), or pull updates manually:
+**Keeping it up to date.**
+
+**Easiest:** Open the plugin manager (`/plugin` → Installed tab → `dotnet-pilot`) and click **"Update now"**. Then `/reload-plugins` to activate.
+
+**CLI alternative:**
 
 ```
 /plugin marketplace update dotnet-pilot-marketplace
+/reload-plugins
 ```
 
-To persist auto-update across machines, add this to `.claude/settings.json`:
+**Auto-update** (GitHub-sourced marketplaces disable it by default). Enable once via the `/plugin` UI (Marketplaces tab → `dotnet-pilot-marketplace` → Enable auto-update), or persist it in `.claude/settings.json`:
 
 ```json
 {
@@ -486,7 +491,19 @@ DotnetPilot aborts after 5 consecutive build failures. Check that `dotnet build`
 
 **Commands missing after update (e.g. `dotnet:tdd` not found)**
 
-Claude Code caches the plugin at install time. After a major version update, `/reload-plugins` may not pick up new command files. Full reset:
+Claude Code caches the plugin at install time. After a major version update, new command files may not appear until the cache is refreshed.
+
+**Option 1 — UI (easiest):** `/plugin` → Installed → `dotnet-pilot` → **"Update now"** → `/reload-plugins`
+
+**Option 2 — short CLI reset:**
+
+```
+/plugin uninstall dotnet-pilot
+/plugin install dotnet-pilot@dotnet-pilot-marketplace
+/reload-plugins
+```
+
+**Option 3 — full reset** (if Options 1 & 2 don't work):
 
 ```
 /plugin uninstall dotnet-pilot
