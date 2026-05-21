@@ -9,7 +9,7 @@
       "name": "dotnet-pilot",
       "source": "./",
       "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, convention-aware scaffolders, and project lifecycle commands.",
-      "version": "2.1.0",
+      "version": "2.1.1",
       "keywords": [
         "dotnet",
         "csharp",
