@@ -11,30 +11,55 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 - `.claude-plugin/plugin.json` — plugin manifest (name, version, mcpServers pointer)
 - `.claude-plugin/marketplace.json` — marketplace listing for plugin distribution
 - `.mcp.json` — MCP server declarations (roslyn server `dnp-roslyn` configured)
-- `agents/dnp-*.md` — 8 subagents with YAML frontmatter (`name`, `description`, `tools`, `model`, `permissionMode`). The `tools` field uses Claude Code's scoped syntax (e.g. `Bash(dotnet:*)`)
+- `agents/dnp-*.md` — 10 agents with YAML frontmatter (`name`, `description`, `tools`, `model`, `permissionMode`). The `tools` field uses Claude Code's scoped syntax (e.g. `Bash(dotnet:*)`)
 - `commands/<category>/<name>.md` — slash commands invoked as `/DotnetPilot:<category>:<name>`. Categories: `project`, `dotnet`, `quality`, `utility`
-- `hooks/hooks.json` + `hooks/dnp-*.{js,sh}` — PreToolUse/PostToolUse hooks. JS hooks read a JSON event from stdin, exit 0 with optional `additionalContext` on stdout for advisory feedback, or non-zero to block
+- `hooks/hooks.json` — hook registry wiring matchers to scripts via `${CLAUDE_PLUGIN_ROOT}`
+- `hooks/dnp-*.js` — 7 advisory hooks (all exit 0; emit `additionalContext` for guidance). Read a JSON event from stdin.
+- `hooks/_lib/config.js` — shared module used by every hook. Resolves `.planning/config.json`: repo-local path first, then user-scoped at `~/.claude/projects/<flattened-cwd>/` (where `D:\Projects\Foo` → `D--Projects-Foo`). All hooks default-on when config is absent.
+- `rules/global-claude-md.md` — template block injected into `~/.claude/CLAUDE.md` by `dnp-sync-global-claude-md.js` on version change (versioned markers keep it idempotent)
 - `skills/<name>/SKILL.md` — skill packs loaded on demand (aspnet-api-patterns, ef-core-patterns, testing-dotnet, clean-architecture, blazor-patterns, dotnet-project-init)
 
 ### Authoring Rules
 
-- **Hooks must be advisory by default.** Exit 0 even on findings; emit guidance via `additionalContext`. Only block (non-zero exit) for hard safety violations. All hooks respect `.planning/config.json` `hooks.*` toggles and exit early when the planning dir is absent.
+- **Hooks must be advisory by default.** Exit 0 even on findings; emit guidance via `additionalContext`. Only block (non-zero exit) for hard safety violations. All hooks respect `.planning/config.json` `hooks.*` toggles and default-on when the file is absent.
 - **Hook paths use `${CLAUDE_PLUGIN_ROOT}`**, never relative paths — the CWD at runtime is the consumer project, not this repo.
+- **All hooks share `_lib/config.js`.** When adding a new hook, import `{ hookEnabled }` from there — don't re-implement config resolution.
+- **`dnp-commit-format` skips heredoc commits.** Claude Code's default multi-line commit workflow (`-m "$(cat <<'EOF'...)"`) is deliberately excluded — the hook only validates plain `-m "..."` strings.
 - **Commands are thin orchestrators.** Heavy logic belongs in agents. A command file is the spec that Claude reads when the slash command fires; it should enumerate steps and which agents to spawn, not re-implement their work.
 - **Agent frontmatter `tools:` is a whitelist.** Adding a tool requires justification; prefer narrower scopes (`Bash(dotnet:*)`) over broad ones.
 - **Model tier by agent role.** Planning/architecture → opus; implementation/review → sonnet; mechanical checks (DI, NuGet audit, scaffolding) → haiku.
 
 ### Validating Plugin Changes
 
-There is no automated test suite. To verify changes:
-1. `echo '<json>' | node hooks/<hook>.js` — smoke-test a hook with a crafted event
-2. Install the plugin from a test .NET project directory:
-   ```
-   /install dotnet-pilot
-   ```
-   Or from a local clone: `/plugin marketplace add ./path-to-dotnet-pilot` then `/plugin install dotnet-pilot@dotnet-pilot-marketplace`
-3. Exercise the command/agent in the test project
-4. Check `plugin.json` version bump and keep `README.md` tables in sync with `agents/` and `commands/` directories
+**Hook test harness** (the only automated validation):
+```bash
+node hooks/__tests__/run.js
+```
+Runs every hook against fixture JSON payloads and asserts: exit code 0, stdout is empty or valid `hookSpecificOutput` JSON, and expected `[dnp-<name>]` message fragments appear. Run before publishing a new version or after editing any hook.
+
+**Manual end-to-end** from a test .NET project directory:
+
+```bash
+# Session-only (no persistent install — for quick iteration):
+claude --plugin-dir "C:\path\to\dotnet-pilot"
+
+# Persistent install from local clone:
+/plugin marketplace add C:\path\to\dotnet-pilot
+/plugin install dotnet-pilot@dotnet-pilot-marketplace
+/reload-plugins
+```
+
+After editing commands, agents, or hooks: `/reload-plugins` (no restart needed).
+
+**Roslyn MCP companion** (required for semantic analysis tools):
+```bash
+dotnet tool install -g DotnetPilot.Mcp.Roslyn   # first install
+dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # update
+```
+
+**Checklist before publishing:**
+- Bump version in `plugin.json` and `marketplace.json` (both must match)
+- Keep `README.md` command/agent tables in sync with `commands/` and `agents/` directories
 
 ### Companion: dnp-roslyn MCP server
 
@@ -79,6 +104,18 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 | `dnp-di-wiring-checker` | claude-haiku-4-5-20251001 | Cross-references constructor injections against DI registrations |
 | `dnp-nuget-auditor` | claude-haiku-4-5-20251001 | Vulnerability, outdated-version, and version-inconsistency scans |
 
+## Hook Behaviors
+
+| Hook | Trigger | What it does |
+|------|---------|--------------|
+| `dnp-sync-global-claude-md` | PreToolUse (any tool) | Injects `rules/global-claude-md.md` block into `~/.claude/CLAUDE.md` with versioned markers; no-ops if current version already present |
+| `dnp-dotnet-priority` | PreToolUse (Agent) | When CWD contains `.sln`/`.slnx`/`.csproj`, emits a routing table nudging the orchestrator toward DotnetPilot agents |
+| `dnp-build-verify` | PostToolUse (Bash) | Parses `dotnet build/test` failures; warns at 3 consecutive failures, escalates at 5; resets counter on success (temp file per CWD) |
+| `dnp-di-registration-check` | PostToolUse (Write/Edit) | On `.cs` file save, regex-checks whether the new class has a DI registration in `Program.cs` / `*Extensions.cs`; skips test files, migrations, `Program.cs` itself |
+| `dnp-migration-guard` | PreToolUse (Write/Edit) | Warns before manual edits to files inside a `Migrations/` directory |
+| `dnp-project-scope-guard` | PostToolUse (Write/Edit) | When `.planning/STATE.md` has `focus_projects: [...]` frontmatter, warns if an edit touches a project outside that list; uses `solution-map.json` for boundary resolution |
+| `dnp-commit-format` | PreToolUse (Bash) | Validates conventional commit format on `git commit -m "..."` invocations; skips heredoc, `--no-edit`, and `--file` forms |
+
 ## Quality Gates
 
 ### Pre-flight (mechanical checks, not blocking unless hooks say so)
@@ -93,7 +130,7 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 - Multiple DbContext ambiguity: migration target unclear
 
 ### Abort (stop immediately, preserve state)
-- 5 consecutive build failures (tracked by `dnp-build-verify` hook)
+- 5+ consecutive build failures (tracked by `dnp-build-verify` in `os.tmpdir()`; warning fires at 3)
 - Solution file corruption
 
 ## What DotnetPilot does NOT do
