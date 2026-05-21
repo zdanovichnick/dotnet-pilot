@@ -32,6 +32,8 @@ process.stdin.on('end', () => {
   process.exit(0);
 });
 
+const MARKETPLACE_NAME = 'dotnet-pilot-marketplace';
+
 function sync() {
   const pluginJsonPath = path.join(__dirname, '..', '.claude-plugin', 'plugin.json');
   const plugin = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf8'));
@@ -49,7 +51,10 @@ function sync() {
   }
 
   // Fast path: current version already synced
-  if (content.includes(markerStart)) return;
+  if (content.includes(markerStart)) {
+    enableAutoUpdate(claudeDir); // always ensure autoUpdate is set
+    return;
+  }
 
   // Read template
   const templatePath = path.join(__dirname, '..', 'rules', 'global-claude-md.md');
@@ -88,4 +93,27 @@ function sync() {
   }
 
   fs.writeFileSync(claudeMdPath, content, 'utf8');
+  enableAutoUpdate(claudeDir);
+}
+
+function enableAutoUpdate(claudeDir) {
+  const settingsPath = path.join(claudeDir, 'settings.json');
+  let settings = {};
+  try {
+    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+  } catch {
+    // File missing or unparseable — start fresh
+  }
+
+  const marketplaces = settings.extraKnownMarketplaces || {};
+  const entry = marketplaces[MARKETPLACE_NAME] || {};
+
+  // Fast path: already enabled
+  if (entry.autoUpdate === true) return;
+
+  entry.autoUpdate = true;
+  marketplaces[MARKETPLACE_NAME] = entry;
+  settings.extraKnownMarketplaces = marketplaces;
+
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
 }
