@@ -7,8 +7,8 @@ description: "List all DotnetPilot commands grouped by category."
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v2.1.1 — .NET development plugin for Claude Code
-23 commands · 10 agents · 7 hooks
+DotnetPilot v2.2.0 — .NET development plugin for Claude Code
+28 commands · 14 agents · 8 hooks · 16 skill packs
 
 PROJECT — project lifecycle
   project:init               Initialize for a .NET solution — discover projects, create
@@ -18,6 +18,8 @@ PROJECT — project lifecycle
                              completeness, and architecture check
   project:ship               Create a pull request — runs final checks and invokes
                              gh pr create
+  project:checkpoint         Ordered quality gate: build → tests → format check →
+                             architecture warning → DI warning → git status summary
 
 DOTNET — scaffolding & solution management
   dotnet:create-entity       Create a full entity stack: entity class, EF configuration,
@@ -38,6 +40,10 @@ DOTNET — scaffolding & solution management
   dotnet:run-tests           Run tests with coverage reporting and failure diagnosis
   dotnet:health-check        Validate full solution health — build, tests, NuGet, project
                              references, DI completeness
+  dotnet:scaffold            Detect solution architecture and scaffold a feature with
+                             the appropriate style (VSA, Clean Architecture, DDD)
+  dotnet:build-fix           Run dotnet build and auto-fix errors — iterative repair loop,
+                             up to 5 cycles before halting
 
 QUALITY — safety checks
   quality:commit-check       Commit quality gate — build, test, format check, DI
@@ -48,6 +54,10 @@ QUALITY — safety checks
                              upgrade recommendations
   quality:check-architecture Scan for clean architecture layer violations — forbidden
                              project references, DI issues, package placement
+  quality:security-scan      OWASP audit — NuGet CVEs, secrets exposure, auth config,
+                             CORS, and input validation gaps
+  quality:de-sloppify        Safe refactoring pass — dead code removal, naming
+                             normalization, duplication elimination
 
 UTILITY — housekeeping
   utility:help               Show this help text

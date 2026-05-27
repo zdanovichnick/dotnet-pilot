@@ -106,6 +106,10 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 | `dnp-test-writer` | claude-sonnet-4-6 | Test writer — xUnit/NUnit with mocking, WebApplicationFactory, convention-aware assertions |
 | `dnp-tdd-developer-easy` | claude-haiku-4-5-20251001 | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
 | `dnp-tdd-developer-hard` | claude-sonnet-4-6 | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
+| `dnp-build-error-resolver` | claude-haiku-4-5 | Iterative build-error fixing — autonomous repair loop, max 5 iterations |
+| `dnp-security-auditor`     | claude-sonnet-4-6 | OWASP Top 10 audit, secrets exposure, auth config, dependency CVEs |
+| `dnp-performance-analyst`  | claude-sonnet-4-6 | Async hotspots, N+1 queries, caching gaps, benchmark design |
+| `dnp-refactor-cleaner`     | claude-sonnet-4-6 | Dead code removal, naming normalization, duplication elimination |
 
 ### Mechanical (fast, focused)
 | Agent | Model | Role |

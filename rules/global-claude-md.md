@@ -45,3 +45,47 @@
 - Use [BE] prefix on backend ticket titles, [FE] prefix on frontend ticket titles
 - Default issue type: Task (unless explicitly a bug or story)
 - Always include Acceptance Criteria in descriptions
+
+## .NET Coding Style
+- Use file-scoped namespaces in all C# files
+- Use `var` for all local variable declarations where type is inferable
+- Prefer primary constructors for classes with simple injection: `public class Service(IDep dep)`
+- Use records for DTOs and immutable data shapes: `public record CreateUserRequest(string Name, string Email);`
+- No `#region` blocks — use partial classes if a file is too large
+- Prefer `IReadOnlyList<T>` / `IReadOnlyDictionary<K,V>` for read-only return types
+- ✅ `public class OrderService(IOrderRepository repo, ILogger<OrderService> logger)`
+- ❌ `public class OrderService { public OrderService(IOrderRepository repo) { _repo = repo; } }`
+
+## .NET Error Handling
+- Use `Result<TValue, TError>` for expected failures in domain/application layer — never throw for business rules
+- Use `ProblemDetails` (RFC 7807) for all HTTP error responses — register a global `GlobalExceptionHandler`
+- Never catch `Exception` at a call site unless you re-throw or have a specific recovery action
+- Exception boundaries: controllers and background jobs only — let domain/application errors bubble as `Result`
+- ✅ `return Result.Failure<Order>("Order not found");`
+- ❌ `throw new NotFoundException("Order not found");` (from application layer)
+
+## .NET Performance
+- Every `async` method on a controller/service call path MUST have a `CancellationToken` parameter
+- Use `TimeProvider` (injected) instead of `DateTime.Now` / `DateTime.UtcNow` — enables deterministic testing
+- Never call `.Result` or `.Wait()` on a `Task` — propagate `async/await` all the way up
+- Prefer `ExecuteUpdateAsync` / `ExecuteDeleteAsync` for bulk EF Core operations (no change-tracking overhead)
+- Use `IMemoryCache` / `HybridCache` for hot data; annotate cache keys as constants
+- ✅ `var user = await repo.GetByIdAsync(id, cancellationToken);`
+- ❌ `var user = repo.GetByIdAsync(id).Result;`
+
+## .NET Security
+- Never log secrets, tokens, passwords, or PII — use structured logging with safe projections
+- Always validate input at system boundaries (controllers, message consumers) — never trust caller
+- Use parameterized queries only — never build SQL strings via interpolation or concatenation
+- Store secrets in environment variables or a secrets manager — never in `appsettings.json` committed to git
+- Use `IDataProtectionProvider` for encrypting PII at rest
+- ✅ `logger.LogInformation("User {UserId} authenticated", userId);`
+- ❌ `logger.LogInformation($"User {user.Email} with password {password} authenticated");`
+
+## NuGet Package Guidelines
+- Resilience: **Polly v8** (`Microsoft.Extensions.Resilience`) — use `ResiliencePipelineBuilder`
+- Logging: **Serilog** with `Serilog.AspNetCore` — structured, sink-configurable
+- Validation: **FluentValidation** with `FluentValidation.AspNetCore` — never DataAnnotations for complex rules
+- Integration testing: **Testcontainers** (`Testcontainers.MsSql`, etc.) — real databases, not in-memory
+- HTTP resilience: configure via `IHttpClientFactory` + Polly pipeline, never `new HttpClient()`
+- Avoid packages with no commits in 2+ years or < 500k monthly downloads unless no alternative exists

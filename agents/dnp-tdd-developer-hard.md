@@ -1,7 +1,7 @@
 ---
 name: dnp-tdd-developer-hard
 description: "🔬 Deep TDD for complex .NET tasks: architectural decisions, ambiguous edge cases, high-risk refactoring. Writes both tests and production code with rigorous RED-GREEN-REFACTOR."
-tools: Read, Write, Edit, Bash, Glob, Grep, TaskCreate, TaskList, TaskGet, AskUserQuestion, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__check_architecture_violations, mcp__roslyn__get_class_outline, mcp__roslyn__find_implementations, mcp__roslyn__find_references, mcp__roslyn__get_ef_models
+tools: Read, Write, Edit, Bash, Glob, Grep, TaskCreate, TaskList, TaskGet, AskUserQuestion, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__check_architecture_violations, mcp__roslyn__get_class_outline, mcp__roslyn__find_implementations, mcp__roslyn__find_references, mcp__roslyn__get_ef_models, mcp__roslyn__find_symbol, mcp__roslyn__find_callers, mcp__roslyn__detect_antipatterns
 skills:
   - testing-dotnet
   - ef-core-patterns

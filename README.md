@@ -6,7 +6,7 @@ Roslyn-backed DI verification · EF Core migration safety · Clean-architecture 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/code) [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](.)
 
-*23 commands · 10 specialized agents · 7 hooks (5 advisory + 1 sync + 1 routing)*
+*28 commands · 14 specialized agents · 8 hooks · 16 skill packs · 15 Roslyn MCP tools*
 
 ---
 
@@ -41,7 +41,7 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 **Verify it worked:**
 
 ```
-/DotnetPilot:utility:help            → should list 23 commands
+/DotnetPilot:utility:help            → should list 28 commands
 /DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
@@ -115,7 +115,7 @@ In Claude Code, enable the **Context7** MCP server at the account level — plan
 ### Step 4 — Verify
 
 ```
-/DotnetPilot:utility:help            → should list 23 commands
+/DotnetPilot:utility:help            → should list 28 commands
 /DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
@@ -165,6 +165,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | `project:next` | `/DotnetPilot:project:next` | Auto-detect and suggest the next project step based on current state |
 | `project:verify` | `/DotnetPilot:project:verify` | Verify readiness before shipping — build, tests, DI completeness, and architecture check |
 | `project:ship` | `/DotnetPilot:project:ship [--draft]` | Create a pull request for completed work — runs final checks and invokes `gh pr create` |
+| `project:checkpoint` | `/DotnetPilot:project:checkpoint` | Ordered quality gate: build → tests → format check → architecture warning → DI warning → git status summary with a suggested commit message |
 
 ### Dotnet — scaffolding & solution management
 
@@ -180,6 +181,8 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | `dotnet:tdd` | `tdd <task> [--complexity easy\|hard]` | Implement a feature using TDD — writes failing tests first, then production code |
 | `dotnet:run-tests` | `run-tests [project] [--coverage] [--filter ...]` | Run tests with coverage reporting and failure diagnosis |
 | `dotnet:health-check` | `health-check [--fix]` | Validate full solution health — build, tests, NuGet, project references, DI completeness |
+| `dotnet:scaffold` | `scaffold <FeatureName> [--arch vsa\|clean\|ddd]` | Detect solution architecture via Roslyn, then scaffold a feature with the appropriate style — delegates to `dnp-api-scaffolder` with full context |
+| `dotnet:build-fix` | `/DotnetPilot:dotnet:build-fix` | Run `dotnet build`, capture output, and auto-fix errors iteratively — up to 5 cycles, then halts and reports what remains |
 
 ### Quality — safety checks
 
@@ -189,6 +192,8 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | `quality:review` | `review [--depth quick\|standard\|deep]` | Code review current changes with .NET-specific focus — async patterns, LINQ, naming, DI |
 | `quality:check-packages` | `/DotnetPilot:quality:check-packages` | Package vulnerability scan, version consistency check, and upgrade recommendations |
 | `quality:check-architecture` | `/DotnetPilot:quality:check-architecture` | Scan for clean architecture layer violations — forbidden project references, DI issues, package placement |
+| `quality:security-scan` | `/DotnetPilot:quality:security-scan` | Three-phase audit: `dotnet list package --vulnerable` → `dnp-security-auditor` OWASP scan → combined CRITICAL findings report |
+| `quality:de-sloppify` | `de-sloppify [--scope path]` | Safe refactoring pass — dead code removal, naming normalization, duplication elimination. Requires tests passing first |
 
 ### Utility — housekeeping
 
@@ -204,7 +209,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 
 ## 🤖 Agents
 
-Commands are thin orchestrators — all heavy work happens in one of these 10 agents, each with scoped tool access and a pinned model ID.
+Commands are thin orchestrators — all heavy work happens in one of these 14 agents, each with scoped tool access and a pinned model ID.
 
 ### Planning & verification
 
@@ -221,6 +226,10 @@ Commands are thin orchestrators — all heavy work happens in one of these 10 ag
 | `dnp-test-writer` | Sonnet 4.6 | Test writer — xUnit/NUnit with mocking, `WebApplicationFactory` integration tests, convention-aware assertions |
 | `dnp-tdd-developer-easy` | Haiku 4.5 | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
 | `dnp-tdd-developer-hard` | Sonnet 4.6 | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
+| `dnp-build-error-resolver` | Haiku 4.5 | Iterative build-error fixing — parses MSBuild output, applies targeted fixes, max 5 cycles before halting |
+| `dnp-security-auditor` | Sonnet 4.6 | OWASP Top 10 for .NET APIs — injection, secrets exposure, auth config, CORS, dependencies, input validation |
+| `dnp-performance-analyst` | Sonnet 4.6 | Async hotspots, EF Core N+1 queries, missing `CancellationToken`, caching gaps, benchmark design |
+| `dnp-refactor-cleaner` | Sonnet 4.6 | Dead code removal, naming normalization, duplication elimination — behavior preserved, verified by tests after each step |
 
 ### Mechanical agents (fast, focused)
 
@@ -248,8 +257,34 @@ Hooks run automatically during Claude Code sessions. Advisory hooks warn but don
 | **Migration Guard** | Before writing/editing migration files | Warns when manually editing EF migration files |
 | **Project Scope Guard** | After writing/editing any file | Warns when editing outside the current phase's focused projects |
 | **Build Verify** | After `dotnet build` runs | Parses failures, tracks consecutive errors, aborts after 5 |
+| **Post-Edit Format** | After Write/Edit/MultiEdit on `.cs` files | Runs `dotnet format --include <file>` on the nearest project; skips `obj/`, `bin/`, `Migrations/`, generated files |
 | **Commit Format** | Before `git commit` | Enforces `type(scope): message` conventional commit format |
 | **Priority Router** | Before spawning an Agent | Detects .NET projects and injects DotnetPilot agent routing priority over generic equivalents |
+
+---
+
+## 📚 Skill Packs
+
+Skills are on-demand knowledge packs loaded by agents when needed — they encode .NET conventions that would otherwise require repeated prompting.
+
+| Skill | What it teaches |
+| --- | --- |
+| `aspnet-api-patterns` | Minimal APIs, controller patterns, middleware, filters, OpenAPI |
+| `ef-core-patterns` | DbContext design, migrations, query optimization, owned entities |
+| `testing-dotnet` | xUnit conventions, NSubstitute, `WebApplicationFactory`, Testcontainers |
+| `clean-architecture` | Layer rules, project layout, dependency direction, shared kernel |
+| `blazor-patterns` | SSR vs WASM, component lifecycle, forms, state management |
+| `dotnet-project-init` | Solution setup, NuGet config, CI scaffolding |
+| `modern-csharp` | C# 12–14: primary constructors, collection expressions, records, pattern matching, `field` keyword |
+| `error-handling` | `Result<TValue,TError>`, `ProblemDetails`, `GlobalExceptionHandler`, exception boundaries |
+| `resilience` | Polly v8 `ResiliencePipelineBuilder`, retry, circuit breaker, timeout, hedging, `IHttpClientFactory` |
+| `caching` | `HybridCache` (.NET 9+), `IOutputCache`, cache-aside, `IMemoryCache`, typed cache keys |
+| `authentication` | JWT bearer, ASP.NET Identity, OIDC, policy-based auth, `IAuthorizationHandler` |
+| `vertical-slice` | Feature folders, `IEndpointGroup`, endpoint filters, no shared base classes |
+| `ddd` | `AggregateRoot<TId>`, value objects, strongly-typed IDs, domain events, repository interfaces |
+| `convention-learner` | 6-step protocol: detect naming, folder structure, DI style, test framework, DTO style, error handling before writing any code |
+| `logging` | Serilog setup, message templates (not interpolation), `LogContext`, request logging, PII rules |
+| `opentelemetry` | `ActivitySource`, `IMeterFactory`, OTLP config, Aspire `AddServiceDefaults()`, Serilog correlation |
 
 ---
 
@@ -402,6 +437,7 @@ After `/DotnetPilot:project:init`, configuration lives at `~/.claude/projects/<f
     "migration_guard": true,
     "project_scope_guard": true,
     "build_verify": true,
+    "post_edit_format": true,
     "commit_format": true
   },
   "workflow": {
@@ -440,6 +476,11 @@ Use `/DotnetPilot:utility:settings <key> <value>` to change values without editi
 | `check_di_completeness` | Missing registrations + captive dependency detection |
 | `check_architecture_violations` | Clean architecture layer rule enforcement |
 | `get_ef_models` | DbContexts, entities, properties, navigations |
+| `find_symbol` | Locate any type, method, or property by name across the solution |
+| `find_callers` | Find all callers of a specific method (call graph, not text search) |
+| `find_dead_code` | Identify unreferenced types and members — confidence-scored by accessibility |
+| `detect_antipatterns` | Syntax-level scan: `async void`, `.Result`/`.Wait()`, `new HttpClient()`, log interpolation, `Thread.Sleep`, missing `CancellationToken`, broad `catch (Exception)`, `DateTime.Now` |
+| `detect_circular_dependencies` | DFS cycle detection across project reference graph |
 
 > Without dnp-roslyn, DI checking falls back to regex-based hooks (less accurate). Roslyn tools only activate when Claude Code is opened inside a `.sln` / `.slnx` directory.
 
@@ -513,7 +554,7 @@ Claude Code caches the plugin at install time. After a major version update, new
 /reload-plugins
 ```
 
-Verify: `/DotnetPilot:utility:help` — should list 23 commands including `dotnet:tdd` and `dotnet:write-tests`.
+Verify: `/DotnetPilot:utility:help` — should list 28 commands including `dotnet:tdd`, `dotnet:build-fix`, and `quality:security-scan`.
 
 **"Context7 tools not available"**
 
@@ -532,7 +573,7 @@ Context7 must be enabled at the account level in Claude Code settings.
 | v1.1.0 | ✅ shipped | `pipeline:init/next/status` merged to core; `pipeline:verify` added; user-scoped `.planning/` path; planner & architect upgraded to Opus 4.7; plugin published to Claude Platform as `dotnet-pilot` |
 | v2.0.0 | ✅ shipped | **Breaking:** 12 commands renamed for clarity (`pipeline:*` → `project:*`, `scaffold-*` → `create-*`, `audit-*` → `check-*`, and others). New: `dotnet:write-tests` and `dotnet:tdd` commands (21 → 23). New: global `CLAUDE.md` sync hook auto-injects .NET code-style rules on plugin install/update (5 → 6 hooks). Marketplace version synced. |
 | v2.1.1 | ✅ shipped | New: `.NET priority routing` hook — auto-detects .NET projects and injects DotnetPilot agent routing priority before generic agents are spawned (6 → 7 hooks). |
-| v2.2 | 🔜 planned | Blazor patterns skill + `dnp-blazor-component` agent |
+| v2.2.0 | ✅ shipped | **Major content expansion.** +10 skills (modern C#, error handling, resilience, caching, auth, VSA, DDD, convention learner, logging, OpenTelemetry). +9 knowledge docs (anti-patterns, package recommendations, common infrastructure snippets, breaking changes, 5 ADRs). +4 agents (build-error-resolver, security-auditor, performance-analyst, refactor-cleaner). +5 commands (scaffold, build-fix, security-scan, de-sloppify, checkpoint). +5 templates (web-api, modular-monolith, blazor-app, worker-service, class-library). +5 Roslyn MCP tools (find_symbol, find_callers, find_dead_code, detect_antipatterns, detect_circular_dependencies). Post-edit auto-format hook. |
 | v2.3 | 🔜 planned | MAUI / mobile support |
 
 ---

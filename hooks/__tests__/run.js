@@ -170,6 +170,32 @@ const CASES = [
     expectEmpty: true,
   },
 
+  // --- dnp-post-edit-format ---
+  {
+    name: 'post-edit-format: non-.cs file is skipped silently',
+    hook: 'dnp-post-edit-format.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_input: { file_path: path.join(workspace, 'README.md') } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'post-edit-format: Migrations/ file is skipped silently',
+    hook: 'dnp-post-edit-format.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_input: { file_path: migrationFile } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'post-edit-format: no file_path is skipped silently',
+    hook: 'dnp-post-edit-format.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_input: {} },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+
   // --- dnp-commit-format ---
   {
     name: 'commit-format: conventional message is silent',

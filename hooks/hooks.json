@@ -14,6 +14,11 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-project-scope-guard.js\"",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-post-edit-format.js\"",
+            "timeout": 15000
           }
         ]
       },
