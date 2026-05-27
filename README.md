@@ -23,6 +23,16 @@ dotnet tool install -g DotnetPilot.Mcp.Roslyn   # first install
 dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # update to latest
 ```
 
+**Strongly recommended — enable auto-update** (one-time setup). GitHub-sourced marketplaces have auto-update disabled by default; without this step you'll have to update manually each release. Add to `~/.claude/settings.json`:
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "dotnet-pilot-marketplace": { "autoUpdate": true }
+  }
+}
+```
+
 That's it. Open Claude Code in your `.sln` / `.slnx` directory and run `/DotnetPilot:utility:help`.
 
 ---
