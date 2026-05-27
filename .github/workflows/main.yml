@@ -22,7 +22,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: global.json
+          global-json-file: mcp/dotnet-pilot-mcp-roslyn/global.json
 
       - name: Restore
         run: dotnet restore mcp/dotnet-pilot-mcp-roslyn/tests/DotnetPilot.Mcp.Roslyn.Tests/DotnetPilot.Mcp.Roslyn.Tests.csproj
@@ -40,11 +40,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: nuget-packages
-          path: artifacts/packages/*
+          path: mcp/dotnet-pilot-mcp-roslyn/artifacts/packages/*
           if-no-files-found: error
 
       - name: Push NuGet package
-        run: dotnet nuget push artifacts/packages/*.nupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push mcp/dotnet-pilot-mcp-roslyn/artifacts/packages/*.nupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Push symbol package
-        run: dotnet nuget push artifacts/packages/*.snupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push mcp/dotnet-pilot-mcp-roslyn/artifacts/packages/*.snupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
