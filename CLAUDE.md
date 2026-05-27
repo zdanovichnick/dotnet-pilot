@@ -58,12 +58,23 @@ dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # update
 ```
 
 **Checklist before publishing:**
-- Bump version in `plugin.json` and `marketplace.json` (both must match)
+- Bump version in `plugin.json` and `marketplace.json` (both must match — plugin track)
+- Roslyn server has its own version in `mcp/dotnet-pilot-mcp-roslyn/src/DotnetPilot.Mcp.Roslyn/DotnetPilot.Mcp.Roslyn.csproj` (`<Version>` tag) — bump separately before `dotnet pack`
 - Keep `README.md` command/agent tables in sync with `commands/` and `agents/` directories
 
 ### Companion: dnp-roslyn MCP server
 
-The Roslyn MCP server lives in a separate repo ([dotnet-pilot-mcp-roslyn](https://github.com/zdanovichnick/dotnet-pilot-mcp-roslyn)). It provides 11 semantic C# analysis tools (DI completeness, architecture violations, EF Core introspection, find references/implementations, class outlines). The `.mcp.json` in this repo auto-starts it. dnp-roslyn only works when Claude Code is opened in a directory containing a `.sln`/`.slnx` file — it fails silently otherwise.
+The Roslyn MCP server source lives locally at `mcp/dotnet-pilot-mcp-roslyn/` (also published to GitHub at [dotnet-pilot-mcp-roslyn](https://github.com/zdanovichnick/dotnet-pilot-mcp-roslyn)). It provides 11 semantic C# analysis tools (DI completeness, architecture violations, EF Core introspection, find references/implementations, class outlines). The `.mcp.json` in this repo auto-starts it. dnp-roslyn only works when Claude Code is opened in a directory containing a `.sln`/`.slnx` file — it fails silently otherwise.
+
+**Build & test the Roslyn server locally:**
+```bash
+dotnet build mcp/dotnet-pilot-mcp-roslyn/DotnetPilot.Mcp.Roslyn.slnx
+dotnet test  mcp/dotnet-pilot-mcp-roslyn/DotnetPilot.Mcp.Roslyn.slnx
+# Integration tests skip if DNP_TEST_SOLUTION is unset
+$env:DNP_TEST_SOLUTION = "C:\path\to\some.slnx"; dotnet test mcp/dotnet-pilot-mcp-roslyn/DotnetPilot.Mcp.Roslyn.slnx
+```
+
+See `mcp/dotnet-pilot-mcp-roslyn/CLAUDE.md` for architecture details of the Roslyn server itself.
 
 ---
 
@@ -108,7 +119,7 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 
 | Hook | Trigger | What it does |
 |------|---------|--------------|
-| `dnp-sync-global-claude-md` | PreToolUse (any tool) | Injects `rules/global-claude-md.md` block into `~/.claude/CLAUDE.md` with versioned markers; no-ops if current version already present |
+| `dnp-sync-global-claude-md` | PreToolUse (Read, Write, Edit, MultiEdit, Bash, Grep, Glob) | Injects `rules/global-claude-md.md` block into `~/.claude/CLAUDE.md` with versioned markers; no-ops if current version already present |
 | `dnp-dotnet-priority` | PreToolUse (Agent) | When CWD contains `.sln`/`.slnx`/`.csproj`, emits a routing table nudging the orchestrator toward DotnetPilot agents |
 | `dnp-build-verify` | PostToolUse (Bash) | Parses `dotnet build/test` failures; warns at 3 consecutive failures, escalates at 5; resets counter on success (temp file per CWD) |
 | `dnp-di-registration-check` | PostToolUse (Write/Edit) | On `.cs` file save, regex-checks whether the new class has a DI registration in `Program.cs` / `*Extensions.cs`; skips test files, migrations, `Program.cs` itself |
