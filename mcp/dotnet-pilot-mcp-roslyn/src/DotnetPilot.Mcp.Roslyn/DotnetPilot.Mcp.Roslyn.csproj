@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>dnp-roslyn</ToolCommandName>
+    <PackageId>DotnetPilot.Mcp.Roslyn</PackageId>
+    <Title>DotnetPilot MCP Roslyn</Title>
+    <Version>0.4.1</Version>
+    <Description>Roslyn-powered MCP server providing semantic C# code intelligence for DotnetPilot. Exposes 11 tools via Model Context Protocol: solution structure, class outlines, method bodies, find references, find implementations, DI analysis, architecture violation checking, and EF Core model introspection.</Description>
+    <Authors>Nick Zdanovych</Authors>
+    <RootNamespace>DotnetPilot.Mcp.Roslyn</RootNamespace>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReleaseNotes>0.4.1: CI hardening — gate NuGet publish on environment approval (nuget-publish) with environment-scoped API key.</PackageReleaseNotes>
+    <PackageProjectUrl>https://github.com/zdanovichnick/dotnet-pilot-mcp-roslyn</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/zdanovichnick/dotnet-pilot-mcp-roslyn</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+    <PackageOutputPath>..\..\artifacts\packages</PackageOutputPath>
+    <PackageTags>dotnet;roslyn;mcp;model-context-protocol;code-analysis;claude;ai;di;ef-core;architecture</PackageTags>
+    <Copyright>Copyright (c) 2026 Nick Zdanovych</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="ModelContextProtocol" Version="1.3.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.8" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.3.0" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="5.3.0" />
+    <PackageReference Include="Microsoft.Build.Locator" Version="1.11.2" />
+  </ItemGroup>
+
+  <!-- MSBuild.Locator requires runtime assets excluded from transitive MSBuild packages -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Build.Framework" Version="18.4.0" ExcludeAssets="runtime" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

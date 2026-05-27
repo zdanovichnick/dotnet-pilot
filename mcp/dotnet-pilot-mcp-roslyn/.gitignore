@@ -1,0 +1,12 @@
+bin/
+obj/
+*.user
+*.suo
+.vs/
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+nupkg/
+artifacts/
+.claude/

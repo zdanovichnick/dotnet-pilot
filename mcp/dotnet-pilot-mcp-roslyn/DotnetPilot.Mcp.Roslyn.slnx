@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/DotnetPilot.Mcp.Roslyn/DotnetPilot.Mcp.Roslyn.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/DotnetPilot.Mcp.Roslyn.Tests/DotnetPilot.Mcp.Roslyn.Tests.csproj" />
+  </Folder>
+</Solution>
