@@ -7,7 +7,7 @@ description: "List all DotnetPilot commands grouped by category."
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v2.2.0 — .NET development plugin for Claude Code
+DotnetPilot v2.2.1 — .NET development plugin for Claude Code
 28 commands · 14 agents · 8 hooks · 16 skill packs
 
 PROJECT — project lifecycle

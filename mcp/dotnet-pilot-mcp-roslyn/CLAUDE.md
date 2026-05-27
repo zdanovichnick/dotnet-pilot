@@ -24,7 +24,7 @@ Integration tests require a .NET solution to load. Set the `DNP_TEST_SOLUTION` e
 - **Tools/** — MCP tools organized by category. Each tool class uses `[McpServerToolType]` + `[McpServerTool(Name = "...")]` attributes.
   - `Workspace/` — `get_solution_structure`, `reload_solution`
   - `FileLevel/` — `get_class_outline`, `get_method_body`
-  - `SolutionLevel/` — `find_references`, `find_implementations`
+  - `SolutionLevel/` — `find_references`, `find_implementations`, `find_symbol`, `find_callers`, `find_dead_code`, `detect_antipatterns`, `detect_circular_dependencies`
   - `Dotnet/DiAnalyzer.cs` + `DiTools.cs` — DI registration/consumer analysis and completeness check
   - `Dotnet/ArchitectureAnalyzer.cs` + `ArchitectureTools.cs` — Clean architecture layer classification and violation detection
   - `Dotnet/EfCoreAnalyzer.cs` + `EfCoreTools.cs` — DbContext/entity introspection
