@@ -10,6 +10,23 @@ Roslyn-backed DI verification · EF Core migration safety · Clean-architecture 
 
 ---
 
+## Quick Install
+
+```
+/plugin marketplace add zdanovichnick/dotnet-pilot
+/plugin install dotnet-pilot@dotnet-pilot-marketplace
+/reload-plugins
+```
+
+```
+dotnet tool install -g DotnetPilot.Mcp.Roslyn   # first install
+dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # update to latest
+```
+
+That's it. Open Claude Code in your `.sln` / `.slnx` directory and run `/DotnetPilot:utility:help`.
+
+---
+
 ## Why DotnetPilot?
 
 AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them at the source:
