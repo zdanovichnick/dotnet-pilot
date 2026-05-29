@@ -7,7 +7,7 @@ argument-hint: "[--scope ProjectName]"
 
 `/DotnetPilot:quality:security-scan` runs a three-phase security audit for the current .NET solution.
 
-> **Delegates to**: `dnp-security-auditor` (Sonnet 4.6); Phase 1 built-in scan runs in the caller's context.
+> **Delegates to**: `dnp-security-auditor` (sonnet); Phase 1 built-in scan runs in the caller's context.
 
 ## Phase 1 — Dependency Vulnerabilities (built-in)
 

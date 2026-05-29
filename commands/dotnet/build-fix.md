@@ -7,7 +7,7 @@ argument-hint: "[--project ProjectName]"
 
 `/DotnetPilot:dotnet:build-fix` attempts to automatically repair build errors.
 
-> **Delegates to**: `dnp-build-error-resolver` (Haiku 4.5); initial build check runs in the caller's context.
+> **Delegates to**: `dnp-build-error-resolver` (haiku); initial build check runs in the caller's context.
 
 ## Execution
 

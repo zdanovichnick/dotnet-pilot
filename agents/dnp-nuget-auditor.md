@@ -2,7 +2,7 @@
 name: dnp-nuget-auditor
 description: "📦 NuGet version consistency, vulnerability scanning, and upgrade recommendations across the solution."
 tools: Read, Bash(dotnet:*), Glob, Grep
-model: claude-haiku-4-5-20251001
+model: haiku
 color: green
 ---
 

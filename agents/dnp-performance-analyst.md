@@ -2,7 +2,7 @@
 name: dnp-performance-analyst
 description: "⚡ .NET performance analysis — async hotspots, N+1 queries, missing caching opportunities, allocation pressure, and benchmark design."
 tools: Read, Bash(dotnet:*), Glob, Grep, mcp__roslyn__get_class_outline, mcp__roslyn__find_references, mcp__roslyn__find_callers, mcp__roslyn__find_symbol, mcp__roslyn__detect_antipatterns
-model: claude-sonnet-4-6
+model: sonnet
 color: yellow
 skills:
   - caching

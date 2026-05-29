@@ -7,7 +7,7 @@ argument-hint: "[FeatureName] [--arch vsa|clean|ddd]"
 
 `/DotnetPilot:dotnet:scaffold [FeatureName]` generates a complete feature scaffold matching the current project's architecture.
 
-> **Delegates to**: `dnp-api-scaffolder` (Haiku 4.5); architecture detection runs in the caller's context.
+> **Delegates to**: `dnp-api-scaffolder` (haiku); architecture detection runs in the caller's context.
 
 ## Architecture Detection
 

@@ -7,7 +7,7 @@ argument-hint: "<controller-name> <http-method> <route> [--with-dto]"
 
 `/DotnetPilot:dotnet:add-endpoint` adds a single endpoint to an existing API surface.
 
-> **Delegates to**: `dnp-api-scaffolder` (claude-haiku-4-5-20251001).
+> **Delegates to**: `dnp-api-scaffolder` (haiku).
 
 ## Execution
 

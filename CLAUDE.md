@@ -11,7 +11,7 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 - `.claude-plugin/plugin.json` — plugin manifest (name, version, mcpServers pointer)
 - `.claude-plugin/marketplace.json` — marketplace listing for plugin distribution
 - `.mcp.json` — MCP server declarations (roslyn server `dnp-roslyn` configured)
-- `agents/dnp-*.md` — 10 agents with YAML frontmatter (`name`, `description`, `tools`, `model`, `permissionMode`). The `tools` field uses Claude Code's scoped syntax (e.g. `Bash(dotnet:*)`)
+- `agents/dnp-*.md` — 14 agents with YAML frontmatter (`name`, `description`, `tools`, `model`, `permissionMode`). The `tools` field uses Claude Code's scoped syntax (e.g. `Bash(dotnet:*)`)
 - `commands/<category>/<name>.md` — slash commands invoked as `/DotnetPilot:<category>:<name>`. Categories: `project`, `dotnet`, `quality`, `utility`
 - `hooks/hooks.json` — hook registry wiring matchers to scripts via `${CLAUDE_PLUGIN_ROOT}`
 - `hooks/dnp-*.js` — 7 advisory hooks (all exit 0; emit `additionalContext` for guidance). Read a JSON event from stdin.
@@ -91,33 +91,33 @@ When the DotnetPilot plugin is active in a consumer project, these instructions 
 
 ## Agents
 
-As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-code-reviewer`, `dnp-security-auditor`, `dnp-plan-checker`, `dnp-executor`) are retired in favor of stock Claude capabilities. The remaining 10 agents focus on things Claude doesn't do well out of the box.
+As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-code-reviewer`, `dnp-security-auditor`, `dnp-plan-checker`, `dnp-executor`) are retired in favor of stock Claude capabilities. The remaining 14 agents focus on things Claude doesn't do well out of the box.
 
 ### Planning & verification
 | Agent | Model | Role |
 |-------|-------|------|
-| `dnp-planner` | claude-opus-4-7 | Emits a .NET-aware, DI-conscious task list that maps 1:1 to `TaskCreate` entries |
-| `dnp-verifier` | claude-sonnet-4-6 | Goal-backward verification: build, tests, DI completeness, migration state, architecture rules |
+| `dnp-planner` | opus | Emits a .NET-aware, DI-conscious task list that maps 1:1 to `TaskCreate` entries |
+| `dnp-verifier` | sonnet | Goal-backward verification: build, tests, DI completeness, migration state, architecture rules |
 
 ### Expert domain knowledge
 | Agent | Model | Role |
 |-------|-------|------|
-| `dnp-architect` | claude-opus-4-7 | Solution architecture, clean-arch layer enforcement, project-reference validation |
-| `dnp-test-writer` | claude-sonnet-4-6 | Test writer — xUnit/NUnit with mocking, WebApplicationFactory, convention-aware assertions |
-| `dnp-tdd-developer-easy` | claude-haiku-4-5-20251001 | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
-| `dnp-tdd-developer-hard` | claude-sonnet-4-6 | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
-| `dnp-build-error-resolver` | claude-haiku-4-5 | Iterative build-error fixing — autonomous repair loop, max 5 iterations |
-| `dnp-security-auditor`     | claude-sonnet-4-6 | OWASP Top 10 audit, secrets exposure, auth config, dependency CVEs |
-| `dnp-performance-analyst`  | claude-sonnet-4-6 | Async hotspots, N+1 queries, caching gaps, benchmark design |
-| `dnp-refactor-cleaner`     | claude-sonnet-4-6 | Dead code removal, naming normalization, duplication elimination |
+| `dnp-architect` | opus | Solution architecture, clean-arch layer enforcement, project-reference validation |
+| `dnp-test-writer` | sonnet | Test writer — xUnit/NUnit with mocking, WebApplicationFactory, convention-aware assertions |
+| `dnp-tdd-developer-easy` | haiku | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
+| `dnp-tdd-developer-hard` | sonnet | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
+| `dnp-build-error-resolver` | haiku | Iterative build-error fixing — autonomous repair loop, max 5 iterations |
+| `dnp-security-auditor`     | sonnet | OWASP Top 10 audit, secrets exposure, auth config, dependency CVEs |
+| `dnp-performance-analyst`  | sonnet | Async hotspots, N+1 queries, caching gaps, benchmark design |
+| `dnp-refactor-cleaner`     | sonnet | Dead code removal, naming normalization, duplication elimination |
 
 ### Mechanical (fast, focused)
 | Agent | Model | Role |
 |-------|-------|------|
-| `dnp-api-scaffolder` | claude-haiku-4-5-20251001 | Controllers or minimal API endpoints with DTOs, validation, DI registration |
-| `dnp-ef-migration-planner` | claude-haiku-4-5-20251001 | EF Core migration safety — chain integrity, data-loss risk, DbContext targeting |
-| `dnp-di-wiring-checker` | claude-haiku-4-5-20251001 | Cross-references constructor injections against DI registrations |
-| `dnp-nuget-auditor` | claude-haiku-4-5-20251001 | Vulnerability, outdated-version, and version-inconsistency scans |
+| `dnp-api-scaffolder` | haiku | Controllers or minimal API endpoints with DTOs, validation, DI registration |
+| `dnp-ef-migration-planner` | haiku | EF Core migration safety — chain integrity, data-loss risk, DbContext targeting |
+| `dnp-di-wiring-checker` | haiku | Cross-references constructor injections against DI registrations |
+| `dnp-nuget-auditor` | haiku | Vulnerability, outdated-version, and version-inconsistency scans |
 
 ## Hook Behaviors
 

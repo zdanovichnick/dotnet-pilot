@@ -7,7 +7,7 @@ argument-hint: "<entity-name> [--properties 'Name:string, Age:int, Email:string'
 
 `/DotnetPilot:dotnet:create-entity` creates the complete vertical slice for a domain entity.
 
-> **Delegates to**: `dnp-ef-migration-planner` (Haiku 4.5) for the migration step; uses `mcp__roslyn__get_solution_structure` to resolve project paths. Other steps run in the caller's context.
+> **Delegates to**: `dnp-ef-migration-planner` (haiku) for the migration step; uses `mcp__roslyn__get_solution_structure` to resolve project paths. Other steps run in the caller's context.
 
 ## Execution
 

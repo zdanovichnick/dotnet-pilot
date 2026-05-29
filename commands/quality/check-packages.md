@@ -6,7 +6,7 @@ description: "Package vulnerability scan, version consistency check, and upgrade
 
 `/DotnetPilot:quality:check-packages` scans NuGet packages across the solution.
 
-> **Delegates to**: `dnp-nuget-auditor` (claude-haiku-4-5-20251001).
+> **Delegates to**: `dnp-nuget-auditor` (haiku).
 
 ## Execution
 

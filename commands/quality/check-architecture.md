@@ -6,7 +6,7 @@ description: "Scan for clean architecture layer violations — forbidden project
 
 `/DotnetPilot:quality:check-architecture` validates architectural integrity.
 
-> **Delegates to**: `dnp-architect` (claude-opus-4-7).
+> **Delegates to**: `dnp-architect` (opus).
 
 ## Execution
 

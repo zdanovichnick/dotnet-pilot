@@ -7,7 +7,7 @@ argument-hint: "<class-or-method> [--integration] [--style unit|integration|e2e]
 
 `/DotnetPilot:dotnet:write-tests` generates tests for existing production code.
 
-> **Delegates to**: `dnp-test-writer` (claude-sonnet-4-6).
+> **Delegates to**: `dnp-test-writer` (sonnet).
 
 ## Difference from `dotnet:run-tests`
 

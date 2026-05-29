@@ -4,7 +4,7 @@ description: "⚡ Fast TDD for routine .NET tasks: clear requirements, low-risk 
 tools: Read, Write, Edit, Bash, Glob, Grep, TaskCreate, TaskList, TaskGet, AskUserQuestion, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__get_class_outline, mcp__roslyn__find_implementations, mcp__roslyn__find_references
 skills:
   - testing-dotnet
-model: claude-haiku-4-5-20251001
+model: haiku
 color: green
 permissionMode: acceptEdits
 ---

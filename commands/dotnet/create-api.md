@@ -7,7 +7,7 @@ argument-hint: "<entity-name> [--minimal for minimal API style]"
 
 `/DotnetPilot:dotnet:create-api` generates a complete API endpoint for an entity.
 
-> **Delegates to**: `dnp-api-scaffolder` (claude-haiku-4-5-20251001).
+> **Delegates to**: `dnp-api-scaffolder` (haiku).
 
 ## Execution
 
