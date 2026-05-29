@@ -34,6 +34,7 @@
 
 ## Git
 - Never append `Co-Authored-By` lines to commit messages
+- When creating a pull request, fetch default reviewers first: check `CODEOWNERS` for paths touched by the PR, then pass each matched owner via `--reviewer <user>` to `gh pr create`.
 
 ## Workflow
 - Before writing code, confirm the approach if the change is non-trivial
