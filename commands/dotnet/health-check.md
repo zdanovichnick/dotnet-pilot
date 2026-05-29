@@ -7,7 +7,7 @@ argument-hint: "[--fix to auto-fix simple issues]"
 
 `/DotnetPilot:dotnet:health-check` runs a comprehensive health check on the .NET solution.
 
-> **Delegates to**: `dnp-nuget-auditor` (Haiku 4.5) and `dnp-di-wiring-checker` (Haiku 4.5); orchestration runs in the caller's context.
+> **Delegates to**: `dnp-nuget-auditor` (haiku) and `dnp-di-wiring-checker` (haiku); orchestration runs in the caller's context.
 
 ## Execution
 

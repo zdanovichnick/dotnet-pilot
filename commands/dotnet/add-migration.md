@@ -7,7 +7,7 @@ argument-hint: "<migration-name> [--context <DbContextName>]"
 
 `/DotnetPilot:dotnet:add-migration` creates an EF Core migration with safety checks.
 
-> **Delegates to**: `dnp-ef-migration-planner` (claude-haiku-4-5-20251001).
+> **Delegates to**: `dnp-ef-migration-planner` (haiku).
 
 ## Execution
 

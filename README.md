@@ -242,30 +242,30 @@ Commands are thin orchestrators — all heavy work happens in one of these 14 ag
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| `dnp-planner` | Opus 4.7 | Emits a .NET-aware, DI-conscious task list that maps 1:1 to `TaskCreate` entries |
-| `dnp-verifier` | Sonnet 4.6 | Goal-backward verification: build, tests, DI completeness, migration state, architecture rules |
+| `dnp-planner` | Opus | Emits a .NET-aware, DI-conscious task list that maps 1:1 to `TaskCreate` entries |
+| `dnp-verifier` | Sonnet | Goal-backward verification: build, tests, DI completeness, migration state, architecture rules |
 
 ### Expert domain agents
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| `dnp-architect` | Opus 4.7 | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation |
-| `dnp-test-writer` | Sonnet 4.6 | Test writer — xUnit/NUnit with mocking, `WebApplicationFactory` integration tests, convention-aware assertions |
-| `dnp-tdd-developer-easy` | Haiku 4.5 | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
-| `dnp-tdd-developer-hard` | Sonnet 4.6 | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
-| `dnp-build-error-resolver` | Haiku 4.5 | Iterative build-error fixing — parses MSBuild output, applies targeted fixes, max 5 cycles before halting |
-| `dnp-security-auditor` | Sonnet 4.6 | OWASP Top 10 for .NET APIs — injection, secrets exposure, auth config, CORS, dependencies, input validation |
-| `dnp-performance-analyst` | Sonnet 4.6 | Async hotspots, EF Core N+1 queries, missing `CancellationToken`, caching gaps, benchmark design |
-| `dnp-refactor-cleaner` | Sonnet 4.6 | Dead code removal, naming normalization, duplication elimination — behavior preserved, verified by tests after each step |
+| `dnp-architect` | Opus | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation |
+| `dnp-test-writer` | Sonnet | Test writer — xUnit/NUnit with mocking, `WebApplicationFactory` integration tests, convention-aware assertions |
+| `dnp-tdd-developer-easy` | Haiku | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
+| `dnp-tdd-developer-hard` | Sonnet | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
+| `dnp-build-error-resolver` | Haiku | Iterative build-error fixing — parses MSBuild output, applies targeted fixes, max 5 cycles before halting |
+| `dnp-security-auditor` | Sonnet | OWASP Top 10 for .NET APIs — injection, secrets exposure, auth config, CORS, dependencies, input validation |
+| `dnp-performance-analyst` | Sonnet | Async hotspots, EF Core N+1 queries, missing `CancellationToken`, caching gaps, benchmark design |
+| `dnp-refactor-cleaner` | Sonnet | Dead code removal, naming normalization, duplication elimination — behavior preserved, verified by tests after each step |
 
 ### Mechanical agents (fast, focused)
 
 | Agent | Model | Role |
 | --- | --- | --- |
-| `dnp-api-scaffolder` | Haiku 4.5 | Generates controllers or minimal API endpoints with DTOs, validation, OpenAPI attributes, DI registration |
-| `dnp-ef-migration-planner` | Haiku 4.5 | Plans safe EF Core migrations — detects breaking changes, validates chain integrity, targets correct DbContext |
-| `dnp-di-wiring-checker` | Haiku 4.5 | Cross-references constructor injection against DI registrations — finds missing services and captive dependencies |
-| `dnp-nuget-auditor` | Haiku 4.5 | Scans for vulnerable, outdated, and version-inconsistent NuGet packages across the solution |
+| `dnp-api-scaffolder` | Haiku | Generates controllers or minimal API endpoints with DTOs, validation, OpenAPI attributes, DI registration |
+| `dnp-ef-migration-planner` | Haiku | Plans safe EF Core migrations — detects breaking changes, validates chain integrity, targets correct DbContext |
+| `dnp-di-wiring-checker` | Haiku | Cross-references constructor injection against DI registrations — finds missing services and captive dependencies |
+| `dnp-nuget-auditor` | Haiku | Scans for vulnerable, outdated, and version-inconsistent NuGet packages across the solution |
 
 > `dnp-test-writer` writes tests only (given existing production code). `dnp-tdd-developer-*` agents own the full TDD loop: write failing test → implement production code → refactor — and handle DI registration, architecture verification, and build checks as part of the cycle.
 >
@@ -602,6 +602,7 @@ Context7 must be enabled at the account level in Claude Code settings.
 | v2.1.1 | ✅ shipped | New: `.NET priority routing` hook — auto-detects .NET projects and injects DotnetPilot agent routing priority before generic agents are spawned (6 → 7 hooks). |
 | v2.2.0 | ✅ shipped | **Major content expansion.** +10 skills (modern C#, error handling, resilience, caching, auth, VSA, DDD, convention learner, logging, OpenTelemetry). +9 knowledge docs (anti-patterns, package recommendations, common infrastructure snippets, breaking changes, 5 ADRs). +4 agents (build-error-resolver, security-auditor, performance-analyst, refactor-cleaner). +5 commands (scaffold, build-fix, security-scan, de-sloppify, checkpoint). +5 templates (web-api, modular-monolith, blazor-app, worker-service, class-library). Post-edit auto-format hook. |
 | v2.2.1 | ✅ shipped | **Fix:** ship the 5 Roslyn MCP tools that were referenced by agents but never implemented — `find_symbol`, `find_callers`, `find_dead_code`, `detect_antipatterns`, `detect_circular_dependencies`. Roslyn server bumped to `0.5.0`. Tool count 10 → 15. |
+| v2.2.2 | ✅ shipped | **Model routing:** every agent switched from pinned/dated model IDs to tier aliases (`opus`/`sonnet`/`haiku`) so frontmatter auto-tracks each tier's current default and needs no bump on future model releases (e.g. Opus 4.8). Synced the model columns in `README.md` and `CLAUDE.md`, the command delegate-notes, and the architecture diagram. Also adds a Git rule to the injected global `CLAUDE.md` — fetch `CODEOWNERS` reviewers when opening PRs. |
 | v2.3 | 🔜 planned | MAUI / mobile support |
 
 ---

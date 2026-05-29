@@ -2,7 +2,7 @@
 name: dnp-api-scaffolder
 description: "🔧 Scaffolds API controllers or minimal API endpoints with DTOs, validation, DI registration, and OpenAPI attributes."
 tools: Read, Write, Edit, Bash, Glob, Grep, mcp__roslyn__get_solution_structure
-model: claude-haiku-4-5-20251001
+model: haiku
 color: green
 permissionMode: acceptEdits
 ---

@@ -7,7 +7,7 @@ argument-hint: "<task-description> [--complexity easy|hard]"
 
 `/DotnetPilot:dotnet:tdd` implements a feature using strict RED-GREEN-REFACTOR discipline.
 
-> **Delegates to**: `dnp-tdd-developer-easy` (Haiku 4.5) or `dnp-tdd-developer-hard` (Sonnet 4.6) based on complexity.
+> **Delegates to**: `dnp-tdd-developer-easy` (haiku) or `dnp-tdd-developer-hard` (sonnet) based on complexity.
 
 ## Difference from `dotnet:write-tests`
 

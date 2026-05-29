@@ -6,7 +6,7 @@ skills:
   - testing-dotnet
   - ef-core-patterns
   - clean-architecture
-model: claude-sonnet-4-6
+model: sonnet
 color: blue
 permissionMode: acceptEdits
 ---
