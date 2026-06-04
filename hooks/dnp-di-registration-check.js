@@ -114,7 +114,10 @@ process.stdin.on('end', () => {
 
         for (const f of filesToCheck) {
           try {
-            const c = fs.readFileSync(f, 'utf8');
+            // Strip comments first — a commented-out `AddScoped<FooService>`
+            // must NOT count as a real registration (it would false-suppress
+            // the advisory).
+            const c = stripComments(fs.readFileSync(f, 'utf8'));
             for (const pattern of registrationPatterns) {
               if (new RegExp(pattern).test(c)) {
                 found = true;
@@ -141,6 +144,16 @@ process.stdin.on('end', () => {
     process.exit(0);
   }
 });
+
+// Remove `//` line comments and `/* */` block comments so commented-out code
+// doesn't register as a real DI call. Not a full C# lexer (won't honor `//`
+// inside string literals), but registration calls don't live in strings, so
+// the simple pass is safe for this check.
+function stripComments(src) {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, ' ')
+    .replace(/\/\/[^\n\r]*/g, ' ');
+}
 
 function findFilesByName(dir, matcher, maxDepth, depth = 0) {
   const results = [];

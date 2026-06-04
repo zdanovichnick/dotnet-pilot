@@ -64,7 +64,7 @@ dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # update
 
 ### Companion: dnp-roslyn MCP server
 
-The Roslyn MCP server source lives locally at `mcp/dotnet-pilot-mcp-roslyn/` (also published to GitHub at [dotnet-pilot-mcp-roslyn](https://github.com/zdanovichnick/dotnet-pilot-mcp-roslyn)). It provides 11 semantic C# analysis tools (DI completeness, architecture violations, EF Core introspection, find references/implementations, class outlines). The `.mcp.json` in this repo auto-starts it. dnp-roslyn only works when Claude Code is opened in a directory containing a `.sln`/`.slnx` file — it fails silently otherwise.
+The Roslyn MCP server source lives locally at `mcp/dotnet-pilot-mcp-roslyn/` (also published to GitHub at [dotnet-pilot-mcp-roslyn](https://github.com/zdanovichnick/dotnet-pilot-mcp-roslyn)). It provides 16 semantic C# analysis tools (DI completeness, architecture violations, EF Core introspection, find references/implementations, class outlines). The `.mcp.json` in this repo auto-starts it. dnp-roslyn only works when Claude Code is opened in a directory containing a `.sln`/`.slnx` file — it fails silently otherwise.
 
 **Build & test the Roslyn server locally:**
 ```bash
@@ -127,9 +127,11 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 | `dnp-dotnet-priority` | PreToolUse (Agent) | When CWD contains `.sln`/`.slnx`/`.csproj`, emits a routing table nudging the orchestrator toward DotnetPilot agents |
 | `dnp-build-verify` | PostToolUse (Bash) | Parses `dotnet build/test` failures; warns at 3 consecutive failures, escalates at 5; resets counter on success (temp file per CWD) |
 | `dnp-di-registration-check` | PostToolUse (Write/Edit) | On `.cs` file save, regex-checks whether the new class has a DI registration in `Program.cs` / `*Extensions.cs`; skips test files, migrations, `Program.cs` itself |
+| `dnp-post-edit-format` | PostToolUse (Write/Edit/MultiEdit) | On `.cs` file save, runs `dotnet format --include <file>` on the nearest project; skips `obj/`, `bin/`, `Migrations/`, and generated files |
 | `dnp-migration-guard` | PreToolUse (Write/Edit) | Warns before manual edits to files inside a `Migrations/` directory |
 | `dnp-project-scope-guard` | PostToolUse (Write/Edit) | When `.planning/STATE.md` has `focus_projects: [...]` frontmatter, warns if an edit touches a project outside that list; uses `solution-map.json` for boundary resolution |
 | `dnp-commit-format` | PreToolUse (Bash) | Validates conventional commit format on `git commit -m "..."` invocations; skips heredoc, `--no-edit`, and `--file` forms |
+| `dnp-git-autoapprove` | PreToolUse (Bash) | **Non-advisory** — returns `permissionDecision: allow` for safe single `git`/`gh` commands (status/diff/log/add/commit/branch/push, `gh pr create`, plus the heredoc-commit form) so commit + PR skip the permission prompt. Chained/substituted/redirected commands fall through to the normal prompt. Gated by `hooks.git_autoapprove` (default-on) |
 
 ## Quality Gates
 
@@ -221,7 +223,8 @@ Minimum schema for core:
     "migration_guard": true,
     "project_scope_guard": true,
     "build_verify": true,
-    "commit_format": true
+    "commit_format": true,
+    "git_autoapprove": true
   },
   "workflow": {
     "build_after_task": true,

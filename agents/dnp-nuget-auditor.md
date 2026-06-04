@@ -50,7 +50,7 @@ Check `nuget.config` for:
 ### Vulnerabilities: 1 Critical, 0 High
 | Package | Version | CVE | Severity | Fixed In |
 |---------|---------|-----|----------|----------|
-| System.Text.Json | 6.0.0 | CVE-2024-XXXX | Critical | 6.0.10 |
+| Example.Package | 1.2.3 | CVE-2023-44487 | Critical | 1.2.4 |
 
 ### Version Inconsistencies: 2
 | Package | Versions Found | Recommended |

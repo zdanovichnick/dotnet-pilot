@@ -43,7 +43,7 @@ MEDIUM / LOW (schedule for backlog)
   ...
 
 Dependency Vulnerabilities
-  ❌ Package X 1.2.3 — CVE-2024-XXXX (High) — fix: upgrade to 1.2.9
+  ❌ Package X 1.2.3 — CVE-2023-44487 (High) — fix: upgrade to 1.2.9
   ✅ No other vulnerable packages found
 
 Domains audited: Injection, Auth/AuthZ, Secrets, CORS, Dependencies, Input Validation

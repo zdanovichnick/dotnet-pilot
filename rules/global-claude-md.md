@@ -36,6 +36,12 @@
 - Never append `Co-Authored-By` lines to commit messages
 - When creating a pull request, fetch default reviewers first: check `CODEOWNERS` for paths touched by the PR, then pass each matched owner via `--reviewer <user>` to `gh pr create`.
 
+## Git Workflow Efficiency
+- Gather commit context in ONE parallel batch — `git status`, `git diff HEAD` (or `--staged`), and `git log -n 5` go in a single message, not three sequential round-trips.
+- Commit in one shot: stage and commit without re-running `git status` afterward to "verify" — the commit either succeeded (exit 0) or it errored; a clean re-check adds nothing.
+- For a PR: gather the branch diff against the base once, then call `gh pr create` a single time with `--title` and `--body`. Don't poll `gh pr view` unless the user asks.
+- The `dnp-git-autoapprove` hook auto-approves safe `git`/`gh` commands (status/diff/log/add/commit/branch/push and `gh pr create`), so these run without a permission prompt — don't pre-narrate or ask before each one; just run them.
+
 ## Workflow
 - Before writing code, confirm the approach if the change is non-trivial
 - Don't create files unless asked — suggest the change first

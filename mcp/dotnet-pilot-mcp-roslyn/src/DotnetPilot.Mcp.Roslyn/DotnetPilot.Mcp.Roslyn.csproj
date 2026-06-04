@@ -10,7 +10,7 @@
     <PackageId>DotnetPilot.Mcp.Roslyn</PackageId>
     <Title>DotnetPilot MCP Roslyn</Title>
     <Version>0.5.0</Version>
-    <Description>Roslyn-powered MCP server providing semantic C# code intelligence for DotnetPilot. Exposes 15 tools via Model Context Protocol: solution structure, class outlines, method bodies, find references, find implementations, find symbol, find callers, find dead code, anti-pattern detection, circular dependency detection, DI analysis, architecture violation checking, and EF Core model introspection.</Description>
+    <Description>Roslyn-powered MCP server providing semantic C# code intelligence for DotnetPilot. Exposes 16 tools via Model Context Protocol: solution structure, solution reload, class outlines, method bodies, find references, find implementations, find symbol, find callers, find dead code, anti-pattern detection, circular dependency detection, DI analysis, architecture violation checking, and EF Core model introspection.</Description>
     <Authors>Nick Zdanovych</Authors>
     <RootNamespace>DotnetPilot.Mcp.Roslyn</RootNamespace>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>

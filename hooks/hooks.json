@@ -69,6 +69,11 @@
         "hooks": [
           {
             "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-git-autoapprove.js\"",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-commit-format.js\"",
             "timeout": 5
           }

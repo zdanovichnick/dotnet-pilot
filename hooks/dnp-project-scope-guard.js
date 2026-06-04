@@ -103,11 +103,14 @@ function resolveProject(filePath, cwd) {
     try {
       const map = JSON.parse(fs.readFileSync(mapPath, 'utf8'));
       if (map.projects) {
+        // Windows paths are case-insensitive — normalize both sides so a
+        // `D:\Projects\Foo` edit still matches a `src/Foo` map entry.
+        const haystack = filePath.toLowerCase();
         let best = null;
         let bestLen = 0;
         for (const [name, info] of Object.entries(map.projects)) {
           const projDir = path.dirname(info.path).replace(/\\/g, '/');
-          if (projDir && filePath.includes('/' + projDir + '/') && projDir.length > bestLen) {
+          if (projDir && haystack.includes('/' + projDir.toLowerCase() + '/') && projDir.length > bestLen) {
             best = name;
             bestLen = projDir.length;
           }

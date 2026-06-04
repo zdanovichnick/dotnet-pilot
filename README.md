@@ -6,7 +6,7 @@ Roslyn-backed DI verification · EF Core migration safety · Clean-architecture 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/code) [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](.)
 
-*28 commands · 14 specialized agents · 8 hooks · 16 skill packs · 15 Roslyn MCP tools*
+*28 commands · 14 specialized agents · 9 hooks · 16 skill packs · 16 Roslyn MCP tools*
 
 ---
 
@@ -275,11 +275,12 @@ Commands are thin orchestrators — all heavy work happens in one of these 14 ag
 
 ## 🪝 Hooks
 
-Hooks run automatically during Claude Code sessions. Advisory hooks warn but don't block, and they respect per-project toggle settings in `.planning/config.json`. The sync hook keeps the global `CLAUDE.md` up to date with the plugin's rule set.
+Hooks run automatically during Claude Code sessions. Advisory hooks warn but don't block, and they respect per-project toggle settings in `.planning/config.json`. The sync hook keeps the global `CLAUDE.md` up to date with the plugin's rule set. One hook (**Git Auto-Approve**) is non-advisory by design — it speaks the PreToolUse permission protocol to skip prompts on safe git/gh commands.
 
 | Hook | Trigger | What it does |
 | --- | --- | --- |
 | **Global CLAUDE.md Sync** | Before any tool use (once per version) | Injects/updates the DotnetPilot rule block in `~/.claude/CLAUDE.md` — runs once after plugin install/update, then fast-path skips |
+| **Git Auto-Approve** | Before `git`/`gh` Bash commands | Returns `permissionDecision: allow` for safe single git/gh commands (status/diff/log/add/commit/branch/push, `gh pr create`) so commit + PR run without a prompt; falls through to the normal prompt for chained/unsafe commands. Toggle `hooks.git_autoapprove: false` to disable |
 | **DI Registration Check** | After writing/editing `.cs` files | New services missing DI registration |
 | **Migration Guard** | Before writing/editing migration files | Warns when manually editing EF migration files |
 | **Project Scope Guard** | After writing/editing any file | Warns when editing outside the current phase's focused projects |

@@ -29,7 +29,7 @@ Roslyn-powered MCP server that gives AI coding assistants semantic understanding
 
 ## What It Does
 
-dnp-roslyn is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that loads your .NET solution via Roslyn's MSBuildWorkspace and exposes **11 tools** for semantic code analysis. Unlike text-based grep/regex approaches, it understands your code at the compiler level — types, symbols, references, inheritance, and DI registration patterns.
+dnp-roslyn is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io/) server that loads your .NET solution via Roslyn's MSBuildWorkspace and exposes **16 tools** for semantic code analysis. Unlike text-based grep/regex approaches, it understands your code at the compiler level — types, symbols, references, inheritance, and DI registration patterns.
 
 | Category | Tool | What it does |
 |----------|------|-------------|
@@ -709,7 +709,7 @@ Tests cover file-level tools, architecture analysis (layer classification for Do
 
 ### Run smoke test
 
-The end-to-end smoke test exercises all 11 tools via MCP JSON-RPC over stdio:
+The end-to-end smoke test exercises all 16 tools via MCP JSON-RPC over stdio:
 
 ```bash
 node tests/smoke-test.js --solution path/to/Your.slnx
