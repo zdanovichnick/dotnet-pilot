@@ -287,7 +287,8 @@ Hooks run automatically during Claude Code sessions. Advisory hooks warn but don
 | **Build Verify** | After `dotnet build` runs | Parses failures, tracks consecutive errors, aborts after 5 |
 | **Post-Edit Format** | After Write/Edit/MultiEdit on `.cs` files | Runs `dotnet format --include <file>` on the nearest project; skips `obj/`, `bin/`, `Migrations/`, generated files |
 | **Commit Format** | Before `git commit` | Enforces `type(scope): message` conventional commit format |
-| **Priority Router** | Before spawning an Agent | Detects .NET projects and injects DotnetPilot agent routing priority over generic equivalents |
+| **Priority Router** | Before spawning an Agent | Detects .NET projects and injects DotnetPilot agent routing priority over generic equivalents; also steers C# code inspection to `mcp__roslyn__` over `mcp__*code-analyzer__`. Toggle `hooks.dotnet_priority: false` to disable |
+| **Code-Analyzer Redirect** | Before a `code-analyzer` MCP tool call | When the call targets C# (a `.cs` file, a .NET `project_path`, or a .NET cwd), nudges toward the C#-aware `mcp__roslyn__` tools — the Python/TS/JS code-analyzer has no C# support. Advisory only; never blocks. Toggle `hooks.code_analyzer_redirect: false` to disable |
 
 ---
 
@@ -604,7 +605,9 @@ Context7 must be enabled at the account level in Claude Code settings.
 | v2.2.0 | ✅ shipped | **Major content expansion.** +10 skills (modern C#, error handling, resilience, caching, auth, VSA, DDD, convention learner, logging, OpenTelemetry). +9 knowledge docs (anti-patterns, package recommendations, common infrastructure snippets, breaking changes, 5 ADRs). +4 agents (build-error-resolver, security-auditor, performance-analyst, refactor-cleaner). +5 commands (scaffold, build-fix, security-scan, de-sloppify, checkpoint). +5 templates (web-api, modular-monolith, blazor-app, worker-service, class-library). Post-edit auto-format hook. |
 | v2.2.1 | ✅ shipped | **Fix:** ship the 5 Roslyn MCP tools that were referenced by agents but never implemented — `find_symbol`, `find_callers`, `find_dead_code`, `detect_antipatterns`, `detect_circular_dependencies`. Roslyn server bumped to `0.5.0`. Tool count 10 → 15. |
 | v2.2.2 | ✅ shipped | **Model routing:** every agent switched from pinned/dated model IDs to tier aliases (`opus`/`sonnet`/`haiku`) so frontmatter auto-tracks each tier's current default and needs no bump on future model releases (e.g. Opus 4.8). Synced the model columns in `README.md` and `CLAUDE.md`, the command delegate-notes, and the architecture diagram. Also adds a Git rule to the injected global `CLAUDE.md` — fetch `CODEOWNERS` reviewers when opening PRs. |
-| v2.3 | 🔜 planned | MAUI / mobile support |
+| v2.3.0 | ✅ shipped | New: `Git Auto-Approve` hook — returns `permissionDecision: allow` for safe single `git`/`gh` commands (status/diff/log/add/commit/branch/push, `gh pr create`, heredoc commit) so commit + PR skip the permission prompt (7 → 8 hooks). Plus doc-drift fixes and hook robustness hardening. |
+| v2.4.0 | ✅ shipped | **.NET-first tooling priority.** New `Code-Analyzer Redirect` advisory hook + extended `Priority Router` steer C# code inspection to `mcp__roslyn__` over kouhesion's Python `code-analyzer` (which has no C# support); adds a `.NET-First Tooling Priority` rule to the injected global `CLAUDE.md`; shared `_lib/dotnet.js` detection (with parent walk-up); both priority hooks are now config-toggleable (8 → 9 hooks). |
+| v2.5 | 🔜 planned | MAUI / mobile support |
 
 ---
 

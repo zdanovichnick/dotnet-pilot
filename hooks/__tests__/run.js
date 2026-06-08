@@ -232,7 +232,7 @@ const CASES = [
     runtime: 'node',
     input: { cwd: workspace, tool_input: { subagent_type: 'general-purpose' } },
     expectExit: 0,
-    expectSubstrings: ['[dnp-priority-router]', 'routing priority', 'dnp-tdd-developer-easy'],
+    expectSubstrings: ['[dnp-priority-router]', 'routing priority', 'dnp-tdd-developer-easy', 'mcp__roslyn__', 'code-analyzer'],
   },
   {
     name: 'priority: dotnet-pilot agent is not nudged',
@@ -247,6 +247,32 @@ const CASES = [
     hook: 'dnp-dotnet-priority.js',
     runtime: 'node',
     input: { cwd: nonDotnetDir, tool_input: { subagent_type: 'general-purpose' } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+
+  // --- dnp-code-analyzer-redirect ---
+  {
+    name: 'redirect: code-analyzer call in .NET dir nudges toward roslyn',
+    hook: 'dnp-code-analyzer-redirect.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_input: { project_path: workspace } },
+    expectExit: 0,
+    expectSubstrings: ['[dnp-code-analyzer-redirect]', 'mcp__roslyn__'],
+  },
+  {
+    name: 'redirect: .cs target redirects even outside a .NET cwd',
+    hook: 'dnp-code-analyzer-redirect.js',
+    runtime: 'node',
+    input: { cwd: nonDotnetDir, tool_input: { file_path: 'Foo.cs' } },
+    expectExit: 0,
+    expectSubstrings: ['[dnp-code-analyzer-redirect]', 'mcp__roslyn__'],
+  },
+  {
+    name: 'redirect: non-.NET dir + Python target is silent',
+    hook: 'dnp-code-analyzer-redirect.js',
+    runtime: 'node',
+    input: { cwd: nonDotnetDir, tool_input: { file_path: 'a.py' } },
     expectExit: 0,
     expectEmpty: true,
   },

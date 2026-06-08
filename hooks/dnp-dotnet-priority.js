@@ -7,7 +7,8 @@
 //
 // Advisory only (exit 0 always) — never blocks tool execution.
 
-const fs = require('fs');
+const { isDotNetProject } = require('./_lib/dotnet');
+const { hookEnabled } = require('./_lib/config');
 
 const HOOK_NAME = 'dnp-priority-router';
 
@@ -20,17 +21,6 @@ function emit(message) {
   }));
 }
 
-function isDotNetProject(dir) {
-  try {
-    const entries = fs.readdirSync(dir);
-    return entries.some(e =>
-      e.endsWith('.sln') || e.endsWith('.slnx') || e.endsWith('.csproj')
-    );
-  } catch {
-    return false;
-  }
-}
-
 let input = '';
 const stdinTimeout = setTimeout(() => process.exit(0), 10000);
 process.stdin.setEncoding('utf8');
@@ -40,6 +30,10 @@ process.stdin.on('end', () => {
   try {
     const data = JSON.parse(input);
     const cwd = (data && data.cwd) || process.cwd();
+
+    if (!hookEnabled(cwd, 'dotnet_priority')) {
+      process.exit(0);
+    }
 
     if (!isDotNetProject(cwd)) {
       process.exit(0);
@@ -65,6 +59,8 @@ process.stdin.on('end', () => {
       `  NuGet audit:      dotnet-pilot:dnp-nuget-auditor\n` +
       `  .NET planning:    dotnet-pilot:dnp-planner\n` +
       `  Verification:     dotnet-pilot:dnp-verifier\n` +
+      `For C# code inspection use mcp__roslyn__ (DI, architecture, EF models, references, class outlines) — ` +
+      `NOT mcp__*code-analyzer__ (Python/TS/JS only; no C# support).\n` +
       `Also prefer /DotnetPilot:* slash commands for .NET-specific tasks.`
     );
   } catch {

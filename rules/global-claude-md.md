@@ -96,3 +96,15 @@
 - Integration testing: **Testcontainers** (`Testcontainers.MsSql`, etc.) — real databases, not in-memory
 - HTTP resilience: configure via `IHttpClientFactory` + Polly pipeline, never `new HttpClient()`
 - Avoid packages with no commits in 2+ years or < 500k monthly downloads unless no alternative exists
+
+## .NET-First Tooling Priority
+When the working solution contains a `.sln` / `.slnx` / `.csproj`, DotnetPilot tooling
+takes precedence over generic or cross-language equivalents for .NET work:
+- **C# code inspection → `mcp__roslyn__*`** (dnp-roslyn): DI completeness, architecture
+  violations, EF Core models, find references / implementations, class outlines.
+  Do **NOT** use `mcp__*code-analyzer__*` for C# — it supports Python/TS/JS only and
+  returns `unsupported_language` on `.cs` files.
+- Prefer `dnp-*` agents and `/dotnet-pilot:*` commands for .NET tasks (planning, TDD,
+  scaffolding, EF migrations, DI/NuGet audits, verification) over generic agents.
+- Scope: this applies to C#/.NET work only. Python / TS / JS files in the same repo
+  still route to their normal tools (including `mcp__*code-analyzer__*`).

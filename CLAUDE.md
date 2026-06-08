@@ -124,7 +124,8 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 | Hook | Trigger | What it does |
 |------|---------|--------------|
 | `dnp-sync-global-claude-md` | PreToolUse (Read, Write, Edit, MultiEdit, Bash, Grep, Glob) | Injects `rules/global-claude-md.md` block into `~/.claude/CLAUDE.md` with versioned markers; no-ops if current version already present |
-| `dnp-dotnet-priority` | PreToolUse (Agent) | When CWD contains `.sln`/`.slnx`/`.csproj`, emits a routing table nudging the orchestrator toward DotnetPilot agents |
+| `dnp-dotnet-priority` | PreToolUse (Agent) | When CWD (or a parent) contains `.sln`/`.slnx`/`.csproj`, emits a routing table nudging the orchestrator toward DotnetPilot agents and toward `mcp__roslyn__` over `mcp__*code-analyzer__` for C# inspection; gated by `hooks.dotnet_priority` (default-on) |
+| `dnp-code-analyzer-redirect` | PreToolUse (`mcp__.*code-analyzer.*`) | Advisory — when a code-analyzer MCP tool targets C# (a `.cs` file, a .NET `project_path`, or a .NET cwd), nudges toward `mcp__roslyn__*` (the Python/TS/JS code-analyzer has no C# support). Never blocks; gated by `hooks.code_analyzer_redirect` (default-on) |
 | `dnp-build-verify` | PostToolUse (Bash) | Parses `dotnet build/test` failures; warns at 3 consecutive failures, escalates at 5; resets counter on success (temp file per CWD) |
 | `dnp-di-registration-check` | PostToolUse (Write/Edit) | On `.cs` file save, regex-checks whether the new class has a DI registration in `Program.cs` / `*Extensions.cs`; skips test files, migrations, `Program.cs` itself |
 | `dnp-post-edit-format` | PostToolUse (Write/Edit/MultiEdit) | On `.cs` file save, runs `dotnet format --include <file>` on the nearest project; skips `obj/`, `bin/`, `Migrations/`, and generated files |
@@ -224,7 +225,9 @@ Minimum schema for core:
     "project_scope_guard": true,
     "build_verify": true,
     "commit_format": true,
-    "git_autoapprove": true
+    "git_autoapprove": true,
+    "dotnet_priority": true,
+    "code_analyzer_redirect": true
   },
   "workflow": {
     "build_after_task": true,
