@@ -460,7 +460,7 @@ const CASES = [
     },
     env: { NO_COLOR: '1' },
     expectExit: 0,
-    expectStdout: ['Opus 4.8', '⚙ high', 'CTX ', '42%', '84k', 'SLN ', 'Demo', '$2.55'],
+    expectStdout: ['Opus 4.8', '⚙  high', 'CTX ', '42%', '84k', 'SLN ', 'Demo', '$2.55'],
   },
   {
     name: 'statusline: recent build failure shows BUILD ✗',

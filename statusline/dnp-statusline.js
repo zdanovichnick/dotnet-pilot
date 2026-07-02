@@ -24,7 +24,7 @@ const { spawnSync } = require('child_process');
 
 // Installed-version stamp — read by dnp-statusline-sync.js to decide whether to
 // refresh the copy in ~/.claude. Keep in sync with plugin.json on release.
-const STATUSLINE_VERSION = '2.5.1';
+const STATUSLINE_VERSION = '2.5.2';
 
 const DOTNET_MARKERS = ['.sln', '.slnx', '.csproj'];
 const SEP = ' │ '; // " │ "
@@ -79,7 +79,9 @@ function buildUniversalLine(data, cwd) {
   // Reasoning-effort level (low|medium|high|xhigh|max) — live session config the
   // model runs under; piped as effort.level in the statusLine stdin schema.
   const effort = data.effort && data.effort.level;
-  if (typeof effort === 'string' && effort) parts.push(c(ANSI.dim, '⚙ ') + effort); // "⚙ "
+  // Two spaces: the gear glyph renders double-width in most terminals and
+  // visually swallows a single trailing space.
+  if (typeof effort === 'string' && effort) parts.push(c(ANSI.dim, '⚙  ') + effort); // "⚙  "
 
   const ctx = contextSegment(data.context_window);
   if (ctx) parts.push(ctx);
@@ -89,7 +91,7 @@ function buildUniversalLine(data, cwd) {
 
   const cost = data.cost || {};
   const elapsed = humanizeMs(cost.total_duration_ms);
-  if (elapsed) parts.push(c(ANSI.dim, '⏱ ') + elapsed); // "⏱ "
+  if (elapsed) parts.push(c(ANSI.dim, '⏱  ') + elapsed); // "⏱  " (double-width glyph — see effort segment)
 
   if (typeof cost.total_cost_usd === 'number') {
     parts.push(c(ANSI.green, '$' + cost.total_cost_usd.toFixed(2)));
