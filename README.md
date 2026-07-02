@@ -298,8 +298,10 @@ Hooks run automatically during Claude Code sessions. Advisory hooks warn but don
 
 A compact, .NET-aware statusline. Install it with `/DotnetPilot:utility:statusline`:
 
-- **Line 1 (always):** `<model> │ CTX <pct>% · <tokens> │ GIT <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ $<cost>`
+- **Line 1 (always):** `<model> │ ⚙ <effort> │ CTX <pct>% · <tokens> │ GIT <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ $<cost>`
 - **Line 2 (only inside a .NET solution):** `SLN <name> │ TFM <framework> │ BUILD ✗ <n>x`
+
+`⚙ <effort>` shows the reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`) when Claude Code pipes it; omitted otherwise.
 
 `BUILD ✗ Nx` reflects the same failure state the **Build Verify** hook records (so it also surfaces `dotnet test` failures); absence means "no recent failure recorded", not a guaranteed green build.
 

@@ -1,6 +1,6 @@
 {
   "name": "dotnet-pilot",
-  "version": "2.5.0",
+  "version": "2.5.1",
   "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, 16 skills, convention-aware scaffolders, security/performance/refactoring agents, and project lifecycle commands.",
   "author": {
     "name": "Nick Zdanovych",

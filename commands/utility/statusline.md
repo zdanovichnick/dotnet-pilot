@@ -8,8 +8,10 @@ argument-hint: "[--manual] — print the settings.json snippet instead of editin
 `/DotnetPilot:utility:statusline` installs the DotnetPilot statusline and wires it into
 `~/.claude/settings.json`. It renders a compact, .NET-aware status line:
 
-- **Line 1 (always):** `<model> │ CTX <pct>% · <tokens> │ GIT <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ $<cost>`
+- **Line 1 (always):** `<model> │ ⚙ <effort> │ CTX <pct>% · <tokens> │ GIT <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ $<cost>`
 - **Line 2 (only inside a .NET solution):** `SLN <name> │ TFM <framework> │ BUILD ✗ <n>x`
+
+`⚙ <effort>` is the reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`), shown when Claude Code pipes `effort.level`.
 
 `BUILD ✗ Nx` appears only when a recent `dotnet build`/`dotnet test` failed — it reads the same
 failure state `dnp-build-verify` writes, so it also reflects test failures. Absence means "no recent

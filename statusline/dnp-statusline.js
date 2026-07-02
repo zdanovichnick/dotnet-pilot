@@ -24,7 +24,7 @@ const { spawnSync } = require('child_process');
 
 // Installed-version stamp — read by dnp-statusline-sync.js to decide whether to
 // refresh the copy in ~/.claude. Keep in sync with plugin.json on release.
-const STATUSLINE_VERSION = '2.5.0';
+const STATUSLINE_VERSION = '2.5.1';
 
 const DOTNET_MARKERS = ['.sln', '.slnx', '.csproj'];
 const SEP = ' │ '; // " │ "
@@ -75,6 +75,11 @@ function buildUniversalLine(data, cwd) {
 
   const model = (data.model && (data.model.display_name || data.model.id)) || 'Claude';
   parts.push(c(ANSI.cyan, model));
+
+  // Reasoning-effort level (low|medium|high|xhigh|max) — live session config the
+  // model runs under; piped as effort.level in the statusLine stdin schema.
+  const effort = data.effort && data.effort.level;
+  if (typeof effort === 'string' && effort) parts.push(c(ANSI.dim, '⚙ ') + effort); // "⚙ "
 
   const ctx = contextSegment(data.context_window);
   if (ctx) parts.push(ctx);
