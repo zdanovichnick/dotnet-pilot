@@ -7,6 +7,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const crypto = require('crypto');
 const { hookEnabled } = require('./_lib/config');
 
 const HOOK_NAME = 'dnp-build-verify';
@@ -92,7 +93,11 @@ process.stdin.on('end', () => {
 });
 
 function getFailCountPath(cwd) {
-  const hash = Buffer.from(cwd).toString('base64').replace(/[/+=]/g, '_').slice(0, 32);
+  // Full-length digest, NOT a prefix slice: sibling project roots share a long
+  // path prefix, so truncating the hash would collide their fail-state files
+  // (e.g. D:\repos\svc-a and D:\repos\svc-b). dnp-statusline.js:buildFailState
+  // must use this exact scheme to read the same file.
+  const hash = crypto.createHash('sha1').update(cwd).digest('hex');
   return path.join(os.tmpdir(), `dnp-build-fail-${hash}.json`);
 }
 

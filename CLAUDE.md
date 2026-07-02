@@ -133,6 +133,7 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 | `dnp-project-scope-guard` | PostToolUse (Write/Edit) | When `.planning/STATE.md` has `focus_projects: [...]` frontmatter, warns if an edit touches a project outside that list; uses `solution-map.json` for boundary resolution |
 | `dnp-commit-format` | PreToolUse (Bash) | Validates conventional commit format on `git commit -m "..."` invocations; skips heredoc, `--no-edit`, and `--file` forms |
 | `dnp-git-autoapprove` | PreToolUse (Bash) | **Non-advisory** — returns `permissionDecision: allow` for safe single `git`/`gh` commands (status/diff/log/add/commit/branch/push, `gh pr create`, plus the heredoc-commit form) so commit + PR skip the permission prompt. Chained/substituted/redirected commands fall through to the normal prompt. Gated by `hooks.git_autoapprove` (default-on) |
+| `dnp-statusline-sync` | SessionStart (startup/resume/clear/compact) | Copies `statusline/dnp-statusline.js` to `~/.claude/dnp-statusline.js` when the plugin ships a newer `STATUSLINE_VERSION` (version-stamped, idempotent). Wires `~/.claude/settings.json` `statusLine` **only** when `statusline.auto_enable === true` (default-off), backing up any prior statusLine once to `~/.claude/dnp-statusline.prev.json`. Advisory (exit 0). Install manually via `/DotnetPilot:utility:statusline` |
 
 ## Quality Gates
 
@@ -150,6 +151,12 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 ### Abort (stop immediately, preserve state)
 - 5+ consecutive build failures (tracked by `dnp-build-verify` in `os.tmpdir()`; warning fires at 3)
 - Solution file corruption
+
+**Shared build-fail state contract:** `dnp-build-verify` writes the consecutive-failure count to
+`os.tmpdir()/dnp-build-fail-<sha1(cwd)>.json` (covering both `dotnet build` and `dotnet test`). The
+statusline's `BUILD ✗ Nx` segment reads that same file — the `sha1(cwd)` hex-digest path scheme must
+match exactly in both `hooks/dnp-build-verify.js` and `statusline/dnp-statusline.js`, or the statusline
+reads the wrong file. State older than 1h is treated as stale.
 
 ## What DotnetPilot does NOT do
 
@@ -229,6 +236,9 @@ Minimum schema for core:
     "dotnet_priority": true,
     "code_analyzer_redirect": true
   },
+  "statusline": {
+    "auto_enable": false
+  },
   "workflow": {
     "build_after_task": true,
     "test_after_task": true,
@@ -236,6 +246,11 @@ Minimum schema for core:
   }
 }
 ```
+
+`statusline.auto_enable` (default `false`) gates whether `dnp-statusline-sync` wires
+`~/.claude/settings.json`. Off by default because it mutates a user file that may already hold
+another `statusLine` — the sync hook only refreshes the installed script until you opt in (or run
+`/DotnetPilot:utility:statusline` for a one-time interactive install).
 
 The retired pipeline keys (`workflow.research`, `workflow.plan_check`,
 `workflow.verifier`, `workflow.auto_advance`, `parallelization.*`,

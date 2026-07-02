@@ -65,11 +65,21 @@ function projectModelEnabled(cwd) {
   return config.enableProjectModel === true;
 }
 
+// Whether the statusline sync hook may wire ~/.claude/settings.json to point at
+// the installed statusline. Default-OFF (like projectModelEnabled) because it
+// mutates a user file that may already hold another statusLine — opt-in only.
+function statuslineAutoEnable(cwd) {
+  const config = loadConfig(cwd);
+  if (!config) return false;
+  return config.statusline?.auto_enable === true;
+}
+
 module.exports = {
   flattenCwd,
   resolveConfigPath,
   loadConfig,
   hookEnabled,
   projectModelEnabled,
+  statuslineAutoEnable,
   resolvePlanningDir,
 };

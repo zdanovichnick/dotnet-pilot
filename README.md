@@ -6,7 +6,7 @@ Roslyn-backed DI verification · EF Core migration safety · Clean-architecture 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/code) [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](.)
 
-*28 commands · 14 specialized agents · 9 hooks · 16 skill packs · 16 Roslyn MCP tools*
+*29 commands · 14 specialized agents · 11 hooks · 16 skill packs · 16 Roslyn MCP tools*
 
 ---
 
@@ -68,7 +68,7 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 **Verify it worked:**
 
 ```
-/DotnetPilot:utility:help            → should list 28 commands
+/DotnetPilot:utility:help            → should list 29 commands
 /DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
@@ -142,7 +142,7 @@ In Claude Code, enable the **Context7** MCP server at the account level — plan
 ### Step 4 — Verify
 
 ```
-/DotnetPilot:utility:help            → should list 28 commands
+/DotnetPilot:utility:help            → should list 29 commands
 /DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
@@ -231,6 +231,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | `utility:status` | `/DotnetPilot:utility:status` | Show current project state — phase, progress, recent activity |
 | `utility:settings` | `settings [key] [value]` | View and modify DotnetPilot configuration |
 | `utility:show-solution` | `/DotnetPilot:utility:show-solution` | Show the .NET solution structure — projects, references, packages, namespaces, layers |
+| `utility:statusline` | `statusline [--manual]` | Install the .NET-aware statusline and wire it into `~/.claude/settings.json` (backs up any existing statusLine) |
 
 ---
 
@@ -289,6 +290,20 @@ Hooks run automatically during Claude Code sessions. Advisory hooks warn but don
 | **Commit Format** | Before `git commit` | Enforces `type(scope): message` conventional commit format |
 | **Priority Router** | Before spawning an Agent | Detects .NET projects and injects DotnetPilot agent routing priority over generic equivalents; also steers C# code inspection to `mcp__roslyn__` over `mcp__*code-analyzer__`. Toggle `hooks.dotnet_priority: false` to disable |
 | **Code-Analyzer Redirect** | Before a `code-analyzer` MCP tool call | When the call targets C# (a `.cs` file, a .NET `project_path`, or a .NET cwd), nudges toward the C#-aware `mcp__roslyn__` tools — the Python/TS/JS code-analyzer has no C# support. Advisory only; never blocks. Toggle `hooks.code_analyzer_redirect: false` to disable |
+| **Statusline Sync** | On session start/resume/clear/compact | Refreshes the installed statusline script at `~/.claude/dnp-statusline.js` when the plugin ships a newer version. Only wires `~/.claude/settings.json` when `statusline.auto_enable: true` (default off) — never clobbers an existing statusLine without opt-in |
+
+---
+
+## 📊 Statusline
+
+A compact, .NET-aware statusline. Install it with `/DotnetPilot:utility:statusline`:
+
+- **Line 1 (always):** `<model> │ CTX <pct>% · <tokens> │ GIT <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ $<cost>`
+- **Line 2 (only inside a .NET solution):** `SLN <name> │ TFM <framework> │ BUILD ✗ <n>x`
+
+`BUILD ✗ Nx` reflects the same failure state the **Build Verify** hook records (so it also surfaces `dotnet test` failures); absence means "no recent failure recorded", not a guaranteed green build.
+
+Claude Code plugins cannot register a `statusLine` directly, and `${CLAUDE_PLUGIN_ROOT}` is not expanded in statusLine command strings — so the command installs the script to a stable path (`~/.claude/dnp-statusline.js`) and points `settings.json` at it. It detects and backs up any existing statusLine before replacing (or run with `--manual` to print the snippet instead). To activate automatically every session, set `statusline.auto_enable: true` in `.planning/config.json`; it coexists with — never silently replaces — another statusline unless you opt in. Honors `NO_COLOR`.
 
 ---
 
@@ -469,6 +484,9 @@ After `/DotnetPilot:project:init`, configuration lives at `~/.claude/projects/<f
     "post_edit_format": true,
     "commit_format": true
   },
+  "statusline": {
+    "auto_enable": false
+  },
   "workflow": {
     "build_after_task": true,
     "test_after_task": true,
@@ -485,6 +503,7 @@ Use `/DotnetPilot:utility:settings <key> <value>` to change values without editi
 | `hooks.di_check` | `false` | DI advisory is too noisy for your workflow |
 | `hooks.project_scope_guard` | `false` | You routinely edit across multiple projects at once |
 | `hooks.commit_format` | `false` | Skip conventional-commit enforcement |
+| `statusline.auto_enable` | `true` | Auto-install + wire the .NET statusline every session (backs up any existing statusLine once) |
 | `workflow.build_after_task` | `false` | Skip automatic build after every scaffold |
 
 ---
@@ -583,7 +602,7 @@ Claude Code caches the plugin at install time. After a major version update, new
 /reload-plugins
 ```
 
-Verify: `/DotnetPilot:utility:help` — should list 28 commands including `dotnet:tdd`, `dotnet:build-fix`, and `quality:security-scan`.
+Verify: `/DotnetPilot:utility:help` — should list 29 commands including `dotnet:tdd`, `dotnet:build-fix`, and `quality:security-scan`.
 
 **"Context7 tools not available"**
 

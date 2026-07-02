@@ -86,6 +86,31 @@ fs.writeFileSync(path.join(scopeWorkspace, '.planning', 'solution-map.json'),
 // never the developer's real ~/.claude/CLAUDE.md.
 const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-home-'));
 
+// --- dnp-statusline fixtures ---
+// Mirrors getFailCountPath() in dnp-build-verify.js so we can seed a failure.
+function buildFailPathFor(cwd) {
+  const hash = require('crypto').createHash('sha1').update(cwd).digest('hex');
+  return path.join(os.tmpdir(), `dnp-build-fail-${hash}.json`);
+}
+// A .NET dir with a fresh seeded build failure so the statusline shows BUILD ✗.
+const slnFailDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-sln-'));
+fs.writeFileSync(path.join(slnFailDir, 'Widget.slnx'), '<Solution />\n');
+const slnFailFile = buildFailPathFor(slnFailDir);
+fs.writeFileSync(slnFailFile, JSON.stringify({ count: 3, lastFail: new Date().toISOString() }));
+
+// --- dnp-statusline-sync fixtures ---
+// Fresh HOME with no config → sync refreshes the script but must NOT touch settings.json.
+const slHomeDefault = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-slhome-'));
+// HOME with a pre-existing statusLine + a workspace opting in via auto_enable.
+const slHomeAuto = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-slauto-'));
+fs.mkdirSync(path.join(slHomeAuto, '.claude'), { recursive: true });
+fs.writeFileSync(path.join(slHomeAuto, '.claude', 'settings.json'),
+  JSON.stringify({ statusLine: { type: 'command', command: 'python ~/.claude/statusline.py' } }, null, 2));
+const slAutoWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-slcfg-'));
+fs.mkdirSync(path.join(slAutoWorkspace, '.planning'), { recursive: true });
+fs.writeFileSync(path.join(slAutoWorkspace, '.planning', 'config.json'),
+  JSON.stringify({ statusline: { auto_enable: true } }));
+
 const CASES = [
   // --- dnp-di-registration-check ---
   {
@@ -420,6 +445,77 @@ const CASES = [
     expectExit: 0,
     expectEmpty: true,
   },
+
+  // --- dnp-statusline (renders plain text, not hookSpecificOutput JSON) ---
+  {
+    name: 'statusline: .NET workspace renders universal + .NET lines',
+    hook: '../statusline/dnp-statusline.js',
+    runtime: 'node',
+    input: {
+      cwd: workspace,
+      model: { display_name: 'Opus 4.8' },
+      context_window: { used_percentage: 42, total_input_tokens: 84000 },
+      cost: { total_cost_usd: 2.55, total_duration_ms: 740000 },
+    },
+    env: { NO_COLOR: '1' },
+    expectExit: 0,
+    expectStdout: ['Opus 4.8', 'CTX ', '42%', '84k', 'SLN ', 'Demo', '$2.55'],
+  },
+  {
+    name: 'statusline: recent build failure shows BUILD ✗',
+    hook: '../statusline/dnp-statusline.js',
+    runtime: 'node',
+    input: { cwd: slnFailDir, model: { display_name: 'Opus 4.8' } },
+    env: { NO_COLOR: '1' },
+    expectExit: 0,
+    expectStdout: ['SLN Widget', 'BUILD ✗ 3x'],
+  },
+  {
+    name: 'statusline: non-.NET dir has no SLN/TFM line',
+    hook: '../statusline/dnp-statusline.js',
+    runtime: 'node',
+    input: { cwd: nonDotnetDir, model: { display_name: 'Opus 4.8' } },
+    env: { NO_COLOR: '1' },
+    expectExit: 0,
+    expectStdout: ['Opus 4.8'],
+    expectStdoutAbsent: ['SLN', 'TFM'],
+  },
+  {
+    name: 'statusline: empty payload degrades to a minimal line',
+    hook: '../statusline/dnp-statusline.js',
+    runtime: 'node',
+    input: { cwd: nonDotnetDir },
+    env: { NO_COLOR: '1' },
+    expectExit: 0,
+    expectStdout: ['Claude'],
+  },
+
+  // --- dnp-statusline-sync (writes into throwaway HOMEs) ---
+  {
+    name: 'statusline-sync: default refreshes script but leaves settings.json alone',
+    hook: 'dnp-statusline-sync.js',
+    runtime: 'node',
+    input: { cwd: nonDotnetDir },
+    env: { USERPROFILE: slHomeDefault, HOME: slHomeDefault },
+    expectExit: 0,
+    expectFiles: [
+      { path: path.join(slHomeDefault, '.claude', 'dnp-statusline.js'), includes: ['STATUSLINE_VERSION'] },
+    ],
+    expectFilesAbsent: [path.join(slHomeDefault, '.claude', 'settings.json')],
+  },
+  {
+    name: 'statusline-sync: auto_enable wires settings.json and backs up prior statusLine',
+    hook: 'dnp-statusline-sync.js',
+    runtime: 'node',
+    input: { cwd: slAutoWorkspace },
+    env: { USERPROFILE: slHomeAuto, HOME: slHomeAuto },
+    expectExit: 0,
+    expectFiles: [
+      { path: path.join(slHomeAuto, '.claude', 'dnp-statusline.js'), includes: ['STATUSLINE_VERSION'] },
+      { path: path.join(slHomeAuto, '.claude', 'settings.json'), includes: ['dnp-statusline.js', 'refreshInterval'] },
+      { path: path.join(slHomeAuto, '.claude', 'dnp-statusline.prev.json'), includes: ['statusline.py'] },
+    ],
+  },
 ];
 
 function runCase(testCase) {
@@ -473,6 +569,22 @@ function runCase(testCase) {
         }
       }
     }
+  } else if (testCase.expectStdout) {
+    // Raw stdout (plain text, e.g. the statusline) — substring match, not JSON.
+    for (const sub of testCase.expectStdout) {
+      if (!stdout.includes(sub)) {
+        problems.push(`missing substring "${sub}" in stdout: ${stdout.slice(0, 200)}`);
+      }
+    }
+  }
+
+  // Independent absence check on raw stdout.
+  if (testCase.expectStdoutAbsent) {
+    for (const sub of testCase.expectStdoutAbsent) {
+      if (stdout.includes(sub)) {
+        problems.push(`unexpected substring "${sub}" present in stdout`);
+      }
+    }
   }
 
   // Side-effect assertions: verify files the hook wrote (e.g., the sync hook).
@@ -489,6 +601,15 @@ function runCase(testCase) {
         if (!fileContent.includes(sub)) {
           problems.push(`missing "${sub}" in ${path.basename(filePath)}`);
         }
+      }
+    }
+  }
+
+  // Absence assertions: verify files the hook must NOT have written.
+  if (testCase.expectFilesAbsent) {
+    for (const filePath of testCase.expectFilesAbsent) {
+      if (fs.existsSync(filePath)) {
+        problems.push(`file should not have been written: ${filePath}`);
       }
     }
   }
@@ -514,7 +635,9 @@ for (const tc of CASES) {
 }
 
 // Cleanup temp workspaces
-for (const dir of [workspace, nonDotnetDir, scopeWorkspace, fakeHome]) {
+try { fs.unlinkSync(slnFailFile); } catch {}
+for (const dir of [workspace, nonDotnetDir, scopeWorkspace, fakeHome,
+                   slnFailDir, slHomeDefault, slHomeAuto, slAutoWorkspace]) {
   try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
 }
 

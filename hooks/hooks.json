@@ -90,6 +90,18 @@
         ]
       }
     ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-statusline-sync.js\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
     "Stop": []
   }
 }
