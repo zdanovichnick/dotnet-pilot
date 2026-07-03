@@ -24,7 +24,7 @@ const { spawnSync } = require('child_process');
 
 // Installed-version stamp — read by dnp-statusline-sync.js to decide whether to
 // refresh the copy in ~/.claude. Keep in sync with plugin.json on release.
-const STATUSLINE_VERSION = '2.5.2';
+const STATUSLINE_VERSION = '2.5.3';
 
 const DOTNET_MARKERS = ['.sln', '.slnx', '.csproj'];
 const SEP = ' │ '; // " │ "
@@ -32,6 +32,18 @@ const SEP = ' │ '; // " │ "
 // ---- color -----------------------------------------------------------------
 const useColor = !process.env.NO_COLOR;
 const ANSI = { dim: '2', red: '31', cyan: '36', green: '32', yellow: '33', blue: '34' };
+
+// Reasoning-effort value color, brightest at the top of the scale so higher
+// effort reads as "hotter" and a level change is obvious at a glance.
+function effortColor(level) {
+  switch (level) {
+    case 'max': return ANSI.red;
+    case 'xhigh': return ANSI.yellow;
+    case 'high': return ANSI.cyan;
+    case 'medium': return ANSI.blue;
+    default: return ANSI.dim; // low (and any future/unknown level)
+  }
+}
 function c(code, s) {
   return useColor ? `[${code}m${s}[0m` : String(s);
 }
@@ -63,10 +75,14 @@ process.stdin.on('end', () => {
 function render(data) {
   const cwd = data.cwd || (data.workspace && data.workspace.current_dir) || process.cwd();
 
+  const dotnet = isDotNetProject(cwd);
   const line1 = buildUniversalLine(data, cwd);
-  const line2 = isDotNetProject(cwd) ? buildDotnetLine(cwd) : '';
+  const line2 = dotnet ? buildDotnetLine(cwd) : '';
+  // Discovery hint under the .NET line — the plugin's commands only matter in a
+  // .NET project, so the tip only shows there.
+  const line3 = dotnet ? tipLine() : '';
 
-  const out = [line1, line2].filter(Boolean).join('\n');
+  const out = [line1, line2, line3].filter(Boolean).join('\n');
   if (out) process.stdout.write(out + '\n');
 }
 
@@ -76,12 +92,16 @@ function buildUniversalLine(data, cwd) {
   const model = (data.model && (data.model.display_name || data.model.id)) || 'Claude';
   parts.push(c(ANSI.cyan, model));
 
-  // Reasoning-effort level (low|medium|high|xhigh|max) — live session config the
-  // model runs under; piped as effort.level in the statusLine stdin schema.
-  const effort = data.effort && data.effort.level;
+  // Reasoning-effort level (low|medium|high|xhigh|max) — the LIVE per-turn value
+  // Claude actually ran at, piped as effort.level (reflects mid-session /effort
+  // changes; under CLAUDE_CODE_EFFORT_LEVEL=auto it is the resolved level, not a
+  // static config value). Color-coded by level so a change is visually obvious.
   // Two spaces: the gear glyph renders double-width in most terminals and
   // visually swallows a single trailing space.
-  if (typeof effort === 'string' && effort) parts.push(c(ANSI.dim, '⚙  ') + effort); // "⚙  "
+  const effort = data.effort && data.effort.level;
+  if (typeof effort === 'string' && effort) {
+    parts.push(c(ANSI.dim, '⚙  ') + c(effortColor(effort), effort)); // "⚙  "
+  }
 
   const ctx = contextSegment(data.context_window);
   if (ctx) parts.push(ctx);
@@ -113,6 +133,26 @@ function buildDotnetLine(cwd) {
   if (fail) parts.push(c(ANSI.red, `BUILD ✗ ${fail}x`)); // "BUILD ✗ Nx"
 
   return parts.length ? parts.join(c(ANSI.dim, SEP)) : '';
+}
+
+// ---- tip line (plugin discovery hints) -------------------------------------
+// A short, rotating "how to use DotnetPilot" pointer shown under the .NET line.
+const DNP_TIPS = [
+  '/dotnet-pilot:utility:help — list every command',
+  '/dotnet-pilot:dotnet:scaffold — feature (endpoint+handler+tests)',
+  '/dotnet-pilot:dotnet:tdd — implement via failing tests first',
+  '/dotnet-pilot:quality:review — .NET-aware code review',
+  '/dotnet-pilot:dotnet:add-migration — safe EF Core migration',
+  '/dotnet-pilot:project:verify — build + tests + DI + arch check',
+  '/dotnet-pilot:quality:security-scan — OWASP + secrets + CVEs',
+];
+
+function tipLine() {
+  // Rotate on a coarse ~30s bucket: the tip varies over a session without
+  // flickering between the frequent statusline refreshes (refreshInterval is
+  // seconds). Date.now() bucketing mirrors the staleness check in buildFailState.
+  const idx = Math.floor(Date.now() / 30000) % DNP_TIPS.length;
+  return c(ANSI.dim, 'TIP ') + c(ANSI.dim, DNP_TIPS[idx]);
 }
 
 // ---- context segment -------------------------------------------------------
@@ -155,7 +195,10 @@ function gitSegment(cwd) {
   const porcelain = git(cwd, ['status', '--porcelain']);
   if (porcelain) {
     const dirty = porcelain.split('\n').filter(Boolean).length;
-    if (dirty > 0) label += ' ' + c(ANSI.yellow, `✚${dirty}`); // "✚N"
+    // Two spaces: ✚ renders double-width in most terminals and visually
+    // abuts the branch name with only a single leading space (same glyph-swallow
+    // that widened the gear/clock segments).
+    if (dirty > 0) label += '  ' + c(ANSI.yellow, `✚${dirty}`); // "✚N"
   }
 
   // "<behind>\t<ahead>" relative to upstream; absent upstream => command fails.
@@ -165,7 +208,7 @@ function gitSegment(cwd) {
     let ua = '';
     if (ahead > 0) ua += `↑${ahead}`; // ↑
     if (behind > 0) ua += `↓${behind}`; // ↓
-    if (ua) label += ' ' + c(ANSI.dim, ua);
+    if (ua) label += '  ' + c(ANSI.dim, ua); // double-width arrows — see ✚ above
   }
 
   return label;

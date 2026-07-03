@@ -300,8 +300,9 @@ A compact, .NET-aware statusline. Install it with `/DotnetPilot:utility:statusli
 
 - **Line 1 (always):** `<model> │ ⚙ <effort> │ CTX <pct>% · <tokens> │ GIT <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ $<cost>`
 - **Line 2 (only inside a .NET solution):** `SLN <name> │ TFM <framework> │ BUILD ✗ <n>x`
+- **Line 3 (only inside a .NET solution):** `TIP <rotating DotnetPilot command hint>` — a slowly-rotating pointer to the plugin's commands, for discovery
 
-`⚙ <effort>` shows the reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`) when Claude Code pipes it; omitted otherwise.
+`⚙ <effort>` shows the **live per-turn** reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`) when Claude Code pipes it — it reflects mid-session `/effort` changes and the resolved level under `auto` (not a static config value), and is color-coded by level (brightest at the top of the scale) so a change is obvious at a glance; omitted when the model doesn't support effort.
 
 `BUILD ✗ Nx` reflects the same failure state the **Build Verify** hook records (so it also surfaces `dotnet test` failures); absence means "no recent failure recorded", not a guaranteed green build.
 

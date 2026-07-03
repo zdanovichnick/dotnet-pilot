@@ -460,7 +460,7 @@ const CASES = [
     },
     env: { NO_COLOR: '1' },
     expectExit: 0,
-    expectStdout: ['Opus 4.8', '⚙  high', 'CTX ', '42%', '84k', 'SLN ', 'Demo', '$2.55'],
+    expectStdout: ['Opus 4.8', '⚙  high', 'CTX ', '42%', '84k', 'SLN ', 'Demo', '$2.55', 'TIP /dotnet-pilot:'],
   },
   {
     name: 'statusline: recent build failure shows BUILD ✗',
@@ -479,7 +479,7 @@ const CASES = [
     env: { NO_COLOR: '1' },
     expectExit: 0,
     expectStdout: ['Opus 4.8'],
-    expectStdoutAbsent: ['SLN', 'TFM'],
+    expectStdoutAbsent: ['SLN', 'TFM', 'TIP'],
   },
   {
     name: 'statusline: empty payload degrades to a minimal line',
