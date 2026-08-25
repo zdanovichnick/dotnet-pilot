@@ -6,7 +6,7 @@ Roslyn-backed DI verification · EF Core migration safety · Clean-architecture 
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/code) [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](.)
 
-*29 commands · 14 specialized agents · 11 hooks · 16 skill packs · 16 Roslyn MCP tools*
+*29 commands · 15 specialized agents · 11 hooks · 16 skill packs · 16 Roslyn MCP tools*
 
 ---
 
@@ -237,40 +237,52 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 
 ## 🤖 Agents
 
-Commands are thin orchestrators — all heavy work happens in one of these 14 agents, each with scoped tool access and a pinned model ID.
+Commands are thin orchestrators — all heavy work happens in one of these 15 agents, each with scoped tool access, a model tier, and a reasoning-effort level.
+
+**Effort** is the second half of routing. Model tier sets *capability*; `effort:` sets how much reasoning is spent within that tier — so a mechanical check runs cheap on a capable model instead of being pushed onto a weaker one. Levels: `low` → `medium` → `high` → `xhigh` → `max`.
 
 ### Planning & verification
 
-| Agent | Model | Role |
-| --- | --- | --- |
-| `dnp-planner` | Opus | Emits a .NET-aware, DI-conscious task list that maps 1:1 to `TaskCreate` entries |
-| `dnp-verifier` | Sonnet | Goal-backward verification: build, tests, DI completeness, migration state, architecture rules |
+| Agent | Model | Effort | Role |
+| --- | --- | --- | --- |
+| `dnp-planner` | Opus | xhigh | Emits a .NET-aware, DI-conscious task list that maps 1:1 to `TaskCreate` entries |
+| `dnp-verifier` | Sonnet | high | Goal-backward verification: build, tests, DI completeness, migration state, architecture rules |
+
+### Deep advisory (consult, don't dispatch)
+
+| Agent | Model | Effort | Role |
+| --- | --- | --- | --- |
+| `dnp-fable-advisor` | Fable | high | Read-only senior advisor to the *other* agents — ADVISE (shape a contract before implementation), UNBLOCK (diagnose a stuck agent's false premise), ADJUDICATE (rule on a disputed behavior claim against the DI-bound implementation). Advises, never implements. |
+
+Reach for it at decision points, not before ordinary work. It requires Fable 5 access and has **no automatic fallback** — if Fable is unavailable, route the same question to `dnp-architect` (Opus / xhigh).
 
 ### Expert domain agents
 
-| Agent | Model | Role |
-| --- | --- | --- |
-| `dnp-architect` | Opus | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation |
-| `dnp-test-writer` | Sonnet | Test writer — xUnit/NUnit with mocking, `WebApplicationFactory` integration tests, convention-aware assertions |
-| `dnp-tdd-developer-easy` | Haiku | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
-| `dnp-tdd-developer-hard` | Sonnet | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
-| `dnp-build-error-resolver` | Haiku | Iterative build-error fixing — parses MSBuild output, applies targeted fixes, max 5 cycles before halting |
-| `dnp-security-auditor` | Sonnet | OWASP Top 10 for .NET APIs — injection, secrets exposure, auth config, CORS, dependencies, input validation |
-| `dnp-performance-analyst` | Sonnet | Async hotspots, EF Core N+1 queries, missing `CancellationToken`, caching gaps, benchmark design |
-| `dnp-refactor-cleaner` | Sonnet | Dead code removal, naming normalization, duplication elimination — behavior preserved, verified by tests after each step |
+| Agent | Model | Effort | Role |
+| --- | --- | --- | --- |
+| `dnp-architect` | Opus | xhigh | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation |
+| `dnp-test-writer` | Sonnet | high | Test writer — xUnit/NUnit with mocking, `WebApplicationFactory` integration tests, convention-aware assertions |
+| `dnp-tdd-developer-easy` | Sonnet | low | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
+| `dnp-tdd-developer-hard` | Sonnet | high | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
+| `dnp-build-error-resolver` | Sonnet | low | Iterative build-error fixing — parses MSBuild output, applies targeted fixes, max 5 cycles before halting |
+| `dnp-security-auditor` | Sonnet | high | OWASP Top 10 for .NET APIs — injection, secrets exposure, auth config, CORS, dependencies, input validation |
+| `dnp-performance-analyst` | Sonnet | high | Async hotspots, EF Core N+1 queries, missing `CancellationToken`, caching gaps, benchmark design |
+| `dnp-refactor-cleaner` | Sonnet | high | Dead code removal, naming normalization, duplication elimination — behavior preserved, verified by tests after each step |
 
 ### Mechanical agents (fast, focused)
 
-| Agent | Model | Role |
-| --- | --- | --- |
-| `dnp-api-scaffolder` | Haiku | Generates controllers or minimal API endpoints with DTOs, validation, OpenAPI attributes, DI registration |
-| `dnp-ef-migration-planner` | Haiku | Plans safe EF Core migrations — detects breaking changes, validates chain integrity, targets correct DbContext |
-| `dnp-di-wiring-checker` | Haiku | Cross-references constructor injection against DI registrations — finds missing services and captive dependencies |
-| `dnp-nuget-auditor` | Haiku | Scans for vulnerable, outdated, and version-inconsistent NuGet packages across the solution |
+| Agent | Model | Effort | Role |
+| --- | --- | --- | --- |
+| `dnp-api-scaffolder` | Sonnet | low | Generates controllers or minimal API endpoints with DTOs, validation, OpenAPI attributes, DI registration |
+| `dnp-ef-migration-planner` | Sonnet | low | Plans safe EF Core migrations — detects breaking changes, validates chain integrity, targets correct DbContext |
+| `dnp-di-wiring-checker` | Sonnet | low | Cross-references constructor injection against DI registrations — finds missing services and captive dependencies |
+| `dnp-nuget-auditor` | Sonnet | low | Scans for vulnerable, outdated, and version-inconsistent NuGet packages across the solution |
 
 > `dnp-test-writer` writes tests only (given existing production code). `dnp-tdd-developer-*` agents own the full TDD loop: write failing test → implement production code → refactor — and handle DI registration, architecture verification, and build checks as part of the cycle.
 >
-> Models are pinned to dated IDs so agent behavior doesn't drift when Anthropic releases new versions.
+> The mechanical agents moved off Haiku in v2.6.0. Effort is model-gated and **unsupported on Haiku 4.5**, so `haiku + effort: low` is a silent no-op — those agents run on Sonnet at `effort: low` instead, which is where the cost/capability trade-off they were reaching for actually lives.
+>
+> Models are tier aliases (`opus`/`sonnet`/`haiku`/`fable`), not dated IDs, so frontmatter tracks each tier's current default and needs no bump on a model release.
 
 ---
 
@@ -629,7 +641,9 @@ Context7 must be enabled at the account level in Claude Code settings.
 | v2.2.2 | ✅ shipped | **Model routing:** every agent switched from pinned/dated model IDs to tier aliases (`opus`/`sonnet`/`haiku`) so frontmatter auto-tracks each tier's current default and needs no bump on future model releases (e.g. Opus 4.8). Synced the model columns in `README.md` and `CLAUDE.md`, the command delegate-notes, and the architecture diagram. Also adds a Git rule to the injected global `CLAUDE.md` — fetch `CODEOWNERS` reviewers when opening PRs. |
 | v2.3.0 | ✅ shipped | New: `Git Auto-Approve` hook — returns `permissionDecision: allow` for safe single `git`/`gh` commands (status/diff/log/add/commit/branch/push, `gh pr create`, heredoc commit) so commit + PR skip the permission prompt (7 → 8 hooks). Plus doc-drift fixes and hook robustness hardening. |
 | v2.4.0 | ✅ shipped | **.NET-first tooling priority.** New `Code-Analyzer Redirect` advisory hook + extended `Priority Router` steer C# code inspection to `mcp__roslyn__` over kouhesion's Python `code-analyzer` (which has no C# support); adds a `.NET-First Tooling Priority` rule to the injected global `CLAUDE.md`; shared `_lib/dotnet.js` detection (with parent walk-up); both priority hooks are now config-toggleable (8 → 9 hooks). |
-| v2.5 | 🔜 planned | MAUI / mobile support |
+| v2.5.0–2.5.3 | ✅ shipped | **.NET-aware statusline.** New `statusline/dnp-statusline.js` (model, context, git, elapsed, cost + a .NET line with solution / TFM / build-fail count) plus the `dnp-statusline-sync` SessionStart hook and `/DotnetPilot:utility:statusline` installer (9 → 11 hooks). Added the reasoning-effort segment, colour-coded it by level, and fixed a `sha1(cwd)` build-fail state collision shared with `dnp-build-verify`. |
+| v2.6.0 | ✅ shipped | **Effort-aware routing + Fable advisor.** Every agent and command now carries an explicit `effort:` level, so reasoning spend is routed independently of model tier. The 6 Haiku agents moved to **Sonnet + `effort: low`** — effort is unsupported on Haiku 4.5, so the old pairing would have been a silent no-op. New `dnp-fable-advisor` (Fable 5, read-only, ADVISE / UNBLOCK / ADJUDICATE) for decision-point consults (14 → 15 agents). Statusline now renders `⚙ <active>≠<configured>` when the configured effort level is not actually in force — the failure mode that made a stale `CLAUDE_CODE_EFFORT_LEVEL` pin look like a statusline bug. |
+| v2.7 | 🔜 planned | MAUI / mobile support |
 
 ---
 

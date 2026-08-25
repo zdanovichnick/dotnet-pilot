@@ -1,13 +1,14 @@
 ---
 description: "Implement a feature using TDD — writes failing tests first, then production code."
 argument-hint: "<task-description> [--complexity easy|hard]"
+effort: high
 ---
 
 # TDD
 
 `/DotnetPilot:dotnet:tdd` implements a feature using strict RED-GREEN-REFACTOR discipline.
 
-> **Delegates to**: `dnp-tdd-developer-easy` (haiku) or `dnp-tdd-developer-hard` (sonnet) based on complexity.
+> **Delegates to**: `dnp-tdd-developer-easy` (sonnet, effort low) or `dnp-tdd-developer-hard` (sonnet, effort high) based on complexity.
 
 ## Difference from `dotnet:write-tests`
 

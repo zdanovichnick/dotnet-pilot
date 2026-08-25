@@ -1,5 +1,6 @@
 ---
 description: "Run a full quality gate check and summarize what's ready to commit."
+effort: medium
 ---
 
 # Checkpoint

@@ -1,13 +1,14 @@
 ---
 description: "Diagnose and iteratively fix dotnet build errors. Max 5 repair iterations."
 argument-hint: "[--project ProjectName]"
+effort: medium
 ---
 
 # Build Fix
 
 `/DotnetPilot:dotnet:build-fix` attempts to automatically repair build errors.
 
-> **Delegates to**: `dnp-build-error-resolver` (haiku); initial build check runs in the caller's context.
+> **Delegates to**: `dnp-build-error-resolver` (sonnet, effort low); initial build check runs in the caller's context.
 
 ## Execution
 

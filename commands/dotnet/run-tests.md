@@ -1,13 +1,14 @@
 ---
 description: "Run tests with coverage reporting and failure diagnosis."
 argument-hint: "[project-name] [--coverage] [--filter <pattern>]"
+effort: medium
 ---
 
 # Run Tests
 
 `/DotnetPilot:dotnet:run-tests` executes tests with detailed reporting.
 
-> **Delegates to**: `dnp-test-writer` (sonnet) — only on test failures, to diagnose and suggest fixes.
+> **Delegates to**: `dnp-test-writer` (sonnet, effort high) — only on test failures, to diagnose and suggest fixes.
 
 ## Execution
 

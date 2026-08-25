@@ -1,5 +1,6 @@
 ---
 description: "Show the .NET solution structure — projects, references, packages, namespaces, layers."
+effort: medium
 ---
 
 # Show Solution

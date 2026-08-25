@@ -3,6 +3,7 @@ name: dnp-security-auditor
 description: "🔐 .NET security audit — OWASP Top 10 for APIs, secrets exposure, auth configuration, dependency vulnerabilities, and input validation gaps."
 tools: Read, Bash(dotnet:*), Glob, Grep, mcp__roslyn__get_solution_structure, mcp__roslyn__find_references, mcp__roslyn__find_symbol, mcp__roslyn__detect_antipatterns
 model: sonnet
+effort: high
 color: red
 skills:
   - authentication

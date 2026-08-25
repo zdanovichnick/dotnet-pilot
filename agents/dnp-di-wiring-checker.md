@@ -2,7 +2,8 @@
 name: dnp-di-wiring-checker
 description: "🔌 Verifies DI container completeness — scans constructor injections and cross-references against service registrations."
 tools: Read, Bash, Glob, Grep, mcp__roslyn__check_di_completeness, mcp__roslyn__find_di_registrations, mcp__roslyn__find_di_consumers
-model: haiku
+model: sonnet
+effort: low
 color: green
 ---
 

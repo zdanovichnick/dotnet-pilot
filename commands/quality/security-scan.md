@@ -1,13 +1,14 @@
 ---
 description: "Run a full .NET security audit — OWASP, secrets, auth, and dependency vulnerabilities."
 argument-hint: "[--scope ProjectName]"
+effort: high
 ---
 
 # Security Scan
 
 `/DotnetPilot:quality:security-scan` runs a three-phase security audit for the current .NET solution.
 
-> **Delegates to**: `dnp-security-auditor` (sonnet); Phase 1 built-in scan runs in the caller's context.
+> **Delegates to**: `dnp-security-auditor` (sonnet, effort high); Phase 1 built-in scan runs in the caller's context.
 
 ## Phase 1 — Dependency Vulnerabilities (built-in)
 

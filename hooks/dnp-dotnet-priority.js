@@ -59,6 +59,7 @@ process.stdin.on('end', () => {
       `  NuGet audit:      dotnet-pilot:dnp-nuget-auditor\n` +
       `  .NET planning:    dotnet-pilot:dnp-planner\n` +
       `  Verification:     dotnet-pilot:dnp-verifier\n` +
+      `  Deep consult:     dotnet-pilot:dnp-fable-advisor (read-only advice; not for implementation)\n` +
       `For C# code inspection use mcp__roslyn__ (DI, architecture, EF models, references, class outlines) — ` +
       `NOT mcp__*code-analyzer__ (Python/TS/JS only; no C# support).\n` +
       `Also prefer /DotnetPilot:* slash commands for .NET-specific tasks.`

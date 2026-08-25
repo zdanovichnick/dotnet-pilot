@@ -1,5 +1,6 @@
 ---
 description: "Show current project state — phase, progress, recent activity."
+effort: low
 ---
 
 # Project Status

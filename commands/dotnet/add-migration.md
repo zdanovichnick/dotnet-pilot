@@ -1,13 +1,14 @@
 ---
 description: "Plan and generate an EF Core migration safely — validates chain, detects breaking changes, targets correct DbContext."
 argument-hint: "<migration-name> [--context <DbContextName>]"
+effort: high
 ---
 
 # Add Migration
 
 `/DotnetPilot:dotnet:add-migration` creates an EF Core migration with safety checks.
 
-> **Delegates to**: `dnp-ef-migration-planner` (haiku).
+> **Delegates to**: `dnp-ef-migration-planner` (sonnet, effort low).
 
 ## Execution
 

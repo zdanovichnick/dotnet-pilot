@@ -1,13 +1,14 @@
 ---
 description: "Add an endpoint to an existing controller or endpoint group."
 argument-hint: "<controller-name> <http-method> <route> [--with-dto]"
+effort: medium
 ---
 
 # Add Endpoint
 
 `/DotnetPilot:dotnet:add-endpoint` adds a single endpoint to an existing API surface.
 
-> **Delegates to**: `dnp-api-scaffolder` (haiku).
+> **Delegates to**: `dnp-api-scaffolder` (sonnet, effort low).
 
 ## Execution
 

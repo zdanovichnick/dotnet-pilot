@@ -1,13 +1,14 @@
 ---
 description: "Scaffold a complete feature (endpoint, handler, validator, DTO, tests) matching the project's existing architecture style."
 argument-hint: "[FeatureName] [--arch vsa|clean|ddd]"
+effort: high
 ---
 
 # Scaffold Feature
 
 `/DotnetPilot:dotnet:scaffold [FeatureName]` generates a complete feature scaffold matching the current project's architecture.
 
-> **Delegates to**: `dnp-api-scaffolder` (haiku); architecture detection runs in the caller's context.
+> **Delegates to**: `dnp-api-scaffolder` (sonnet, effort low); architecture detection runs in the caller's context.
 
 ## Architecture Detection
 

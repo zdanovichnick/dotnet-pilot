@@ -1,6 +1,7 @@
 ---
 description: "Add a new project to the solution with correct references and layer placement."
 argument-hint: "<project-name> <type: classlib|web|xunit|worker|console>"
+effort: medium
 ---
 
 # Add Project

@@ -1,6 +1,7 @@
 ---
 description: "Code review current changes with .NET-specific focus — async patterns, LINQ, naming, DI."
 argument-hint: "[--depth quick|standard|deep]"
+effort: high
 ---
 
 # Code Review

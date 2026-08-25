@@ -1,13 +1,14 @@
 ---
 description: "Generate tests for existing code — unit, integration, or WebApplicationFactory tests."
 argument-hint: "<class-or-method> [--integration] [--style unit|integration|e2e]"
+effort: medium
 ---
 
 # Write Tests
 
 `/DotnetPilot:dotnet:write-tests` generates tests for existing production code.
 
-> **Delegates to**: `dnp-test-writer` (sonnet).
+> **Delegates to**: `dnp-test-writer` (sonnet, effort high).
 
 ## Difference from `dotnet:run-tests`
 

@@ -2,7 +2,8 @@
 name: dnp-build-error-resolver
 description: "🔧 Autonomous iterative build-error fixing — parses dotnet build/test output, diagnoses root causes, and applies minimal targeted fixes. Max 5 iterations before halting."
 tools: Read, Write, Edit, Bash(dotnet:*), Glob, Grep
-model: haiku
+model: sonnet
+effort: low
 color: orange
 ---
 

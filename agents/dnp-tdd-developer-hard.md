@@ -7,6 +7,7 @@ skills:
   - ef-core-patterns
   - clean-architecture
 model: sonnet
+effort: high
 color: blue
 permissionMode: acceptEdits
 ---

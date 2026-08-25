@@ -1,5 +1,6 @@
 ---
 description: "Verify readiness before shipping — build, tests, DI completeness, and architecture check."
+effort: high
 ---
 
 # Verify
@@ -7,7 +8,7 @@ description: "Verify readiness before shipping — build, tests, DI completeness
 `/DotnetPilot:project:verify` is the "ready to ship?" gate between active development
 and `/DotnetPilot:project:ship`. Run it when you think the feature is done.
 
-> **Delegates to**: `dnp-di-wiring-checker` (haiku) and `dnp-architect` (opus).
+> **Delegates to**: `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (opus, effort xhigh).
 
 ## Difference from `quality:commit-check`
 

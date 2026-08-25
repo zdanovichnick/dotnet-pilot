@@ -1,5 +1,6 @@
 ---
 description: "Auto-detect and suggest the next project step based on current state."
+effort: low
 ---
 
 # Next Step

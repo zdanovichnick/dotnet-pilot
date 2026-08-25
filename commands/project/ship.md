@@ -1,13 +1,14 @@
 ---
 description: "Create a pull request for completed work — runs final checks and invokes gh pr create."
 argument-hint: "[--draft to create a draft PR]"
+effort: medium
 ---
 
 # Ship
 
 `/DotnetPilot:project:ship` creates a pull request for the current branch.
 
-> **Delegates to** (optional pre-flight): `dnp-di-wiring-checker` (haiku) and `dnp-architect` (opus). The `gh pr create` call runs in the caller's context.
+> **Delegates to** (optional pre-flight): `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (opus, effort xhigh). The `gh pr create` call runs in the caller's context.
 
 ## Execution
 

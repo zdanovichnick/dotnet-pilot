@@ -11,7 +11,10 @@
 // build-fail temp path) are re-implemented here with a pointer to their origin.
 //
 // Layout:
-//   Line 1 (always): <model> | CTX <pct>% · <tokens> | GIT <branch> <dirty/upstream> | ⏱ <elapsed> | $<cost>
+//   Line 1 (always): <model> | ⚙ <effort>[≠<configured>] | CTX <pct>% · <tokens>
+//                    | GIT <branch> <dirty/upstream> | ⏱ <elapsed> | $<cost>
+//     ⚙ shows the ACTIVE effort level; a ≠ suffix names the CONFIGURED level
+//     when it differs (i.e. the configured one is not actually in force).
 //   Line 2 (.NET only): SLN <name> | TFM <tfm> | BUILD ✗ Nx
 //
 // Never throws, never blocks: any failure degrades to a shorter line or nothing.
@@ -24,7 +27,7 @@ const { spawnSync } = require('child_process');
 
 // Installed-version stamp — read by dnp-statusline-sync.js to decide whether to
 // refresh the copy in ~/.claude. Keep in sync with plugin.json on release.
-const STATUSLINE_VERSION = '2.5.3';
+const STATUSLINE_VERSION = '2.6.0';
 
 const DOTNET_MARKERS = ['.sln', '.slnx', '.csproj'];
 const SEP = ' │ '; // " │ "
@@ -46,6 +49,45 @@ function effortColor(level) {
 }
 function c(code, s) {
   return useColor ? `[${code}m${s}[0m` : String(s);
+}
+
+// ---- configured (as opposed to active) reasoning effort ---------------------
+// The payload's effort.level is the level the turn ACTUALLY ran at, after any
+// silent downgrade for the selected model. That can differ from the level the
+// user configured — most often because a stale CLAUDE_CODE_EFFORT_LEVEL launch
+// pin outranks the `effortLevel` setting, or because the model does not support
+// the requested level (effort is unsupported outright on Haiku 4.5). When the
+// two disagree the line shows both, so a level that silently is not in force
+// reads as a mismatch rather than looking like a statusline bug.
+//
+// Precedence mirrors Claude Code's own: an env pin wins for the session, then
+// project-local settings, then project, then user. "auto"/"unset" is not a pin.
+const EFFORT_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'];
+
+function readEffortLevel(file) {
+  try {
+    const v = JSON.parse(fs.readFileSync(file, 'utf8')).effortLevel;
+    return typeof v === 'string' && EFFORT_LEVELS.includes(v.toLowerCase()) ? v.toLowerCase() : '';
+  } catch {
+    return ''; // absent, unreadable, or malformed — not worth surfacing
+  }
+}
+
+function configuredEffort(cwd) {
+  const pin = (process.env.CLAUDE_CODE_EFFORT_LEVEL || '').toLowerCase();
+  if (pin && pin !== 'auto' && pin !== 'unset') {
+    // A real pin IS the level in force; every settings file is overridden by it.
+    return EFFORT_LEVELS.includes(pin) ? pin : '';
+  }
+  for (const file of [
+    path.join(cwd, '.claude', 'settings.local.json'),
+    path.join(cwd, '.claude', 'settings.json'),
+    path.join(os.homedir(), '.claude', 'settings.json'),
+  ]) {
+    const level = readEffortLevel(file);
+    if (level) return level;
+  }
+  return '';
 }
 
 // ---- stdin -----------------------------------------------------------------
@@ -92,15 +134,22 @@ function buildUniversalLine(data, cwd) {
   const model = (data.model && (data.model.display_name || data.model.id)) || 'Claude';
   parts.push(c(ANSI.cyan, model));
 
-  // Reasoning-effort level (low|medium|high|xhigh|max) — the LIVE per-turn value
-  // Claude actually ran at, piped as effort.level (reflects mid-session /effort
-  // changes; under CLAUDE_CODE_EFFORT_LEVEL=auto it is the resolved level, not a
-  // static config value). Color-coded by level so a change is visually obvious.
+  // Reasoning effort. TWO values, because they can legitimately disagree:
+  //   active     = data.effort.level — what the turn ACTUALLY ran at, already
+  //                downgraded if the model can't serve the requested level.
+  //   configured = what the user asked for (env pin / settings effortLevel).
+  // Showing only `active` made a neutralized setting look like a statusline bug
+  // (e.g. a stale CLAUDE_CODE_EFFORT_LEVEL pin outranking effortLevel: xhigh,
+  // which then renders as plain "high" with no hint why). On a mismatch we
+  // render `active` + a dim "!=configured" so the cause is visible on the line.
   // Two spaces: the gear glyph renders double-width in most terminals and
   // visually swallows a single trailing space.
   const effort = data.effort && data.effort.level;
   if (typeof effort === 'string' && effort) {
-    parts.push(c(ANSI.dim, '⚙  ') + c(effortColor(effort), effort)); // "⚙  "
+    let seg = c(ANSI.dim, '⚙  ') + c(effortColor(effort), effort); // "⚙  "
+    const wanted = configuredEffort(cwd);
+    if (wanted && wanted !== effort) seg += c(ANSI.yellow, '≠' + wanted); // "!=<configured>"
+    parts.push(seg);
   }
 
   const ctx = contextSegment(data.context_window);

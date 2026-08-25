@@ -1,13 +1,14 @@
 ---
 description: "Clean up code — remove dead code, normalize naming, eliminate duplication."
 argument-hint: "[--scope path/to/project]"
+effort: high
 ---
 
 # De-sloppify
 
 `/DotnetPilot:quality:de-sloppify` performs systematic code cleanup without changing behavior.
 
-> **Delegates to**: `dnp-refactor-cleaner` (sonnet); pre-flight check runs in the caller's context.
+> **Delegates to**: `dnp-refactor-cleaner` (sonnet, effort high); pre-flight check runs in the caller's context.
 
 ## Pre-flight
 

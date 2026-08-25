@@ -3,6 +3,7 @@ name: dnp-verifier
 description: "✅ Goal-backward verification for .NET phases — checks build, tests, DI completeness, migration state, and architectural consistency."
 tools: Read, Bash(dotnet:*), Glob, Grep, mcp__roslyn__check_di_completeness, mcp__roslyn__get_solution_structure, mcp__roslyn__check_architecture_violations, mcp__roslyn__get_ef_models, mcp__roslyn__detect_antipatterns, mcp__roslyn__detect_circular_dependencies
 model: sonnet
+effort: high
 color: blue
 ---
 

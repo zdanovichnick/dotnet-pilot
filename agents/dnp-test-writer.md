@@ -3,6 +3,7 @@ name: dnp-test-writer
 description: "🧪 TDD agent for .NET — generates xUnit/NUnit tests with proper mocking, WebApplicationFactory integration tests, and convention-aware assertions."
 tools: Read, Write, Edit, Bash, Glob, Grep
 model: sonnet
+effort: high
 color: blue
 permissionMode: acceptEdits
 ---

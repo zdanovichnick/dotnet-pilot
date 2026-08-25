@@ -1,6 +1,7 @@
 ---
 description: "Install and wire the DotnetPilot .NET-aware statusline."
 argument-hint: "[--manual] — print the settings.json snippet instead of editing it"
+effort: low
 ---
 
 # Statusline

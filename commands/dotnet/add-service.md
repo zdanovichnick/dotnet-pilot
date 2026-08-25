@@ -1,6 +1,7 @@
 ---
 description: "Create a service with interface, implementation, DI registration, and test scaffold."
 argument-hint: "<service-name> [--lifetime scoped|transient|singleton]"
+effort: medium
 ---
 
 # Add Service

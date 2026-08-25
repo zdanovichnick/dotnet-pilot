@@ -3,6 +3,7 @@ name: dnp-planner
 description: "📋 Plans a .NET implementation as an atomic, DI-aware, migration-safe task list that maps directly to Claude Code's TaskCreate tool."
 tools: Read, Write, Bash(dotnet:*), Glob, Grep, mcp__context7__*
 model: opus
+effort: xhigh
 color: purple
 permissionMode: acceptEdits
 ---

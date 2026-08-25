@@ -1,13 +1,14 @@
 ---
 description: "Create a full entity stack: entity class, EF configuration, repository, service, and migration."
 argument-hint: "<entity-name> [--properties 'Name:string, Age:int, Email:string']"
+effort: high
 ---
 
 # Create Entity
 
 `/DotnetPilot:dotnet:create-entity` creates the complete vertical slice for a domain entity.
 
-> **Delegates to**: `dnp-ef-migration-planner` (haiku) for the migration step; uses `mcp__roslyn__get_solution_structure` to resolve project paths. Other steps run in the caller's context.
+> **Delegates to**: `dnp-ef-migration-planner` (sonnet, effort low) for the migration step; uses `mcp__roslyn__get_solution_structure` to resolve project paths. Other steps run in the caller's context.
 
 ## Execution
 

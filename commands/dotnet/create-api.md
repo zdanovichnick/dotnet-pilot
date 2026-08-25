@@ -1,13 +1,14 @@
 ---
 description: "Create API controller or minimal API endpoint with DTOs, validation, DI registration, and OpenAPI attributes."
 argument-hint: "<entity-name> [--minimal for minimal API style]"
+effort: medium
 ---
 
 # Create API
 
 `/DotnetPilot:dotnet:create-api` generates a complete API endpoint for an entity.
 
-> **Delegates to**: `dnp-api-scaffolder` (haiku).
+> **Delegates to**: `dnp-api-scaffolder` (sonnet, effort low).
 
 ## Execution
 

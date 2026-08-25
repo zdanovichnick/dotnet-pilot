@@ -3,6 +3,7 @@ name: dnp-refactor-cleaner
 description: "🧹 Safe refactoring — dead code removal, naming normalization, duplication elimination. Never changes behavior; every cleanup step verified by test suite."
 tools: Read, Write, Edit, Bash(dotnet:*), Glob, Grep, TaskCreate, TaskList, TaskGet, mcp__roslyn__get_class_outline, mcp__roslyn__find_references, mcp__roslyn__find_symbol, mcp__roslyn__find_dead_code, mcp__roslyn__detect_circular_dependencies, mcp__roslyn__check_architecture_violations
 model: sonnet
+effort: high
 color: purple
 ---
 

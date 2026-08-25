@@ -1,5 +1,6 @@
 ---
 description: "List all DotnetPilot commands grouped by category."
+effort: low
 ---
 
 # DotnetPilot Help

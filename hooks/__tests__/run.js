@@ -458,9 +458,13 @@ const CASES = [
       context_window: { used_percentage: 42, total_input_tokens: 84000 },
       cost: { total_cost_usd: 2.55, total_duration_ms: 740000 },
     },
-    env: { NO_COLOR: '1' },
+    // Pin the effort explicitly: without it the segment would resolve the
+    // CONFIGURED level from the real ~/.claude/settings.json and the mismatch
+    // marker would come and go with whoever runs the suite.
+    env: { NO_COLOR: '1', CLAUDE_CODE_EFFORT_LEVEL: 'high' },
     expectExit: 0,
     expectStdout: ['Opus 4.8', '⚙  high', 'CTX ', '42%', '84k', 'SLN ', 'Demo', '$2.55', 'TIP /dotnet-pilot:'],
+    expectStdoutAbsent: ['≠'],
   },
   {
     name: 'statusline: recent build failure shows BUILD ✗',
@@ -480,6 +484,29 @@ const CASES = [
     expectExit: 0,
     expectStdout: ['Opus 4.8'],
     expectStdoutAbsent: ['SLN', 'TFM', 'TIP'],
+  },
+  {
+    // The bug this segment exists for: a configured level that is NOT in force
+    // used to render as the bare active level, which read as a statusline bug.
+    name: 'statusline: configured effort differing from active renders a mismatch',
+    hook: '../statusline/dnp-statusline.js',
+    runtime: 'node',
+    input: { cwd: nonDotnetDir, model: { display_name: 'Opus 4.8' }, effort: { level: 'high' } },
+    env: { NO_COLOR: '1', CLAUDE_CODE_EFFORT_LEVEL: 'max' },
+    expectExit: 0,
+    expectStdout: ['⚙  high', '≠max'],
+  },
+  {
+    name: 'statusline: effort pin of "auto" is not a pin (falls through to settings)',
+    hook: '../statusline/dnp-statusline.js',
+    runtime: 'node',
+    input: { cwd: nonDotnetDir, model: { display_name: 'Opus 4.8' }, effort: { level: 'high' } },
+    // HOME is redirected so no real user settings file can be found; with no pin
+    // and no settings, there is nothing to compare against and no marker shows.
+    env: { NO_COLOR: '1', CLAUDE_CODE_EFFORT_LEVEL: 'auto', HOME: nonDotnetDir, USERPROFILE: nonDotnetDir },
+    expectExit: 0,
+    expectStdout: ['⚙  high'],
+    expectStdoutAbsent: ['≠'],
   },
   {
     name: 'statusline: empty payload degrades to a minimal line',

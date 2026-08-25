@@ -1,12 +1,13 @@
 ---
 description: "Package vulnerability scan, version consistency check, and upgrade recommendations."
+effort: medium
 ---
 
 # Check Packages
 
 `/DotnetPilot:quality:check-packages` scans NuGet packages across the solution.
 
-> **Delegates to**: `dnp-nuget-auditor` (haiku).
+> **Delegates to**: `dnp-nuget-auditor` (sonnet, effort low).
 
 ## Execution
 

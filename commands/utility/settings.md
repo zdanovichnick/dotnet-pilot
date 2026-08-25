@@ -1,6 +1,7 @@
 ---
 description: "View and modify DotnetPilot configuration."
 argument-hint: "[key] [value] — get or set a config value"
+effort: low
 ---
 
 # Settings

@@ -1,6 +1,7 @@
 ---
 description: "Initialize DotnetPilot for a .NET solution — discovers projects, creates user-scoped .planning/ directory, generates PROJECT.md and solution map."
 argument-hint: "[--refresh to re-scan existing .planning/]"
+effort: medium
 ---
 
 # Initialize DotnetPilot Workflow

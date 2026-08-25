@@ -1,12 +1,13 @@
 ---
 description: "Commit quality gate — build, test, format check, DI verification, and architecture check."
+effort: medium
 ---
 
 # Commit Check
 
 `/DotnetPilot:quality:commit-check` runs all quality checks before committing.
 
-> **Delegates to**: `dnp-di-wiring-checker` (haiku); optionally the stock `code-reviewer` agent on large changesets.
+> **Delegates to**: `dnp-di-wiring-checker` (sonnet, effort low); optionally the stock `code-reviewer` agent on large changesets.
 
 ## Execution
 

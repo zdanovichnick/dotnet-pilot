@@ -1,6 +1,7 @@
 ---
 description: "Quick fix — bypass the full pipeline for small changes."
 argument-hint: "<task description>"
+effort: medium
 ---
 
 # Quick Task
