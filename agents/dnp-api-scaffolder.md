@@ -49,7 +49,7 @@ For a given entity name (e.g., "User"):
        [ProducesResponseType(StatusCodes.Status404NotFound)]
        public async Task<IActionResult> GetById(int id, CancellationToken ct)
        {
-           // implementation
+           /* body */
        }
    }
    ```

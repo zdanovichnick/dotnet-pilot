@@ -6,7 +6,7 @@ effort: medium
 
 # Build Fix
 
-`/DotnetPilot:dotnet:build-fix` attempts to automatically repair build errors.
+`/dotnet-pilot:dotnet:build-fix` attempts to automatically repair build errors.
 
 > **Delegates to**: `dnp-build-error-resolver` (sonnet, effort low); initial build check runs in the caller's context.
 
@@ -53,6 +53,6 @@ Files modified: <list>
 
 ## Related
 
-- `/DotnetPilot:quality:check-architecture` — if build errors indicate architecture layer violations
-- `/DotnetPilot:dotnet:add-service` — if build error is caused by a missing DI registration
-- `/DotnetPilot:dotnet:health-check` — full solution health check including build
+- `/dotnet-pilot:quality:check-architecture` — if build errors indicate architecture layer violations
+- `/dotnet-pilot:dotnet:add-service` — if build error is caused by a missing DI registration
+- `/dotnet-pilot:dotnet:health-check` — full solution health check including build

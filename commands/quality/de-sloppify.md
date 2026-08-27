@@ -6,14 +6,14 @@ effort: high
 
 # De-sloppify
 
-`/DotnetPilot:quality:de-sloppify` performs systematic code cleanup without changing behavior.
+`/dotnet-pilot:quality:de-sloppify` performs systematic code cleanup without changing behavior.
 
 > **Delegates to**: `dnp-refactor-cleaner` (sonnet, effort high); pre-flight check runs in the caller's context.
 
 ## Pre-flight
 
 1. Verify tests pass: `dotnet test`
-2. If tests fail: **stop** — do not clean broken code. Run `/DotnetPilot:dotnet:build-fix` first if the build is broken.
+2. If tests fail: **stop** — do not clean broken code. Run `/dotnet-pilot:dotnet:build-fix` first if the build is broken.
 
 ## Execution
 
@@ -49,10 +49,10 @@ Files modified: 5
 
 - Before a major feature release to reduce review noise
 - After a large merge with many contributors
-- When `/DotnetPilot:dotnet:health-check` reports dead code or naming inconsistencies
+- When `/dotnet-pilot:dotnet:health-check` reports dead code or naming inconsistencies
 
 ## Related
 
-- `/DotnetPilot:dotnet:health-check` — identify issues before cleaning
-- `/DotnetPilot:quality:check-architecture` — architecture compliance check
-- `/DotnetPilot:project:checkpoint` — verify the solution is clean after de-sloppify
+- `/dotnet-pilot:dotnet:health-check` — identify issues before cleaning
+- `/dotnet-pilot:quality:check-architecture` — architecture compliance check
+- `/dotnet-pilot:project:checkpoint` — verify the solution is clean after de-sloppify

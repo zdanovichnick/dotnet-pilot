@@ -119,3 +119,53 @@ var user = fixture.Create<User>();
 ```csharp
 var user = new UserBuilder().WithEmail("test@example.com").Build();
 ```
+
+Examples here use Moq because it is the most common. Read the test project's `.csproj` and
+mirror whatever it already references — a second mocking library in one solution is debt.
+
+## Choosing a Tier
+
+Confidence per test is not uniform. An integration test through `WebApplicationFactory`
+exercises real DI, middleware, and routing; a unit test proves one method handles one case.
+Prefer the highest tier that is still fast and deterministic for the behavior in question.
+
+| Behavior under test | Tier that actually proves it |
+|---|---|
+| New API endpoint | Integration via `WebApplicationFactory` — routing + DI + middleware |
+| Bug fix at a service boundary | Integration — the bug lives where components meet |
+| Edge case in pure domain logic | Unit — fast, exhaustive, precise |
+| EF Core query behavior | Integration against a real provider; the in-memory provider diverges from SQL Server on ordering, transactions, and raw SQL |
+| Validation rules | Unit — `[Theory]` coverage is economical |
+| Cross-service workflow | Integration plus one system-level test |
+
+## Mocks
+
+**A test that only asserts on its mocks proves nothing.** Litmus: delete every `Verify()`,
+`Received()`, and `MustHaveHappened()` call. If nothing is left that would fail when the
+implementation breaks, the test is measuring its own setup.
+
+Preference order:
+
+1. **Real, if it is controllable and fast** — `TestServer`, `IMemoryCache`, a real filesystem
+   with `IDisposable` cleanup.
+2. **A container** — Testcontainers for SQL Server, Redis, RabbitMQ. Slower, but the behavior is
+   the behavior.
+3. **A mock** — only when the dependency is non-deterministic, costly (a paid API), or slow.
+
+A mock is a claim about a contract, so verify the claim before writing it: read the real
+signature (`mcp__roslyn__get_class_outline`) for return types and nullability, and read the
+implementation for the values it actually returns. A mock returning `"PENDING"` where the real
+code returns `OrderStatus.Pending` hides the bug it was supposed to expose.
+
+## Boundary Coverage
+
+Every boundary the feature crosses wants at least one test with the real implementation behind
+it. Mock-only coverage at a boundary means nothing has proven the integration works.
+
+| Boundary | Real-implementation approach |
+|---|---|
+| Database | `WebApplicationFactory` + provider under test, or Testcontainers |
+| External HTTP API | `HttpClient` against WireMock or a test-mode endpoint |
+| Message queue | Real broker in a container |
+| Cache | Real `IMemoryCache`, or Redis in a container |
+| Internal service seam | Real DI container via `WebApplicationFactory` |

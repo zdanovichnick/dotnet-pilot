@@ -6,7 +6,7 @@ effort: medium
 
 # Add Project
 
-`/DotnetPilot:dotnet:add-project` creates a project and wires it into the solution correctly.
+`/dotnet-pilot:dotnet:add-project` creates a project and wires it into the solution correctly.
 
 ## Execution
 

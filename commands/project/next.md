@@ -5,7 +5,7 @@ effort: low
 
 # Next Step
 
-`/DotnetPilot:project:next` reads `.planning/STATE.md` (if present) and suggests the
+`/dotnet-pilot:project:next` reads `.planning/STATE.md` (if present) and suggests the
 appropriate next action.
 
 The legacy spec-driven pipeline (`discuss`/`research`/`plan`/`execute`/`verify`) has been
@@ -14,10 +14,10 @@ retired. For multi-step implementation work, use Claude Code's native **Plan Mod
 
 ## Decision Logic
 
-1. **No `.planning/` directory** → Run `/DotnetPilot:project:init` to set up the project model.
+1. **No `.planning/` directory** → Run `/dotnet-pilot:project:init` to set up the project model.
 2. **`.planning/` exists, no ROADMAP.md / PROJECT.md populated** → Open those files and fill them in, then re-run this command.
-3. **PROJECT.md / ROADMAP.md populated, uncommitted work in progress** → Use Plan Mode for the next feature, then `/DotnetPilot:quality:commit-check`, then `/DotnetPilot:project:ship`.
-4. **All phases complete, tests pass, no uncommitted work** → Run `/DotnetPilot:project:ship`.
+3. **PROJECT.md / ROADMAP.md populated, uncommitted work in progress** → Use Plan Mode for the next feature, then `/dotnet-pilot:quality:commit-check`, then `/dotnet-pilot:project:ship`.
+4. **All phases complete, tests pass, no uncommitted work** → Run `/dotnet-pilot:project:ship`.
 
 ## Execution
 

@@ -6,7 +6,7 @@ effort: medium
 
 # Initialize DotnetPilot Workflow
 
-`/DotnetPilot:project:init` discovers your .NET solution and creates a user-scoped
+`/dotnet-pilot:project:init` discovers your .NET solution and creates a user-scoped
 `.planning/` directory with all foundational state files.
 
 Requires `enableProjectModel: true` (set automatically on first run).
@@ -88,7 +88,7 @@ Display a summary:
 - Projects discovered (table with name, type, layer)
 - EF Core contexts found
 - State directory: `~/.claude/projects/<flattened>/.planning/`
-- Next step: open Plan Mode for your first feature, or run `/DotnetPilot:dotnet:create-entity <name>` for a focused scaffold.
+- Next step: open Plan Mode for your first feature, or run `/dotnet-pilot:dotnet:create-entity <name>` for a focused scaffold.
 
 ## Templates
 

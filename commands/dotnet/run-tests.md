@@ -6,7 +6,7 @@ effort: medium
 
 # Run Tests
 
-`/DotnetPilot:dotnet:run-tests` executes tests with detailed reporting.
+`/dotnet-pilot:dotnet:run-tests` executes tests with detailed reporting.
 
 > **Delegates to**: `dnp-test-writer` (sonnet, effort high) — only on test failures, to diagnose and suggest fixes.
 

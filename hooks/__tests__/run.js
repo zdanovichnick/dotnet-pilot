@@ -252,12 +252,12 @@ const CASES = [
 
   // --- dnp-dotnet-priority ---
   {
-    name: 'priority: .NET project + generic agent emits routing table',
+    name: 'priority: .NET project + generic agent emits routing nudge',
     hook: 'dnp-dotnet-priority.js',
     runtime: 'node',
     input: { cwd: workspace, tool_input: { subagent_type: 'general-purpose' } },
     expectExit: 0,
-    expectSubstrings: ['[dnp-priority-router]', 'routing priority', 'dnp-tdd-developer-easy', 'mcp__roslyn__', 'code-analyzer'],
+    expectSubstrings: ['[dnp-priority-router]', 'dnp-* agents', '/dotnet-pilot:utility:help', 'mcp__roslyn__', 'code-analyzer'],
   },
   {
     name: 'priority: dotnet-pilot agent is not nudged',
@@ -312,7 +312,7 @@ const CASES = [
     expectExit: 0,
     expectEmpty: true,
     expectFiles: [
-      { path: path.join(fakeHome, '.claude', 'CLAUDE.md'), includes: ['<!-- DotnetPilot v', 'Git Workflow Efficiency'] },
+      { path: path.join(fakeHome, '.claude', 'CLAUDE.md'), includes: ['<!-- DotnetPilot v', '.NET Tooling Priority'] },
       { path: path.join(fakeHome, '.claude', 'settings.json'), includes: ['"autoUpdate": true'] },
     ],
   },
@@ -463,17 +463,17 @@ const CASES = [
     // marker would come and go with whoever runs the suite.
     env: { NO_COLOR: '1', CLAUDE_CODE_EFFORT_LEVEL: 'high' },
     expectExit: 0,
-    expectStdout: ['Opus 4.8', '⚙  high', 'CTX ', '42%', '84k', 'SLN ', 'Demo', '$2.55', 'TIP /dotnet-pilot:'],
-    expectStdoutAbsent: ['≠'],
+    expectStdout: ['🤖', 'Opus 4.8', '⚡', 'EFF high', '🧠', '█', '░', '42%', '84k', '📦', 'SLN Demo', '💰', '$2.55', '💡', 'TIP /dotnet-pilot:'],
+    expectStdoutAbsent: ['(set:'],
   },
   {
-    name: 'statusline: recent build failure shows BUILD ✗',
+    name: 'statusline: recent build failure shows the BUILD segment',
     hook: '../statusline/dnp-statusline.js',
     runtime: 'node',
     input: { cwd: slnFailDir, model: { display_name: 'Opus 4.8' } },
     env: { NO_COLOR: '1' },
     expectExit: 0,
-    expectStdout: ['SLN Widget', 'BUILD ✗ 3x'],
+    expectStdout: ['SLN Widget', '❌', 'BUILD 3x'],
   },
   {
     name: 'statusline: non-.NET dir has no SLN/TFM line',
@@ -494,7 +494,7 @@ const CASES = [
     input: { cwd: nonDotnetDir, model: { display_name: 'Opus 4.8' }, effort: { level: 'high' } },
     env: { NO_COLOR: '1', CLAUDE_CODE_EFFORT_LEVEL: 'max' },
     expectExit: 0,
-    expectStdout: ['⚙  high', '≠max'],
+    expectStdout: ['EFF high', '(set: max)'],
   },
   {
     name: 'statusline: effort pin of "auto" is not a pin (falls through to settings)',
@@ -505,8 +505,8 @@ const CASES = [
     // and no settings, there is nothing to compare against and no marker shows.
     env: { NO_COLOR: '1', CLAUDE_CODE_EFFORT_LEVEL: 'auto', HOME: nonDotnetDir, USERPROFILE: nonDotnetDir },
     expectExit: 0,
-    expectStdout: ['⚙  high'],
-    expectStdoutAbsent: ['≠'],
+    expectStdout: ['EFF high'],
+    expectStdoutAbsent: ['(set:'],
   },
   {
     name: 'statusline: empty payload degrades to a minimal line',
@@ -516,7 +516,7 @@ const CASES = [
     env: { NO_COLOR: '1' },
     expectExit: 0,
     expectStdout: ['Claude'],
-    expectStdoutAbsent: ['⚙'],
+    expectStdoutAbsent: ['EFF'],
   },
 
   // --- dnp-statusline-sync (writes into throwaway HOMEs) ---

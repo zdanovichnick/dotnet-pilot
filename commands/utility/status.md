@@ -5,11 +5,11 @@ effort: low
 
 # Project Status
 
-`/DotnetPilot:utility:status` displays the current state of the DotnetPilot project.
+`/dotnet-pilot:utility:status` displays the current state of the DotnetPilot project.
 
 ## Execution
 
-1. Check if `.planning/` exists. If not: "DotnetPilot not initialized. Run `/DotnetPilot:project:init`."
+1. Check if `.planning/` exists. If not: "DotnetPilot not initialized. Run `/dotnet-pilot:project:init`."
 
 2. Read `.planning/STATE.md` frontmatter and body.
 

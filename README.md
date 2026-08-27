@@ -33,7 +33,7 @@ dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # update to latest
 }
 ```
 
-That's it. Open Claude Code in your `.sln` / `.slnx` directory and run `/DotnetPilot:utility:help`.
+That's it. Open Claude Code in your `.sln` / `.slnx` directory and run `/dotnet-pilot:utility:help`.
 
 ---
 
@@ -68,8 +68,8 @@ AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them a
 **Verify it worked:**
 
 ```
-/DotnetPilot:utility:help            → should list 29 commands
-/DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
+/dotnet-pilot:utility:help            → should list 29 commands
+/dotnet-pilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
 **Keeping it up to date.**
@@ -142,8 +142,8 @@ In Claude Code, enable the **Context7** MCP server at the account level — plan
 ### Step 4 — Verify
 
 ```
-/DotnetPilot:utility:help            → should list 29 commands
-/DotnetPilot:dotnet:health-check     → validates build, tests, DI, architecture
+/dotnet-pilot:utility:help            → should list 29 commands
+/dotnet-pilot:dotnet:health-check     → validates build, tests, DI, architecture
 ```
 
 ---
@@ -153,7 +153,7 @@ In Claude Code, enable the **Context7** MCP server at the account level — plan
 ### Initialize your project (once per solution)
 
 ```
-/DotnetPilot:project:init
+/dotnet-pilot:project:init
 ```
 
 Scans your solution, detects architecture style / test framework / EF contexts, and creates a user-scoped `.planning/` directory. Then asks three questions: what are you building, who is it for, what constraints exist.
@@ -165,9 +165,9 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 ### Or go even faster with the shorthand
 
 ```
-/DotnetPilot:dotnet:create-entity Category --properties 'Name:string, SortOrder:int'
-/DotnetPilot:dotnet:create-api Category
-/DotnetPilot:dotnet:add-migration AddCategoryTable
+/dotnet-pilot:dotnet:create-entity Category --properties 'Name:string, SortOrder:int'
+/dotnet-pilot:dotnet:create-api Category
+/dotnet-pilot:dotnet:add-migration AddCategoryTable
 ```
 
 ---
@@ -176,7 +176,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 
 ![DotnetPilot architecture diagram](./assets/architecture.svg)
 
-**Flow:** Developer invokes a `/DotnetPilot:*` command → the command spawns the right agent → the agent calls the Roslyn MCP server for semantic C# analysis (DI completeness, architecture violations, EF Core models, symbol references). Hooks run automatically on file writes and git events, feeding advisory feedback back to the command layer — they never block by default.
+**Flow:** Developer invokes a `/dotnet-pilot:*` command → the command spawns the right agent → the agent calls the Roslyn MCP server for semantic C# analysis (DI completeness, architecture violations, EF Core models, symbol references). Hooks run automatically on file writes and git events, feeding advisory feedback back to the command layer — they never block by default.
 
 > **v2.0.0 breaking change:** Commands were renamed for clarity. `pipeline:*` → `project:*`, `scaffold-*` → `create-*`, `audit-*` → `check-*`, and several others. See the tables below for full mapping.
 
@@ -188,11 +188,11 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 
 | Command | Usage | What it does |
 | --- | --- | --- |
-| `project:init` | `/DotnetPilot:project:init [--refresh]` | Initialize for a .NET solution — discover projects, create `.planning/` directory, generate PROJECT.md and solution map |
-| `project:next` | `/DotnetPilot:project:next` | Auto-detect and suggest the next project step based on current state |
-| `project:verify` | `/DotnetPilot:project:verify` | Verify readiness before shipping — build, tests, DI completeness, and architecture check |
-| `project:ship` | `/DotnetPilot:project:ship [--draft]` | Create a pull request for completed work — runs final checks and invokes `gh pr create` |
-| `project:checkpoint` | `/DotnetPilot:project:checkpoint` | Ordered quality gate: build → tests → format check → architecture warning → DI warning → git status summary with a suggested commit message |
+| `project:init` | `/dotnet-pilot:project:init [--refresh]` | Initialize for a .NET solution — discover projects, create `.planning/` directory, generate PROJECT.md and solution map |
+| `project:next` | `/dotnet-pilot:project:next` | Auto-detect and suggest the next project step based on current state |
+| `project:verify` | `/dotnet-pilot:project:verify` | Verify readiness before shipping — build, tests, DI completeness, and architecture check |
+| `project:ship` | `/dotnet-pilot:project:ship [--draft]` | Create a pull request for completed work — runs final checks and invokes `gh pr create` |
+| `project:checkpoint` | `/dotnet-pilot:project:checkpoint` | Ordered quality gate: build → tests → format check → architecture warning → DI warning → git status summary with a suggested commit message |
 
 ### Dotnet — scaffolding & solution management
 
@@ -209,28 +209,28 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | `dotnet:run-tests` | `run-tests [project] [--coverage] [--filter ...]` | Run tests with coverage reporting and failure diagnosis |
 | `dotnet:health-check` | `health-check [--fix]` | Validate full solution health — build, tests, NuGet, project references, DI completeness |
 | `dotnet:scaffold` | `scaffold <FeatureName> [--arch vsa\|clean\|ddd]` | Detect solution architecture via Roslyn, then scaffold a feature with the appropriate style — delegates to `dnp-api-scaffolder` with full context |
-| `dotnet:build-fix` | `/DotnetPilot:dotnet:build-fix` | Run `dotnet build`, capture output, and auto-fix errors iteratively — up to 5 cycles, then halts and reports what remains |
+| `dotnet:build-fix` | `/dotnet-pilot:dotnet:build-fix` | Run `dotnet build`, capture output, and auto-fix errors iteratively — up to 5 cycles, then halts and reports what remains |
 
 ### Quality — safety checks
 
 | Command | Usage | What it does |
 | --- | --- | --- |
-| `quality:commit-check` | `/DotnetPilot:quality:commit-check` | Commit quality gate — build, test, format check, DI verification, and architecture check |
+| `quality:commit-check` | `/dotnet-pilot:quality:commit-check` | Commit quality gate — build, test, format check, DI verification, and architecture check |
 | `quality:review` | `review [--depth quick\|standard\|deep]` | Code review current changes with .NET-specific focus — async patterns, LINQ, naming, DI |
-| `quality:check-packages` | `/DotnetPilot:quality:check-packages` | Package vulnerability scan, version consistency check, and upgrade recommendations |
-| `quality:check-architecture` | `/DotnetPilot:quality:check-architecture` | Scan for clean architecture layer violations — forbidden project references, DI issues, package placement |
-| `quality:security-scan` | `/DotnetPilot:quality:security-scan` | Three-phase audit: `dotnet list package --vulnerable` → `dnp-security-auditor` OWASP scan → combined CRITICAL findings report |
+| `quality:check-packages` | `/dotnet-pilot:quality:check-packages` | Package vulnerability scan, version consistency check, and upgrade recommendations |
+| `quality:check-architecture` | `/dotnet-pilot:quality:check-architecture` | Scan for clean architecture layer violations — forbidden project references, DI issues, package placement |
+| `quality:security-scan` | `/dotnet-pilot:quality:security-scan` | Three-phase audit: `dotnet list package --vulnerable` → `dnp-security-auditor` OWASP scan → combined CRITICAL findings report |
 | `quality:de-sloppify` | `de-sloppify [--scope path]` | Safe refactoring pass — dead code removal, naming normalization, duplication elimination. Requires tests passing first |
 
 ### Utility — housekeeping
 
 | Command | Usage | What it does |
 | --- | --- | --- |
-| `utility:help` | `/DotnetPilot:utility:help` | Show all commands with descriptions |
+| `utility:help` | `/dotnet-pilot:utility:help` | Show all commands with descriptions |
 | `utility:quick-fix` | `quick-fix <task description>` | Quick fix — bypass the full pipeline for small changes |
-| `utility:status` | `/DotnetPilot:utility:status` | Show current project state — phase, progress, recent activity |
+| `utility:status` | `/dotnet-pilot:utility:status` | Show current project state — phase, progress, recent activity |
 | `utility:settings` | `settings [key] [value]` | View and modify DotnetPilot configuration |
-| `utility:show-solution` | `/DotnetPilot:utility:show-solution` | Show the .NET solution structure — projects, references, packages, namespaces, layers |
+| `utility:show-solution` | `/dotnet-pilot:utility:show-solution` | Show the .NET solution structure — projects, references, packages, namespaces, layers |
 | `utility:statusline` | `statusline [--manual]` | Install the .NET-aware statusline and wire it into `~/.claude/settings.json` (backs up any existing statusLine) |
 
 ---
@@ -308,13 +308,15 @@ Hooks run automatically during Claude Code sessions. Advisory hooks warn but don
 
 ## 📊 Statusline
 
-A compact, .NET-aware statusline. Install it with `/DotnetPilot:utility:statusline`:
+A compact, .NET-aware statusline. Install it with `/dotnet-pilot:utility:statusline`:
 
-- **Line 1 (always):** `<model> │ ⚙ <effort> │ CTX <pct>% · <tokens> │ GIT <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ $<cost>`
-- **Line 2 (only inside a .NET solution):** `SLN <name> │ TFM <framework> │ BUILD ✗ <n>x`
-- **Line 3 (only inside a .NET solution):** `TIP <rotating DotnetPilot command hint>` — a slowly-rotating pointer to the plugin's commands, for discovery
+- **Line 1 (always):** `🤖 <model> │ ⚡ EFF <effort>[ (set: <configured>)] │ 🧠 <bar> <pct>% · <tokens> │ 🌿 <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ 💰 $<cost>`
+- **Line 2 (only inside a .NET solution):** `📦 SLN <name> │ 🎯 TFM <framework> │ ❌ BUILD <n>x`
+- **Line 3 (only inside a .NET solution):** `💡 TIP <rotating DotnetPilot command hint>` — a slowly-rotating pointer to the plugin's commands, for discovery
 
-`⚙ <effort>` shows the **live per-turn** reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`) when Claude Code pipes it — it reflects mid-session `/effort` changes and the resolved level under `auto` (not a static config value), and is color-coded by level (brightest at the top of the scale) so a change is obvious at a glance; omitted when the model doesn't support effort.
+Every segment carries an emoji icon and a saturated color on its **value** (labels stay dim), so the data reads before the scaffolding. Three segments are threshold-colored rather than fixed: the 🧠 context bar and percentage (green → yellow → red past 50 / 75 / 90%), the ⚡ effort level (dim `low` up to bold red `max`), and the 💰 cost (green → yellow → red past \$2 / \$10). Set `NO_COLOR` for plain text.
+
+`⚡ EFF <effort>` shows the **live per-turn** reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`) when Claude Code pipes it — it reflects mid-session `/effort` changes and the resolved level under `auto` (not a static config value), and is color-coded by level (brightest at the top of the scale) so a change is obvious at a glance; omitted when the model doesn't support effort. When the level you configured is not the one in force, a yellow `(set: <configured>)` suffix names it — e.g. `EFF high (set: xhigh)`.
 
 `BUILD ✗ Nx` reflects the same failure state the **Build Verify** hook records (so it also surfaces `dotnet test` failures); absence means "no recent failure recorded", not a guaranteed green build.
 
@@ -352,7 +354,7 @@ Skills are on-demand knowledge packs loaded by agents when needed — they encod
 **1. Scaffold a CRUD entity end-to-end in 30 seconds**
 
 ```
-> /DotnetPilot:dotnet:create-entity Category --properties 'Name:string, Description:string?, SortOrder:int'
+> /dotnet-pilot:dotnet:create-entity Category --properties 'Name:string, Description:string?, SortOrder:int'
 
 Created 9 files:
   src/ECommerce.Domain/Entities/Category.cs
@@ -367,7 +369,7 @@ Created 9 files:
 
 Build: PASS · Tests: PASS · DI: PASS
 
-> /DotnetPilot:dotnet:create-api Category
+> /dotnet-pilot:dotnet:create-api Category
 
 Created 4 files:
   src/ECommerce.Api/DTOs/CreateCategoryRequest.cs
@@ -381,7 +383,7 @@ Build: PASS
 **2. Safely migrate a project with multiple DbContexts**
 
 ```
-> /DotnetPilot:dotnet:add-migration AddCompanyNameToTenant
+> /dotnet-pilot:dotnet:add-migration AddCompanyNameToTenant
 
 
 Multiple DbContexts detected. Which one?
@@ -405,7 +407,7 @@ Committed: feat(Infrastructure): add migration AddCompanyNameToTenant
 **3. Catch architecture violations before they ship**
 
 ```
-> /DotnetPilot:quality:check-architecture
+> /dotnet-pilot:quality:check-architecture
 
 Architecture Audit: ECommerce.slnx
   Style: clean
@@ -420,7 +422,7 @@ Architecture Audit: ECommerce.slnx
 **4. Find and fix missing DI registrations**
 
 ```
-> /DotnetPilot:dotnet:health-check
+> /dotnet-pilot:dotnet:health-check
 
   DI Wiring:    FAIL (15 services, 2 missing)
 
@@ -428,7 +430,7 @@ Architecture Audit: ECommerce.slnx
     IPaymentGateway      → consumed by OrderService (Application/Services/OrderService.cs:14)
     INotificationService → consumed by OrderCompletedHandler (Application/Handlers/...:9)
 
-> /DotnetPilot:dotnet:health-check --fix
+> /dotnet-pilot:dotnet:health-check --fix
 
   Fixed ServiceCollectionExtensions.cs:
     + services.AddScoped<IPaymentGateway, StripePaymentGateway>();
@@ -440,7 +442,7 @@ Architecture Audit: ECommerce.slnx
 **5. Pre-commit quality gate**
 
 ```
-> /DotnetPilot:quality:commit-check
+> /dotnet-pilot:quality:commit-check
 
   [PASS] Build:        0 errors
   [PASS] Tests:        72 passed
@@ -454,7 +456,7 @@ Architecture Audit: ECommerce.slnx
 **6. Deep code review before a PR merge**
 
 ```
-> /DotnetPilot:quality:review --depth deep
+> /dotnet-pilot:quality:review --depth deep
 
 
   [HIGH]   UserService.cs:45
@@ -478,7 +480,7 @@ Architecture Audit: ECommerce.slnx
 
 ## ⚙️ Configuration
 
-After `/DotnetPilot:project:init`, configuration lives at `~/.claude/projects/<flat-repo-path>/.planning/config.json`.
+After `/dotnet-pilot:project:init`, configuration lives at `~/.claude/projects/<flat-repo-path>/.planning/config.json`.
 
 ```json
 {
@@ -510,7 +512,7 @@ After `/DotnetPilot:project:init`, configuration lives at `~/.claude/projects/<f
 }
 ```
 
-Use `/DotnetPilot:utility:settings <key> <value>` to change values without editing JSON directly.
+Use `/dotnet-pilot:utility:settings <key> <value>` to change values without editing JSON directly.
 
 
 | Setting | Change to | Reason |
@@ -579,7 +581,7 @@ dnp-roslyn doctor    # shows solution detection status
 
 **"DotnetPilot not initialized"**
 
-Most commands work without init. If `project:next` or `utility:status` reports this, run `/DotnetPilot:project:init` once to create the `.planning/` directory.
+Most commands work without init. If `project:next` or `utility:status` reports this, run `/dotnet-pilot:project:init` once to create the `.planning/` directory.
 
 **Hooks are too noisy**
 
@@ -587,11 +589,11 @@ Most commands work without init. If `project:next` or `utility:status` reports t
 { "hooks": { "di_check": false, "project_scope_guard": false } }
 ```
 
-Or: `/DotnetPilot:utility:settings hooks.di_check false`
+Or: `/dotnet-pilot:utility:settings hooks.di_check false`
 
 **Build keeps failing after scaffolding**
 
-DotnetPilot aborts after 5 consecutive build failures. Check that `dotnet build` works manually, then run `/DotnetPilot:dotnet:health-check --fix` for auto-repair.
+DotnetPilot aborts after 5 consecutive build failures. Check that `dotnet build` works manually, then run `/dotnet-pilot:dotnet:health-check --fix` for auto-repair.
 
 **Commands missing after update (e.g. `dotnet:tdd` not found)**
 
@@ -617,7 +619,7 @@ Claude Code caches the plugin at install time. After a major version update, new
 /reload-plugins
 ```
 
-Verify: `/DotnetPilot:utility:help` — should list 29 commands including `dotnet:tdd`, `dotnet:build-fix`, and `quality:security-scan`.
+Verify: `/dotnet-pilot:utility:help` — should list 29 commands including `dotnet:tdd`, `dotnet:build-fix`, and `quality:security-scan`.
 
 **"Context7 tools not available"**
 
@@ -641,9 +643,10 @@ Context7 must be enabled at the account level in Claude Code settings.
 | v2.2.2 | ✅ shipped | **Model routing:** every agent switched from pinned/dated model IDs to tier aliases (`opus`/`sonnet`/`haiku`) so frontmatter auto-tracks each tier's current default and needs no bump on future model releases (e.g. Opus 4.8). Synced the model columns in `README.md` and `CLAUDE.md`, the command delegate-notes, and the architecture diagram. Also adds a Git rule to the injected global `CLAUDE.md` — fetch `CODEOWNERS` reviewers when opening PRs. |
 | v2.3.0 | ✅ shipped | New: `Git Auto-Approve` hook — returns `permissionDecision: allow` for safe single `git`/`gh` commands (status/diff/log/add/commit/branch/push, `gh pr create`, heredoc commit) so commit + PR skip the permission prompt (7 → 8 hooks). Plus doc-drift fixes and hook robustness hardening. |
 | v2.4.0 | ✅ shipped | **.NET-first tooling priority.** New `Code-Analyzer Redirect` advisory hook + extended `Priority Router` steer C# code inspection to `mcp__roslyn__` over kouhesion's Python `code-analyzer` (which has no C# support); adds a `.NET-First Tooling Priority` rule to the injected global `CLAUDE.md`; shared `_lib/dotnet.js` detection (with parent walk-up); both priority hooks are now config-toggleable (8 → 9 hooks). |
-| v2.5.0–2.5.3 | ✅ shipped | **.NET-aware statusline.** New `statusline/dnp-statusline.js` (model, context, git, elapsed, cost + a .NET line with solution / TFM / build-fail count) plus the `dnp-statusline-sync` SessionStart hook and `/DotnetPilot:utility:statusline` installer (9 → 11 hooks). Added the reasoning-effort segment, colour-coded it by level, and fixed a `sha1(cwd)` build-fail state collision shared with `dnp-build-verify`. |
+| v2.5.0–2.5.3 | ✅ shipped | **.NET-aware statusline.** New `statusline/dnp-statusline.js` (model, context, git, elapsed, cost + a .NET line with solution / TFM / build-fail count) plus the `dnp-statusline-sync` SessionStart hook and `/dotnet-pilot:utility:statusline` installer (9 → 11 hooks). Added the reasoning-effort segment, colour-coded it by level, and fixed a `sha1(cwd)` build-fail state collision shared with `dnp-build-verify`. |
 | v2.6.0 | ✅ shipped | **Effort-aware routing + Fable advisor.** Every agent and command now carries an explicit `effort:` level, so reasoning spend is routed independently of model tier. The 6 Haiku agents moved to **Sonnet + `effort: low`** — effort is unsupported on Haiku 4.5, so the old pairing would have been a silent no-op. New `dnp-fable-advisor` (Fable 5, read-only, ADVISE / UNBLOCK / ADJUDICATE) for decision-point consults (14 → 15 agents). Statusline now renders `⚙ <active>≠<configured>` when the configured effort level is not actually in force — the failure mode that made a stale `CLAUDE_CODE_EFFORT_LEVEL` pin look like a statusline bug. |
-| v2.7 | 🔜 planned | MAUI / mobile support |
+| v2.7.0 | ✅ shipped | **Statusline restyle.** The effort segment drops the double-width `⚙` glyph for an `EFF` label, and its configured-level mismatch now reads as a spelled-out `(set: <configured>)` instead of a cramped `≠<configured>`. Every segment gained an emoji icon and a saturated **value** color (labels stay dim), context usage renders as a threshold-colored 10-cell bar, and cost/context/effort now ramp green → yellow → red with pressure — following the icon + progress-bar style of the [official statusline docs](https://code.claude.com/docs/en/statusline). **Context-engineering pass for Claude 5.** The two TDD agents shed 680 lines of guardrail scaffolding — anti-rationalization tables, epistemic-gate and predict-first protocols, `LLM-1..6` self-verification checklists, and six pages of few-shot ideal-output transcripts — keeping the .NET gotchas that the model can't infer. Test-tier selection, mock-fidelity rules, and boundary-coverage tables moved into the `testing-dotnet` skill, loaded on demand instead of inlined. The global `CLAUDE.md` rules block lost a live contradiction ("prefer explicit types" vs "always use `var`") and its duplicated .NET style sections. `dnp-dotnet-priority` stopped re-injecting the 16-line agent roster on every `Agent` call — Claude Code already surfaces agent descriptions. Command references corrected from the never-valid `/DotnetPilot:` prefix to `/dotnet-pilot:` (109 occurrences). New **Comments** rule in the injected global block — default to none, and a comment earns its place only where the code cannot say the thing itself; `dnp-test-writer`'s example test dropped its `// Arrange` / `// Act` / `// Assert` labels, which had been demonstrating the opposite of the stated convention. |
+| v2.8 | 🔜 planned | MAUI / mobile support |
 
 ---
 

@@ -53,7 +53,7 @@ Build a directed graph. Any edge violating the layer rules above is a violation.
 
 ### Architecture Report
 
-Output format for `/DotnetPilot:quality:check-architecture`:
+Output format for `/dotnet-pilot:quality:check-architecture`:
 
 ```markdown
 ## Architecture Audit
@@ -75,10 +75,9 @@ Domain ← Application ← Infrastructure ← Api
 2. Register IEmailSender in Infrastructure DI extension
 ```
 
-## Anti-Rationalization Table
+## Judgment Calls
 
-| If you're thinking... | The truth is... |
-|---|---|
-| "This small reference won't hurt" | Every layer violation is a crack. They compound into unmaintainable code. |
-| "The test project can do anything" | True for test projects. Not true for shared test helpers that leak into production. |
-| "MediatR in Domain is fine" | Only MediatR.Contracts (interfaces). The full MediatR package belongs in Application. |
+Test projects genuinely may reference anything; shared test helpers that leak into production
+code do not. `MediatR.Contracts` in Domain is fine — the full `MediatR` package is not. A single
+"small" cross-layer reference is still the crack the next twenty follow through, so report it at
+the same severity as the rest.

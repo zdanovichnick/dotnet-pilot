@@ -6,7 +6,7 @@ effort: high
 
 # Scaffold Feature
 
-`/DotnetPilot:dotnet:scaffold [FeatureName]` generates a complete feature scaffold matching the current project's architecture.
+`/dotnet-pilot:dotnet:scaffold [FeatureName]` generates a complete feature scaffold matching the current project's architecture.
 
 > **Delegates to**: `dnp-api-scaffolder` (sonnet, effort low); architecture detection runs in the caller's context.
 
@@ -51,6 +51,6 @@ Delegate to `dnp-api-scaffolder` with:
 
 ## Related
 
-- `/DotnetPilot:dotnet:add-endpoint` — add a single endpoint to an existing feature
-- `/DotnetPilot:quality:check-architecture` — verify architecture compliance after scaffold
-- `/DotnetPilot:dotnet:health-check` — full solution health including DI completeness
+- `/dotnet-pilot:dotnet:add-endpoint` — add a single endpoint to an existing feature
+- `/dotnet-pilot:quality:check-architecture` — verify architecture compliance after scaffold
+- `/dotnet-pilot:dotnet:health-check` — full solution health including DI completeness

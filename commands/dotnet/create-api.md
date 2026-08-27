@@ -6,7 +6,7 @@ effort: medium
 
 # Create API
 
-`/DotnetPilot:dotnet:create-api` generates a complete API endpoint for an entity.
+`/dotnet-pilot:dotnet:create-api` generates a complete API endpoint for an entity.
 
 > **Delegates to**: `dnp-api-scaffolder` (sonnet, effort low).
 

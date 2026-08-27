@@ -6,7 +6,7 @@ effort: medium
 
 # Add Service
 
-`/DotnetPilot:dotnet:add-service` creates a complete service with proper DI wiring.
+`/dotnet-pilot:dotnet:add-service` creates a complete service with proper DI wiring.
 
 ## Execution
 

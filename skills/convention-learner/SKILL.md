@@ -5,22 +5,17 @@ description: Protocol for detecting and replicating existing project conventions
 
 # Convention Learner
 
-Protocol for detecting project conventions before generating code. Run this before creating any new files in a project you haven't worked in during this session.
+**Purpose**: prevent naming drift. Generated code that doesn't match the project's conventions
+creates review friction and merge noise long after it ships.
 
-**Purpose**: Prevent naming drift and structural inconsistency. Generated code that doesn't match project conventions creates review friction, merge noise, and long-term maintenance debt.
+Run this the first time you create a file in a codebase you haven't touched this session, and
+whenever the request leaves naming or structure open. Skip it when the request specifies the
+conventions, or when you already established them earlier in this conversation.
 
-## When This Protocol Is MANDATORY
+## Detection
 
-- First file creation in any session
-- Adding a new feature to an existing codebase
-- Any time the project's architecture style is unknown
-- When the user's request doesn't specify naming or structure
-
-Skip only when: the user explicitly specifies all conventions in their request, or you have confirmed conventions in the same session (within the current conversation).
-
-## Detection Protocol
-
-Run Steps 1–6 before writing any code. You need all six answers.
+Six questions. Answer the ones your change actually depends on — a new validator needs the
+naming and folder answers, not the EF configuration one.
 
 ### Step 1 — Naming Suffix Convention
 

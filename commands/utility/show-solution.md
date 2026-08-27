@@ -5,7 +5,7 @@ effort: medium
 
 # Show Solution
 
-`/DotnetPilot:utility:show-solution` scans the solution and updates `solution-map.json`.
+`/dotnet-pilot:utility:show-solution` scans the solution and updates `solution-map.json`.
 
 ## Execution
 

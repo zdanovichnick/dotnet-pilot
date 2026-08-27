@@ -5,8 +5,8 @@ effort: high
 
 # Verify
 
-`/DotnetPilot:project:verify` is the "ready to ship?" gate between active development
-and `/DotnetPilot:project:ship`. Run it when you think the feature is done.
+`/dotnet-pilot:project:verify` is the "ready to ship?" gate between active development
+and `/dotnet-pilot:project:ship`. Run it when you think the feature is done.
 
 > **Delegates to**: `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (opus, effort xhigh).
 
@@ -50,7 +50,7 @@ Verification Results
   [PASS] Architecture: no violations
   [PASS] EF Migrations: chain valid
 
-Ready to ship. Run /DotnetPilot:project:ship.
+Ready to ship. Run /dotnet-pilot:project:ship.
 ```
 
 If any check fails, stop and list what needs fixing before `/project:ship` is called.

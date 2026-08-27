@@ -6,7 +6,7 @@ effort: high
 
 # Security Scan
 
-`/DotnetPilot:quality:security-scan` runs a three-phase security audit for the current .NET solution.
+`/dotnet-pilot:quality:security-scan` runs a three-phase security audit for the current .NET solution.
 
 > **Delegates to**: `dnp-security-auditor` (sonnet, effort high); Phase 1 built-in scan runs in the caller's context.
 
@@ -52,6 +52,6 @@ Domains audited: Injection, Auth/AuthZ, Secrets, CORS, Dependencies, Input Valid
 
 ## Related
 
-- `/DotnetPilot:quality:check-packages` — NuGet version audit without the full security scan
-- `/DotnetPilot:quality:check-architecture` — architecture compliance (separate concern)
-- `/DotnetPilot:dotnet:health-check` — full solution health including build and DI
+- `/dotnet-pilot:quality:check-packages` — NuGet version audit without the full security scan
+- `/dotnet-pilot:quality:check-architecture` — architecture compliance (separate concern)
+- `/dotnet-pilot:dotnet:health-check` — full solution health including build and DI

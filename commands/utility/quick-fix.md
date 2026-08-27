@@ -6,7 +6,7 @@ effort: medium
 
 # Quick Task
 
-`/DotnetPilot:utility:quick-fix` executes a single task without the full planning pipeline. Good for small fixes, refactors, and configuration changes.
+`/dotnet-pilot:utility:quick-fix` executes a single task without the full planning pipeline. Good for small fixes, refactors, and configuration changes.
 
 ## Execution
 

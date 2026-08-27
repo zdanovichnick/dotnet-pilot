@@ -47,7 +47,9 @@ Track `iteration = 1..5`. After iteration 5 without a clean build, HALT and retu
 - Touch only files named in the current error batch
 - If a fix introduces new errors, those count as the next iteration's starting point
 - Never suppress compiler warnings with `#pragma warning disable` without a `#pragma warning restore` on the next line
-- Never delete code that fails to compile — fix the type error instead
+- Never delete or comment out code that fails to compile, and never adjust a test assertion to
+  match broken production code — both hide the error instead of fixing the contract
+- Generated files are overwritten on the next build; fix the generator or its input
 
 ## Halt Protocol
 
@@ -62,15 +64,6 @@ Likely cause: <diagnosis>
 Manual action required: <what the human needs to do>
 Files modified: <list>
 ```
-
-## Anti-Rationalization Table
-
-| If you're thinking... | The truth is... |
-|---|---|
-| "I'll just comment this out to unblock the build" | Deleted/commented code hides the real error. Fix the type contract. |
-| "This test assertion is wrong so I'll adjust it" | Never alter tests to pass. The production code must match the contract. |
-| "I'll suppress this warning so the build passes" | Suppression without restoration leaves a permanent blind spot. |
-| "I'll fix the generated file directly" | Generated files are overwritten on next build. Fix the generator or the input. |
 
 ## Completion Protocol
 

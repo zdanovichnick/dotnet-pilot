@@ -47,22 +47,9 @@ process.stdin.on('end', () => {
     }
 
     emit(
-      `.NET project detected — DotnetPilot has routing priority.\n` +
-      `Prefer these DotnetPilot agents over generic equivalents:\n` +
-      `  TDD (routine):    dotnet-pilot:dnp-tdd-developer-easy\n` +
-      `  TDD (complex):    dotnet-pilot:dnp-tdd-developer-hard\n` +
-      `  Test writing:     dotnet-pilot:dnp-test-writer\n` +
-      `  Architecture:     dotnet-pilot:dnp-architect\n` +
-      `  API scaffolding:  dotnet-pilot:dnp-api-scaffolder\n` +
-      `  DI verification:  dotnet-pilot:dnp-di-wiring-checker\n` +
-      `  EF migrations:    dotnet-pilot:dnp-ef-migration-planner\n` +
-      `  NuGet audit:      dotnet-pilot:dnp-nuget-auditor\n` +
-      `  .NET planning:    dotnet-pilot:dnp-planner\n` +
-      `  Verification:     dotnet-pilot:dnp-verifier\n` +
-      `  Deep consult:     dotnet-pilot:dnp-fable-advisor (read-only advice; not for implementation)\n` +
-      `For C# code inspection use mcp__roslyn__ (DI, architecture, EF models, references, class outlines) — ` +
-      `NOT mcp__*code-analyzer__ (Python/TS/JS only; no C# support).\n` +
-      `Also prefer /DotnetPilot:* slash commands for .NET-specific tasks.`
+      `.NET solution detected. For .NET work prefer the dotnet-pilot:dnp-* agents over generic ` +
+      `equivalents — /dotnet-pilot:utility:help lists the full roster.\n` +
+      `Inspect C# with mcp__roslyn__* (semantic); mcp__*code-analyzer__* has no C# support.`
     );
   } catch {
     // Advisory only — never fail

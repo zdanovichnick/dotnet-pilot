@@ -37,14 +37,11 @@ public class UserServiceTests
     [Fact]
     public async Task GetByIdAsync_WhenUserExists_ReturnsUser()
     {
-        // Arrange
         var expected = new User { Id = 1, Name = "Test" };
         _repositoryMock.Setup(r => r.GetByIdAsync(1)).ReturnsAsync(expected);
 
-        // Act
         var result = await _sut.GetByIdAsync(1);
 
-        // Assert
         result.Should().BeEquivalentTo(expected);
     }
 }
@@ -77,6 +74,9 @@ When type is `tdd`:
 1. **RED:** Write the test first. Run `dotnet test` — it should fail (compile error or assertion)
 2. **GREEN:** Write the minimum implementation to make the test pass
 3. **REFACTOR:** Clean up while keeping tests green
+
+Arrange, act, and assert are separated by blank lines, not by comments labelling them — the
+shape is already visible.
 
 ## Test Naming Convention
 

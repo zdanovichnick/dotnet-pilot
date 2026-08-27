@@ -68,5 +68,5 @@ UTILITY — housekeeping
   utility:show-solution      Show the .NET solution structure — projects, references,
                              packages, namespaces, layers
 
-Usage: /DotnetPilot:<command>   e.g. /DotnetPilot:dotnet:create-entity Product
+Usage: /dotnet-pilot:<command>   e.g. /dotnet-pilot:dotnet:create-entity Product
 ```

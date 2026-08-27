@@ -5,7 +5,7 @@ effort: medium
 
 # Commit Check
 
-`/DotnetPilot:quality:commit-check` runs all quality checks before committing.
+`/dotnet-pilot:quality:commit-check` runs all quality checks before committing.
 
 > **Delegates to**: `dnp-di-wiring-checker` (sonnet, effort low); optionally the stock `code-reviewer` agent on large changesets.
 
@@ -42,7 +42,7 @@ Quick layer violation scan:
 If violations: report, WARN (non-blocking).
 
 ### 6. Code Review (optional)
-If changes touch >5 files, run `/DotnetPilot:quality:review --depth quick` (which
+If changes touch >5 files, run `/dotnet-pilot:quality:review --depth quick` (which
 delegates to the stock `code-reviewer` agent with .NET focus).
 
 ## Report

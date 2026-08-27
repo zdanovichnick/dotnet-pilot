@@ -6,7 +6,7 @@ effort: high
 
 # Add Migration
 
-`/DotnetPilot:dotnet:add-migration` creates an EF Core migration with safety checks.
+`/dotnet-pilot:dotnet:add-migration` creates an EF Core migration with safety checks.
 
 > **Delegates to**: `dnp-ef-migration-planner` (sonnet, effort low).
 

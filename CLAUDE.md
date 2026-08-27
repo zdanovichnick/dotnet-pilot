@@ -12,7 +12,7 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 - `.claude-plugin/marketplace.json` — marketplace listing for plugin distribution
 - `.mcp.json` — MCP server declarations (roslyn server `dnp-roslyn` configured)
 - `agents/dnp-*.md` — 15 agents with YAML frontmatter (`name`, `description`, `tools`, `model`, `effort`, `color`, `permissionMode`). The `tools` field uses Claude Code's scoped syntax (e.g. `Bash(dotnet:*)`)
-- `commands/<category>/<name>.md` — slash commands invoked as `/DotnetPilot:<category>:<name>`. Categories: `project`, `dotnet`, `quality`, `utility`
+- `commands/<category>/<name>.md` — slash commands invoked as `/dotnet-pilot:<category>:<name>`. Categories: `project`, `dotnet`, `quality`, `utility`
 - `hooks/hooks.json` — hook registry wiring matchers to scripts via `${CLAUDE_PLUGIN_ROOT}`
 - `hooks/dnp-*.js` — 7 advisory hooks (all exit 0; emit `additionalContext` for guidance). Read a JSON event from stdin.
 - `hooks/_lib/config.js` — shared module used by every hook. Resolves `.planning/config.json`: repo-local path first, then user-scoped at `~/.claude/projects/<flattened-cwd>/` (where `D:\Projects\Foo` → `D--Projects-Foo`). All hooks default-on when config is absent.
@@ -29,6 +29,17 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 - **Agent frontmatter `tools:` is a whitelist.** Adding a tool requires justification; prefer narrower scopes (`Bash(dotnet:*)`) over broad ones.
 - **Model tier by agent role.** Planning/architecture → opus; implementation/review → sonnet; mechanical checks (DI, NuGet audit, scaffolding) → sonnet at `effort: low`; deep read-only consults → fable.
 - **Every agent and command declares `effort:`.** Model tier sets capability, `effort:` (`low|medium|high|xhigh|max`) sets reasoning spend within it. Do NOT pair `effort:` with `model: haiku` — effort is unsupported on Haiku 4.5 and the field is silently dropped, which is why the mechanical agents run on sonnet at `effort: low` instead of haiku.
+- **Agent prompts carry gotchas, not guardrails.** Write what is specific to .NET and to this
+  plugin — missing DI registration throwing at runtime, migrations needing their own step, the
+  in-memory EF provider diverging from SQL Server. Do not add anti-rationalization tables,
+  epistemic-gate checklists, "predict before you grep" protocols, or few-shot transcripts of
+  ideal output: they re-encode judgment the model already has, and every added constraint is
+  another chance to contradict a neighbouring one. Domain reference material (test tiers, mock
+  fidelity, boundary coverage) belongs in a `skills/` file the agent loads via `skills:`, not
+  inlined in the prompt.
+- **State a fact in exactly one place.** Tool guidance goes in the tool or agent description;
+  routing goes in this file; conventions go in a skill. A hook that re-injects a roster this file
+  already carries pays for the same tokens on every call.
 - **`shell:` is not used here.** It only governs `!`-blocks in command frontmatter, and no dotnet-pilot command uses one — adding it would be dead config. If you introduce a `!`-block that shells out on Windows, add `shell: powershell` to *that* command.
 
 ### Validating Plugin Changes
@@ -93,38 +104,18 @@ When the DotnetPilot plugin is active in a consumer project, these instructions 
 
 ## Agents
 
-As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-code-reviewer`, `dnp-security-auditor`, `dnp-plan-checker`, `dnp-executor`) are retired in favor of stock Claude capabilities. The remaining 15 agents focus on things Claude doesn't do well out of the box.
+Claude Code surfaces each agent's `description:` in the agent list, so this file doesn't restate
+the roster — read `agents/dnp-*.md` for detail. What the descriptions don't tell you:
 
-### Planning & verification
-| Agent | Model | Effort | Role |
-|-------|-------|--------|------|
-| `dnp-planner` | opus | xhigh | Emits a .NET-aware, DI-conscious task list that maps 1:1 to `TaskCreate` entries |
-| `dnp-verifier` | sonnet | high | Goal-backward verification: build, tests, DI completeness, migration state, architecture rules |
-
-### Expert domain knowledge
-| Agent | Model | Effort | Role |
-|-------|-------|--------|------|
-| `dnp-architect` | opus | xhigh | Solution architecture, clean-arch layer enforcement, project-reference validation |
-| `dnp-test-writer` | sonnet | high | Test writer — xUnit/NUnit with mocking, WebApplicationFactory, convention-aware assertions |
-| `dnp-tdd-developer-easy` | sonnet | low | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR |
-| `dnp-tdd-developer-hard` | sonnet | high | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration |
-| `dnp-build-error-resolver` | sonnet | low | Iterative build-error fixing — autonomous repair loop, max 5 iterations |
-| `dnp-security-auditor` | sonnet | high | OWASP Top 10 audit, secrets exposure, auth config, dependency CVEs |
-| `dnp-performance-analyst` | sonnet | high | Async hotspots, N+1 queries, caching gaps, benchmark design |
-| `dnp-refactor-cleaner` | sonnet | high | Dead code removal, naming normalization, duplication elimination |
-
-### Deep advisory (consult, don't dispatch)
-| Agent | Model | Effort | Role |
-|-------|-------|--------|------|
-| `dnp-fable-advisor` | fable | high | Read-only senior advisor to the other agents — ADVISE / UNBLOCK / ADJUDICATE. Advises, never implements; requires Fable 5 access with **no automatic fallback** (route to `dnp-architect` if unavailable) |
-
-### Mechanical (fast, focused)
-| Agent | Model | Effort | Role |
-|-------|-------|--------|------|
-| `dnp-api-scaffolder` | sonnet | low | Controllers or minimal API endpoints with DTOs, validation, DI registration |
-| `dnp-ef-migration-planner` | sonnet | low | EF Core migration safety — chain integrity, data-loss risk, DbContext targeting |
-| `dnp-di-wiring-checker` | sonnet | low | Cross-references constructor injections against DI registrations |
-| `dnp-nuget-auditor` | sonnet | low | Vulnerability, outdated-version, and version-inconsistency scans |
+- **Tier the TDD work.** `dnp-tdd-developer-easy` (sonnet/low) handles routine changes and
+  returns a `[ROUTING: …hard]` verdict when the task outgrows it. Escalate to
+  `dnp-tdd-developer-hard` (sonnet/high) on a named signal — architectural choice, cross-layer
+  change, unestablished pattern — not on general uncertainty.
+- **`dnp-fable-advisor` needs Fable 5 access and has no automatic fallback.** If the account
+  can't serve `model: fable` the agent won't spawn; route the consult to `dnp-architect` instead.
+  It advises and never implements, so it is a decision-point consult, not a worker.
+- **The spec-driven agents are gone.** `dnp-researcher`, `dnp-code-reviewer`, `dnp-plan-checker`,
+  and `dnp-executor` were retired in v1.0.0 in favor of stock Claude capabilities.
 
 ## Hook Behaviors
 
@@ -140,7 +131,7 @@ As of v1.0.0 the abstraction-heavy spec-driven agents (`dnp-researcher`, `dnp-co
 | `dnp-project-scope-guard` | PostToolUse (Write/Edit) | When `.planning/STATE.md` has `focus_projects: [...]` frontmatter, warns if an edit touches a project outside that list; uses `solution-map.json` for boundary resolution |
 | `dnp-commit-format` | PreToolUse (Bash) | Validates conventional commit format on `git commit -m "..."` invocations; skips heredoc, `--no-edit`, and `--file` forms |
 | `dnp-git-autoapprove` | PreToolUse (Bash) | **Non-advisory** — returns `permissionDecision: allow` for safe single `git`/`gh` commands (status/diff/log/add/commit/branch/push, `gh pr create`, plus the heredoc-commit form) so commit + PR skip the permission prompt. Chained/substituted/redirected commands fall through to the normal prompt. Gated by `hooks.git_autoapprove` (default-on) |
-| `dnp-statusline-sync` | SessionStart (startup/resume/clear/compact) | Copies `statusline/dnp-statusline.js` to `~/.claude/dnp-statusline.js` when the plugin ships a newer `STATUSLINE_VERSION` (version-stamped, idempotent). Wires `~/.claude/settings.json` `statusLine` **only** when `statusline.auto_enable === true` (default-off), backing up any prior statusLine once to `~/.claude/dnp-statusline.prev.json`. Advisory (exit 0). Install manually via `/DotnetPilot:utility:statusline` |
+| `dnp-statusline-sync` | SessionStart (startup/resume/clear/compact) | Copies `statusline/dnp-statusline.js` to `~/.claude/dnp-statusline.js` when the plugin ships a newer `STATUSLINE_VERSION` (version-stamped, idempotent). Wires `~/.claude/settings.json` `statusLine` **only** when `statusline.auto_enable === true` (default-off), backing up any prior statusLine once to `~/.claude/dnp-statusline.prev.json`. Advisory (exit 0). Install manually via `/dotnet-pilot:utility:statusline` |
 
 ## Quality Gates
 
@@ -170,7 +161,7 @@ reads the wrong file. State older than 1h is treated as stale.
 Use these native Claude Code primitives instead — they evolve with Claude Code and don't drift:
 
 - Multi-step planning → **Plan Mode** (`EnterPlanMode`) + `TaskCreate`
-- General code review → stock `code-reviewer` agent (see `/DotnetPilot:quality:review`, which now delegates to it)
+- General code review → stock `code-reviewer` agent (see `/dotnet-pilot:quality:review`, which now delegates to it)
 - Security audit → stock `/security-review` command
 - Research → Context7 MCP (`mcp__context7__*`) or `WebSearch`
 - Tracking work within a conversation → `TaskCreate` / `TaskUpdate`
@@ -185,22 +176,19 @@ For teams that want lightweight persistent state (a PROJECT.md, a roadmap, a sol
 
 ## .NET Conventions
 
-When working in a .NET solution, always:
+The layer rules, DI patterns, and convention detection live in the `clean-architecture` and
+`convention-learner` skills — load them rather than duplicating them here. Two things that only
+apply inside this plugin's world:
 
-1. **Respect layer boundaries.** Domain has no references to Infrastructure or API. Application depends only on Domain. Infrastructure implements Application interfaces.
-2. **Register services.** Every new service class needs `AddScoped`/`AddTransient`/`AddSingleton` in the DI container. Check `Program.cs` or extension methods.
-3. **Generate migrations properly.** Use `dotnet ef migrations add` — never manually create migration files. Always specify the correct DbContext if multiple exist.
-4. **Follow project conventions.** Detect existing patterns (naming, folder structure, test framework) before creating new files. Match what's already there.
-5. **Verify builds.** Run `dotnet build --no-restore` after significant changes. Parse error output and fix issues before committing.
-6. **Use the solution map.** Read `.planning/solution-map.json` to understand project structure rather than re-scanning every time.
+- **Migrations come from the CLI.** `dotnet ef migrations add`, never a hand-written migration
+  file, and always `--context` when the solution has more than one `DbContext`.
+- **`.planning/solution-map.json` is the cached project graph.** Read it before re-scanning the
+  solution.
 
 ## Plan format
 
 `dnp-planner` emits a Markdown task list that maps 1:1 to Claude Code's native
-`TaskCreate` entries. The legacy `<task type="auto">...</task>` XML DSL was retired
-in v1.0.0 — it duplicated `TaskCreate` and required a bespoke executor agent.
-
-See `agents/dnp-planner.md` for the output template. The caller (you, or a
+`TaskCreate` entries. See `agents/dnp-planner.md` for the output template. The caller (you, or a
 feature-dev skill) is responsible for invoking `TaskCreate` per entry and wiring
 `addBlockedBy` relationships.
 
@@ -210,57 +198,20 @@ Use conventional commits scoped to the .NET project name:
 
 ```
 feat(Api): add UserController with CRUD endpoints
-fix(Infrastructure): correct EF migration for UserProfile table
-test(Tests): add integration tests for authentication flow
-refactor(Application): extract validation into pipeline behavior
 ```
 
 ## Configuration Reference
 
-`.planning/config.json` is owned by the optional `dotnet-pilot-workflow` plugin.
-`dotnet-pilot` reads the `hooks.*` and `dotnet.*` sections if the file exists.
+`.planning/config.json` is owned by the optional `dotnet-pilot-workflow` plugin; this plugin only
+reads its `hooks.*`, `dotnet.*`, and `statusline.*` sections, and every hook defaults on when the
+file is absent. `hooks/_lib/config.js` is the resolver and the authoritative key list.
 
-Minimum schema for core:
+Two non-obvious defaults:
 
-```json
-{
-  "dotnet": {
-    "solution_path": null,
-    "target_framework": null,
-    "test_framework": "xunit",
-    "ef_contexts": [],
-    "architecture_style": "clean",
-    "use_minimal_api": false,
-    "central_package_management": false
-  },
-  "hooks": {
-    "di_check": true,
-    "migration_guard": true,
-    "project_scope_guard": true,
-    "build_verify": true,
-    "commit_format": true,
-    "git_autoapprove": true,
-    "dotnet_priority": true,
-    "code_analyzer_redirect": true
-  },
-  "statusline": {
-    "auto_enable": false
-  },
-  "workflow": {
-    "build_after_task": true,
-    "test_after_task": true,
-    "di_check_on_write": true
-  }
-}
-```
-
-`statusline.auto_enable` (default `false`) gates whether `dnp-statusline-sync` wires
-`~/.claude/settings.json`. Off by default because it mutates a user file that may already hold
-another `statusLine` — the sync hook only refreshes the installed script until you opt in (or run
-`/DotnetPilot:utility:statusline` for a one-time interactive install).
-
-The retired pipeline keys (`workflow.research`, `workflow.plan_check`,
-`workflow.verifier`, `workflow.auto_advance`, `parallelization.*`,
-`gates.confirm_plan`, `gates.confirm_phases`, `gates.breaking_change_confirm`,
-`git.phase_branch_template`) are ignored — they belonged to the spec-driven
-pipeline that was retired in v1.0.0.
+- `statusline.auto_enable` defaults to **false** because wiring it mutates
+  `~/.claude/settings.json`, which may already hold another `statusLine`. The sync hook refreshes
+  the installed script regardless; opt in via the key or `/dotnet-pilot:utility:statusline`.
+- Keys from the retired spec-driven pipeline (`workflow.research`, `workflow.plan_check`,
+  `workflow.verifier`, `workflow.auto_advance`, `parallelization.*`, `gates.*`,
+  `git.phase_branch_template`) are silently ignored — finding one in a config file does not mean
+  it does anything.

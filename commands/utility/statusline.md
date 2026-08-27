@@ -6,13 +6,19 @@ effort: low
 
 # Statusline
 
-`/DotnetPilot:utility:statusline` installs the DotnetPilot statusline and wires it into
+`/dotnet-pilot:utility:statusline` installs the DotnetPilot statusline and wires it into
 `~/.claude/settings.json`. It renders a compact, .NET-aware status line:
 
-- **Line 1 (always):** `<model> │ ⚙ <effort> │ CTX <pct>% · <tokens> │ GIT <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ $<cost>`
-- **Line 2 (only inside a .NET solution):** `SLN <name> │ TFM <framework> │ BUILD ✗ <n>x`
+- **Line 1 (always):** `🤖 <model> │ ⚡ EFF <effort>[ (set: <configured>)] │ 🧠 <bar> <pct>% · <tokens> │ 🌿 <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ 💰 $<cost>`
+- **Line 2 (only inside a .NET solution):** `📦 SLN <name> │ 🎯 TFM <framework> │ ❌ BUILD <n>x`
+- **Line 3 (only inside a .NET solution):** `💡 TIP <rotating DotnetPilot command hint>`
 
-`⚙ <effort>` is the reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`), shown when Claude Code pipes `effort.level`.
+Values are color-coded; the 🧠 context bar, ⚡ effort level, and 💰 cost ramp green → yellow → red
+with pressure. `NO_COLOR` renders plain text.
+
+`⚡ EFF <effort>` is the ACTIVE reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`), shown when
+Claude Code pipes `effort.level`. A `(set: <configured>)` suffix appears only when the configured
+level (env pin / `effortLevel` setting) is not the one actually in force — e.g. `EFF high (set: xhigh)`.
 
 `BUILD ✗ Nx` appears only when a recent `dotnet build`/`dotnet test` failed — it reads the same
 failure state `dnp-build-verify` writes, so it also reflects test failures. Absence means "no recent

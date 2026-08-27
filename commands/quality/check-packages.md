@@ -5,7 +5,7 @@ effort: medium
 
 # Check Packages
 
-`/DotnetPilot:quality:check-packages` scans NuGet packages across the solution.
+`/dotnet-pilot:quality:check-packages` scans NuGet packages across the solution.
 
 > **Delegates to**: `dnp-nuget-auditor` (sonnet, effort low).
 

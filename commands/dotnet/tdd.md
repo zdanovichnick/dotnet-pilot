@@ -6,7 +6,7 @@ effort: high
 
 # TDD
 
-`/DotnetPilot:dotnet:tdd` implements a feature using strict RED-GREEN-REFACTOR discipline.
+`/dotnet-pilot:dotnet:tdd` implements a feature using strict RED-GREEN-REFACTOR discipline.
 
 > **Delegates to**: `dnp-tdd-developer-easy` (sonnet, effort low) or `dnp-tdd-developer-hard` (sonnet, effort high) based on complexity.
 

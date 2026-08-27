@@ -6,20 +6,20 @@ effort: low
 
 # Settings
 
-`/DotnetPilot:utility:settings` manages `.planning/config.json`.
+`/dotnet-pilot:utility:settings` manages `.planning/config.json`.
 
 ## Usage
 
-- **View all:** `/DotnetPilot:utility:settings` — display current config
-- **Get value:** `/DotnetPilot:utility:settings dotnet.test_framework` — show specific key
-- **Set value:** `/DotnetPilot:utility:settings hooks.di_check false` — disable DI advisory
-- **Reset:** `/DotnetPilot:utility:settings --reset` — reset to defaults
+- **View all:** `/dotnet-pilot:utility:settings` — display current config
+- **Get value:** `/dotnet-pilot:utility:settings dotnet.test_framework` — show specific key
+- **Set value:** `/dotnet-pilot:utility:settings hooks.di_check false` — disable DI advisory
+- **Reset:** `/dotnet-pilot:utility:settings --reset` — reset to defaults
 
 ## Common Settings
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `enableProjectModel` | false | Enable `.planning/` project state (PROJECT.md, ROADMAP.md, STATE.md). Set to `true` by `/DotnetPilot:project:init`. |
+| `enableProjectModel` | false | Enable `.planning/` project state (PROJECT.md, ROADMAP.md, STATE.md). Set to `true` by `/dotnet-pilot:project:init`. |
 | `mode` | interactive | `interactive` or `auto` |
 | `dotnet.test_framework` | xunit | `xunit`, `nunit`, or `mstest` |
 | `dotnet.architecture_style` | clean | `clean`, `vertical-slices`, or `flat` |

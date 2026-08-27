@@ -6,7 +6,7 @@ effort: medium
 
 # Add Endpoint
 
-`/DotnetPilot:dotnet:add-endpoint` adds a single endpoint to an existing API surface.
+`/dotnet-pilot:dotnet:add-endpoint` adds a single endpoint to an existing API surface.
 
 > **Delegates to**: `dnp-api-scaffolder` (sonnet, effort low).
 

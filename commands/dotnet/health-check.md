@@ -6,7 +6,7 @@ effort: medium
 
 # Health Check
 
-`/DotnetPilot:dotnet:health-check` runs a comprehensive health check on the .NET solution.
+`/dotnet-pilot:dotnet:health-check` runs a comprehensive health check on the .NET solution.
 
 > **Delegates to**: `dnp-nuget-auditor` (sonnet, effort low) and `dnp-di-wiring-checker` (sonnet, effort low); orchestration runs in the caller's context.
 

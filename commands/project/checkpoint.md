@@ -5,7 +5,7 @@ effort: medium
 
 # Checkpoint
 
-`/DotnetPilot:project:checkpoint` verifies the current state is clean and summarizes what has changed.
+`/dotnet-pilot:project:checkpoint` verifies the current state is clean and summarizes what has changed.
 
 > **Orchestration only** — all checks run in the caller's context using built-in tools and Roslyn MCP.
 
@@ -17,7 +17,7 @@ effort: medium
 dotnet build --no-restore
 ```
 
-- FAIL: report errors, stop. Run `/DotnetPilot:dotnet:build-fix` to repair.
+- FAIL: report errors, stop. Run `/dotnet-pilot:dotnet:build-fix` to repair.
 
 ### 2. Tests
 
@@ -81,6 +81,6 @@ Ready to commit. Suggested message:
 
 ## Related
 
-- `/DotnetPilot:project:ship` — full ship readiness check with additional gates
-- `/DotnetPilot:project:verify` — phase verification for planned workflows
-- `/DotnetPilot:quality:de-sloppify` — clean up code before committing
+- `/dotnet-pilot:project:ship` — full ship readiness check with additional gates
+- `/dotnet-pilot:project:verify` — phase verification for planned workflows
+- `/dotnet-pilot:quality:de-sloppify` — clean up code before committing

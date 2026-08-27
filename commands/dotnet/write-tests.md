@@ -6,7 +6,7 @@ effort: medium
 
 # Write Tests
 
-`/DotnetPilot:dotnet:write-tests` generates tests for existing production code.
+`/dotnet-pilot:dotnet:write-tests` generates tests for existing production code.
 
 > **Delegates to**: `dnp-test-writer` (sonnet, effort high).
 

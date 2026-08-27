@@ -5,7 +5,7 @@
 //
 // Hooks look repo-local first, then fall back to user-scoped:
 //   - Legacy users see zero change.
-//   - New users have config picked up automatically after `/DotnetPilot:project:init`.
+//   - New users have config picked up automatically after `/dotnet-pilot:project:init`.
 
 const fs = require('fs');
 const os = require('os');

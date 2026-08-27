@@ -6,7 +6,7 @@ effort: high
 
 # Create Entity
 
-`/DotnetPilot:dotnet:create-entity` creates the complete vertical slice for a domain entity.
+`/dotnet-pilot:dotnet:create-entity` creates the complete vertical slice for a domain entity.
 
 > **Delegates to**: `dnp-ef-migration-planner` (sonnet, effort low) for the migration step; uses `mcp__roslyn__get_solution_structure` to resolve project paths. Other steps run in the caller's context.
 
@@ -23,4 +23,4 @@ effort: high
    - **DI registration:** Register repository and service
    - **Migration:** Run `dotnet ef migrations add Add<Entity>Table`
 3. Verify each step builds
-4. Suggest: `/DotnetPilot:dotnet:create-api <entity>` to add API endpoints
+4. Suggest: `/dotnet-pilot:dotnet:create-api <entity>` to add API endpoints
