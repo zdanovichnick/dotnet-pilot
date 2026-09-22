@@ -7,7 +7,7 @@ effort: high
 
 `/dotnet-pilot:quality:check-architecture` validates architectural integrity.
 
-> **Delegates to**: `dnp-architect` (opus, effort xhigh).
+> **Delegates to**: `dnp-architect` (fable, effort xhigh).
 
 ## Execution
 

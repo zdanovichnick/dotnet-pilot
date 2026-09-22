@@ -244,7 +244,7 @@ Commands are thin orchestrators — all heavy work happens in one of these 9 age
 
 | Agent | Model | Effort | Role |
 | --- | --- | --- | --- |
-| `dnp-architect` | Opus | xhigh | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation (loads the `clean-architecture` skill) |
+| `dnp-architect` | Fable | xhigh | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation (loads the `clean-architecture` skill) |
 | `dnp-ef-migration-planner` | Sonnet | low | Plans safe EF Core migrations — detects breaking changes, validates chain integrity, targets correct DbContext (loads the `ef-core-patterns` skill) |
 
 ### Review confirmers (fast, focused)
@@ -258,9 +258,9 @@ Commands are thin orchestrators — all heavy work happens in one of these 9 age
 
 > Agents never prompt the user. A decision an agent cannot make comes back as `[HALT: <question>]`, and the command that spawned it asks you, then re-briefs the agent with the answer.
 >
-> Effort is model-gated and **unsupported on Haiku 4.5**, so every agent runs on Sonnet or Opus with an explicit `effort:`; the mechanical ones sit at `effort: low`, which is where the cost/capability trade-off Haiku was reaching for actually lives.
+> Effort is model-gated and **unsupported on Haiku 4.5**, so every agent runs on Sonnet or Fable with an explicit `effort:`; the mechanical ones sit at `effort: low`, which is where the cost/capability trade-off Haiku was reaching for actually lives.
 >
-> Models are tier aliases (`opus`/`sonnet`), not dated IDs, so frontmatter tracks each tier's current default and needs no bump on a model release.
+> Models are tier aliases (`fable`/`sonnet`), not dated IDs, so frontmatter tracks each tier's current default and needs no bump on a model release. Where an organization's model allowlist blocks `fable`, Claude Code runs `dnp-architect` on the session model and shows a warning naming both.
 
 ---
 

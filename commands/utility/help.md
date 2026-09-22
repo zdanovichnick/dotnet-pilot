@@ -59,7 +59,7 @@ AGENTS (9) — spawned by commands; a decision they cannot make returns as [HALT
   dnp-tdd-developer-easy     sonnet / low    Routine TDD; also runs dotnet:scaffold and dotnet:add-endpoint
   dnp-tdd-developer-hard     sonnet / high   Complex TDD: architectural choices, cross-layer changes
   dnp-refactor-cleaner       sonnet / high   Dead code, naming, duplication; behavior verified by tests
-  dnp-architect              opus / xhigh    Layer boundaries, project references, package placement
+  dnp-architect              fable / xhigh   Layer boundaries, project references, package placement
   dnp-ef-migration-planner   sonnet / low    Migration chain, data-loss risk, DbContext targeting
   dnp-security-auditor       sonnet / high   OWASP Top 10 for APIs, secrets, auth config, input validation
   dnp-performance-analyst    sonnet / high   Async hotspots, N+1 queries, caching gaps, allocation pressure

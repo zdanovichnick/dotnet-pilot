@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 `/dotnet-pilot:project:ship` creates a pull request for the current branch.
 
-> **Delegates to** (optional pre-flight): `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (opus, effort xhigh). The `gh pr create` call runs in the caller's context.
+> **Delegates to** (optional pre-flight): `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (fable, effort xhigh). The `gh pr create` call runs in the caller's context.
 
 ## Execution
 

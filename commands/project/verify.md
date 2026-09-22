@@ -9,7 +9,7 @@ effort: high
 `/dotnet-pilot:project:verify` is the "ready to ship?" gate between active development
 and `/dotnet-pilot:project:ship`. Run it when you think the feature is done.
 
-> **Delegates to**: `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (opus, effort xhigh).
+> **Delegates to**: `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (fable, effort xhigh).
 
 ## `--quick`
 

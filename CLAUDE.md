@@ -32,7 +32,7 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 - **`dnp-commit-format` skips heredoc commits.** Claude Code's default multi-line commit workflow (`-m "$(cat <<'EOF'...)"`) is deliberately excluded — the hook only validates plain `-m "..."` strings.
 - **Commands are thin orchestrators.** Heavy logic belongs in agents. A command file is the spec that Claude reads when the slash command fires; it should enumerate steps and which agents to spawn, not re-implement their work.
 - **Agent frontmatter `tools:` is a whitelist.** Adding a tool requires justification. Use exact tool names — `Bash`, not a scoped form — because plugin subagents honor only exact names and `mcp__<server>__*`.
-- **Model tier by agent role.** Architecture → opus; implementation/review → sonnet; mechanical checks (DI, NuGet audit, migration planning, routine TDD) → sonnet at `effort: low`.
+- **Model tier by agent role.** Architecture → fable (the one judgment-heavy, rarely spawned agent; where an org allowlist blocks the alias, Claude Code runs it on the session model and warns); implementation/review → sonnet; mechanical checks (DI, NuGet audit, migration planning, routine TDD) → sonnet at `effort: low`.
 - **Every agent and command declares `effort:`.** Model tier sets capability, `effort:` (`low|medium|high|xhigh|max`) sets reasoning spend within it. Do NOT pair `effort:` with `model: haiku` — effort is unsupported on Haiku 4.5 and the field is silently dropped, which is why the mechanical agents run on sonnet at `effort: low` instead of haiku.
 - **Agent prompts carry gotchas, not guardrails.** Write what is specific to .NET and to this
   plugin — missing DI registration throwing at runtime, migrations needing their own step, the

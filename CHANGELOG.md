@@ -95,6 +95,10 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 
 ### Changed
 
+- `dnp-architect` runs on `fable` (was `opus`) at `effort: xhigh` — the one judgment-heavy, rarely
+  spawned agent. The other eight agents stay on `sonnet`. Where an organization's model allowlist
+  blocks the alias, Claude Code runs the agent on the session model and warns, so the pin does not
+  break installs without Fable access.
 - `testing-dotnet` skill: examples use NSubstitute instead of Moq and `WebApplicationFactory` over a
   Testcontainers SQL Server instead of the in-memory EF provider; a mocking-library comparison table
   covers Moq and FakeItEasy for existing projects.
