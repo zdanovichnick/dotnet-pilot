@@ -21,7 +21,7 @@ teams consume, not on internals.
 ## Error Handling
 - `Result<TValue, TError>` for expected/business failures in domain and application code;
   exceptions cross boundaries only (controllers, background jobs).
-- RFC 7807 `ProblemDetails` for every HTTP error, via a registered `GlobalExceptionHandler`.
+- RFC 9457 `ProblemDetails` for every HTTP error, via a registered `GlobalExceptionHandler`.
 
 ## Async & Time
 - `CancellationToken` on every async method on a controller or service call path, threaded all
@@ -35,20 +35,13 @@ Structured logging with safe projections; secrets, tokens, and PII never reach a
 ## Testing
 - xUnit; `MethodName_Scenario_ExpectedBehavior`; `[Theory]` + `[InlineData]` over duplicated
   `[Fact]`s; one behavior per test.
-- NSubstitute + FluentAssertions for new test projects — an existing project's libraries win.
+- NSubstitute + FluentAssertions 7.x (pin `[7,8)`; v8+ needs a commercial licence) or Shouldly for
+  new test projects — an existing project's libraries win.
 - Integration tests hit real dependencies via Testcontainers, not in-memory substitutes.
 
 ## Package Defaults (greenfield; existing choices win)
 Polly v8 via `Microsoft.Extensions.Resilience` · Serilog + `Serilog.AspNetCore` · FluentValidation
 for anything beyond trivial rules · `IHttpClientFactory` + a Polly pipeline, never `new HttpClient()`.
-
-## Git
-- No `Co-Authored-By` lines in commit messages.
-- Before opening a PR, match the touched paths against `CODEOWNERS` and pass each owner as
-  `--reviewer <user>` to `gh pr create`.
-
-## Jira
-`[BE]` / `[FE]` title prefixes. Default issue type Task. Always include Acceptance Criteria.
 
 ## .NET Tooling Priority
 In a solution containing `.sln` / `.slnx` / `.csproj`, inspect C# with `mcp__roslyn__*`

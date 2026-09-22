@@ -20,8 +20,10 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { statuslineAutoEnable } = require('./_lib/config');
+const { isNewer } = require('./_lib/version');
+const { readJsonFile, writeJsonFile } = require('./_lib/json-file');
 
-const VERSION_RE = /STATUSLINE_VERSION\s*=\s*'([\d.]+)'/;
+const VERSION_RE = /STATUSLINE_VERSION\s*=\s*'([\w.+-]+)'/;
 
 let input = '';
 const stdinTimeout = setTimeout(() => process.exit(0), 10000);
@@ -73,12 +75,9 @@ function sync(cwd) {
 
 function wireStatusLine(claudeDir, destPath) {
   const settingsPath = path.join(claudeDir, 'settings.json');
-  let settings = {};
-  try {
-    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-  } catch {
-    // Missing or unparseable — start fresh.
-  }
+  const file = readJsonFile(settingsPath);
+  if (file.exists && !file.ok) return;
+  const settings = file.ok ? file.value : {};
 
   const command = `node "${destPath}"`;
   const existing = settings.statusLine;
@@ -95,7 +94,7 @@ function wireStatusLine(claudeDir, destPath) {
   }
 
   settings.statusLine = { type: 'command', command, refreshInterval: 5 };
-  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+  writeJsonFile(settingsPath, settings, file.bom);
 }
 
 function versionOf(content) {
@@ -110,20 +109,4 @@ function readSafe(p) {
   } catch {
     return '';
   }
-}
-
-// Semantic-ish compare: returns true if `a` is a strictly newer version than `b`.
-// A missing source version is treated as not-newer (leave the installed copy alone).
-function isNewer(a, b) {
-  if (!a) return false;
-  if (!b) return true;
-  const pa = a.split('.').map(n => parseInt(n, 10) || 0);
-  const pb = b.split('.').map(n => parseInt(n, 10) || 0);
-  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
-    const da = pa[i] || 0;
-    const db = pb[i] || 0;
-    if (da > db) return true;
-    if (da < db) return false;
-  }
-  return false;
 }

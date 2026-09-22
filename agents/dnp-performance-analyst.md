@@ -18,7 +18,10 @@ Identify performance bottlenecks across 6 domains. Return a prioritized finding 
 
 ## Strategy: Roslyn-First
 
-Use `mcp__roslyn__detect_antipatterns` as the primary tool for async and cancellation issues — it provides semantic-level detection superior to grep. Fall back to `Grep` when the Roslyn server is unavailable.
+Use `mcp__roslyn__detect_antipatterns` as the primary tool for async and cancellation issues. It is
+syntax-based: one fast pass over the whole solution that is more thorough than hand-written grep
+patterns, but it matches code shapes, not call paths — confirm a hit sits on a hot or request path
+before reporting it. Fall back to `Grep` when the Roslyn server is unavailable.
 
 Use `mcp__roslyn__find_callers` to identify call frequency for hot-path analysis and benchmark recommendations.
 
@@ -108,6 +111,14 @@ Identify the top 3 methods worth benchmarking via BenchmarkDotNet:
 
 Domains analyzed: Async, N+1, CancellationToken, Allocations, Caching, Benchmarks
 ```
+
+## Focused Briefs
+
+A brief that carries one finding routed from `/dotnet-pilot:quality:review` wants a verdict on
+that finding, not an analysis. Confirm or refute it with a `path:line` citation, reading only what
+settles it — the callers that make the path hot or cold, whether the query really runs once per
+iteration, whether a cache or `AsNoTracking` already covers it — and skip the six domains, the
+benchmark list and the report format above. Answer in the shape the brief asks for.
 
 ## Advisory Invariant
 

@@ -1,7 +1,7 @@
 ---
 description: "Clean up code — remove dead code, normalize naming, eliminate duplication."
 argument-hint: "[--scope path/to/project]"
-effort: high
+effort: medium
 ---
 
 # De-sloppify
@@ -20,7 +20,7 @@ effort: high
 Delegate to `dnp-refactor-cleaner` with:
 - Scope: `--scope` argument if provided, otherwise full solution
 - Instruction: run full refactoring protocol in order — dead code → naming normalization → duplication elimination → circular dependency resolution
-- Constraint: run `dotnet test` after each atomic change; revert immediately if tests break
+- Constraint: run `dotnet test` after each atomic change; undo only that change's own edits if tests break (never `git checkout`/`restore`/`reset` — the tree may hold the developer's uncommitted work)
 
 ## Output
 
@@ -49,10 +49,10 @@ Files modified: 5
 
 - Before a major feature release to reduce review noise
 - After a large merge with many contributors
-- When `/dotnet-pilot:dotnet:health-check` reports dead code or naming inconsistencies
+- When a review or `mcp__roslyn__find_dead_code` turns up dead code or naming drift
 
 ## Related
 
-- `/dotnet-pilot:dotnet:health-check` — identify issues before cleaning
+- `/dotnet-pilot:dotnet:health-check` — confirm build, tests and DI are healthy before cleaning
 - `/dotnet-pilot:quality:check-architecture` — architecture compliance check
 - `/dotnet-pilot:project:verify --quick` — verify the solution is clean after de-sloppify

@@ -77,7 +77,7 @@ public class ResourceOwnerHandler(IHttpContextAccessor httpContextAccessor)
         ResourceOwnerRequirement requirement,
         Order resource)
     {
-        var userId = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = ctx.User.FindFirstValue("sub");
 
         if (resource.OwnerId == userId || ctx.User.IsInRole("Admin"))
             ctx.Succeed(requirement);
@@ -94,7 +94,9 @@ builder.Services.AddScoped<IAuthorizationHandler, ResourceOwnerHandler>();
 ### Usage in Endpoint
 
 ```csharp
-app.MapPut("/orders/{id}", async (
+// A lambda with several TypedResults returns needs the Results<...> union declared,
+// otherwise the branches have no common return type and the lambda fails to compile.
+app.MapPut("/orders/{id}", async Task<Results<Ok<OrderResponse>, NotFound, ForbidHttpResult, ProblemHttpResult>> (
     int id,
     UpdateOrderRequest req,
     IAuthorizationService authz,
@@ -109,7 +111,7 @@ app.MapPut("/orders/{id}", async (
     if (!authResult.Succeeded) return TypedResults.Forbid();
 
     var result = await svc.UpdateAsync(id, req, ct);
-    return result.Match(
+    return result.Match<Results<Ok<OrderResponse>, NotFound, ForbidHttpResult, ProblemHttpResult>>(
         updated => TypedResults.Ok(updated),
         error   => TypedResults.Problem(error.Message));
 });

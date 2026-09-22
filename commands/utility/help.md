@@ -8,7 +8,7 @@ effort: low
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v3.1.0 — .NET development plugin for Claude Code
+DotnetPilot v3.2.0 — .NET development plugin for Claude Code
 Usage: /dotnet-pilot:<category>:<command> [args]      e.g. /dotnet-pilot:dotnet:create-entity Product
 
 COMMANDS (16)
@@ -26,11 +26,11 @@ COMMANDS (16)
                             [--lifetime scoped|transient|singleton] [--type classlib|web|xunit|worker|console]
         Generate code that matches the solution's architecture; feature is the default mode
     dotnet:create-entity    <Name> [--properties 'Name:string, Age:int, Email:string']
-        Entity class, EF configuration, repository, service, DI registration, migration
+        Entity class, EF configuration, repository, service, DI registration; then add-migration
     dotnet:add-endpoint     <Controller> <http-method> <route> [--with-dto]
         Add an endpoint to an existing controller or endpoint group
     dotnet:add-migration    <Name> [--context <DbContext>]
-        Validate the migration chain, detect breaking changes, target the right DbContext
+        Generate, then check Up() for data-loss operations; idempotent SQL script for review
     dotnet:tdd              <task> [--complexity easy|hard] [--existing <class|file|project>]
         Failing tests first, then production code; --existing adds tests to code that already exists
     dotnet:run-tests        [project] [--coverage] [--filter <pattern>]
@@ -41,7 +41,7 @@ COMMANDS (16)
   quality — safety checks
     quality:review          [--base <ref> | --staged | --last-commit | --scope <glob>]
                             [--depth quick|standard|deep]
-        Sharded review: haiku scouts per diff shard, sonnet confirmers per finding, one deterministic
+        Sharded review: haiku scouts per diff shard, opus confirmers per finding, one deterministic
         digest. Runs the dnp-review workflow; allow the permission rule Workflow(dnp-review) once
     quality:check-architecture
         Clean-architecture layer violations: forbidden project references, DI issues, package placement
@@ -57,9 +57,9 @@ COMMANDS (16)
 
 AGENTS (9) — spawned by commands; a decision they cannot make returns as [HALT: <question>]
   dnp-tdd-developer-easy     sonnet / low    Routine TDD; also runs dotnet:scaffold and dotnet:add-endpoint
-  dnp-tdd-developer-hard     sonnet / high   Complex TDD: architectural choices, cross-layer changes
+  dnp-tdd-developer-hard     opus / medium   Complex TDD: architectural choices, cross-layer changes
   dnp-refactor-cleaner       sonnet / high   Dead code, naming, duplication; behavior verified by tests
-  dnp-architect              fable / xhigh   Layer boundaries, project references, package placement
+  dnp-architect              opus / high     Layer boundaries, project references, package placement
   dnp-ef-migration-planner   sonnet / low    Migration chain, data-loss risk, DbContext targeting
   dnp-security-auditor       sonnet / high   OWASP Top 10 for APIs, secrets, auth config, input validation
   dnp-performance-analyst    sonnet / high   Async hotspots, N+1 queries, caching gaps, allocation pressure
@@ -72,8 +72,9 @@ SKILLS (15) — knowledge packs agents load on demand
   cross-cutting    caching · resilience · logging · opentelemetry
   language & test  modern-csharp · testing-dotnet
 
-HOOKS (13) — advisory (exit 0); switch one off with hooks.<key>: false in .planning/config.json
-  dnp-sync-global-claude-md    (sync_global_claude_md)   inject the .NET rules block into ~/.claude/CLAUDE.md
+HOOKS (13) — advisory (exit 0) except dnp-git-autoapprove, which grants permission; switch one
+            off with hooks.<key>: false in .planning/config.json
+  dnp-sync-global-claude-md    (sync_global_claude_md)   at session start, refresh the rules block in ~/.claude/CLAUDE.md
   dnp-dotnet-priority          (dotnet_priority)         steer .NET work to dnp-* agents and mcp__roslyn__*
   dnp-code-analyzer-redirect   (code_analyzer_redirect)  code-analyzer MCP has no C#; use mcp__roslyn__*
   dnp-migration-guard          (migration_guard)         warn before a hand edit under Migrations/

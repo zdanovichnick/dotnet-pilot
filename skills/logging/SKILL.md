@@ -66,7 +66,7 @@ finally
       "Override": {
         "Microsoft": "Warning",
         "Microsoft.EntityFrameworkCore": "Warning",
-        "Microsoft.EntityFrameworkCore.Database.Command": "Information",
+        "Microsoft.EntityFrameworkCore.Database.Command": "Warning",
         "System": "Warning"
       }
     }
@@ -111,7 +111,7 @@ public class UserContextMiddleware(RequestDelegate next)
 {
     public async Task InvokeAsync(HttpContext context)
     {
-        var userId = context.User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userId = context.User.FindFirstValue("sub");
         if (userId is not null)
             using (LogContext.PushProperty("UserId", userId))
             {
@@ -139,7 +139,7 @@ app.UseSerilogRequestLogging(options =>
             : LogEventLevel.Information;
     options.EnrichDiagnosticContext = (diagCtx, httpContext) =>
     {
-        diagCtx.Set("UserId", httpContext.User.FindFirstValue(ClaimTypes.NameIdentifier));
+        diagCtx.Set("UserId", httpContext.User.FindFirstValue("sub"));
         diagCtx.Set("ClientIp", httpContext.Connection.RemoteIpAddress?.ToString());
     };
 });
@@ -152,8 +152,8 @@ app.UseSerilogRequestLogging(options =>
 | `Verbose` / `Trace` | SQL queries, cache hits, per-frame loops | Off |
 | `Debug` | Detailed flow for diagnosing a specific issue | Off |
 | `Information` | Business events (order created, user logged in, job started) | On |
-| `Warning` | Recoverable issues: retry attempt, cache miss storm, deprecated API call | On |
-| `Error` | Failures affecting one request: payment declined, DB timeout, validation failure | On |
+| `Warning` | Recoverable issues: retry attempt, cache miss storm, deprecated API call; request validation failures (a client error, not a fault) | On |
+| `Error` | Failures affecting one request that the service caused or could not absorb: DB timeout, unhandled exception, downstream outage | On |
 | `Fatal` | Application cannot continue: startup failure, unrecoverable state | On |
 
 ## Performance Guard
@@ -168,14 +168,17 @@ if (_logger.IsEnabled(LogLevel.Debug))
 }
 ```
 
-For hot paths, prefer `LoggerMessage.Define` for zero-allocation logging:
+For hot paths, use the `[LoggerMessage]` source generator — it emits the `IsEnabled` check and avoids
+boxing. It takes MEL's `LogLevel`, not Serilog's `LogEventLevel`:
 
 ```csharp
-private static readonly Action<ILogger, Guid, Exception?> _orderCreated =
-    LoggerMessage.Define<Guid>(LogEventLevel.Information, new EventId(1, "OrderCreated"),
-        "Order {OrderId} created.");
+internal static partial class OrderLog
+{
+    [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Order {OrderId} created.")]
+    public static partial void OrderCreated(ILogger logger, Guid orderId);
+}
 
-_orderCreated(_logger, order.Id, null);
+OrderLog.OrderCreated(_logger, order.Id);
 ```
 
 ## Security Rules
@@ -196,19 +199,6 @@ _logger.LogInformation("User login attempt: {Email} / {Password}", email, passwo
 _logger.LogInformation("User login attempt for account {AccountId}", accountId);
 ```
 
-## Correlation with OpenTelemetry
-
-Add `Serilog.Enrichers.Span` to include `TraceId` and `SpanId` in log entries, correlating logs with traces in your observability platform:
-
-```xml
-<PackageReference Include="Serilog.Enrichers.Span" Version="3.*" />
-```
-
-```csharp
-config.Enrich.WithSpan(); // add to Serilog configuration
-```
-
 ## See Also
 
-- `skills/opentelemetry/SKILL.md` — trace/span setup and correlation with logs
-- EF Core query logging: set `Microsoft.EntityFrameworkCore.Database.Command` to `Information` in config
+- `skills/opentelemetry/SKILL.md` — trace/span setup and log↔trace correlation (`TraceId`/`SpanId`)

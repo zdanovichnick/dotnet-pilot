@@ -84,3 +84,12 @@ For each injected type:
 |-------|---------|
 | Captive dependency | Scoped `IUserService` injected into Singleton `CacheService` — may cause stale data |
 ```
+
+## Focused Briefs
+
+A brief that carries one finding routed from `/dotnet-pilot:quality:review` wants a verdict on
+that finding, not a solution-wide report. Confirm or refute it with a `path:line` citation,
+reading only what settles it — the one type in `mcp__roslyn__find_di_registrations` output (or a search
+of every `Program.cs` and `*Extensions.cs`), and both lifetimes when the finding is a captive
+dependency — and skip the protocols and the report table above. Answer in the shape the brief
+asks for.

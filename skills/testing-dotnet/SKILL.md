@@ -66,7 +66,7 @@ public async Task GetByIdAsync_WhenUserNotFound_ReturnsNull() { }
 [Theory]
 [InlineData("")]
 [InlineData(null)]
-public async Task CreateAsync_WithInvalidEmail_ThrowsValidationException(string? email) { }
+public async Task CreateAsync_WithInvalidEmail_ReturnsValidationError(string? email) { }
 ```
 
 ### IClassFixture for Shared Setup
@@ -87,7 +87,9 @@ provider as production. Docker must be available where the tests run.
 ```csharp
 public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 {
-    private readonly MsSqlContainer _db = new MsSqlBuilder().Build();
+    // The parameterless MsSqlBuilder() is obsolete in Testcontainers 4.x; pin the image explicitly.
+    private readonly MsSqlContainer _db =
+        new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04").Build();
 
     public Task InitializeAsync() => _db.StartAsync();
 
@@ -100,7 +102,10 @@ public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
     protected override void ConfigureWebHost(IWebHostBuilder builder) =>
         builder.ConfigureTestServices(services =>
         {
+            // EF Core 9+ also registers the original UseSqlServer(...) callback as an
+            // IDbContextOptionsConfiguration<T>; leaving it in re-applies the production connection.
             services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
+            services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(_db.GetConnectionString()));
         });
@@ -128,6 +133,28 @@ Under xUnit v2 `IAsyncLifetime.DisposeAsync` returns `Task`, so the explicit imp
 keeps it apart from `WebApplicationFactory.DisposeAsync()` (`ValueTask`). xUnit v3 unifies both on
 `ValueTask` and the explicit form is no longer needed.
 
+## Controlling Time
+
+Code that takes `TimeProvider` (never `DateTime.UtcNow`) is tested with `FakeTimeProvider` from
+`Microsoft.Extensions.TimeProvider.Testing` — no mock needed:
+
+```csharp
+[Fact]
+public void Expire_AfterTtl_MarksSessionExpired()
+{
+    var time = new FakeTimeProvider(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));
+    var session = Session.Start(time, ttl: TimeSpan.FromMinutes(30));
+
+    time.Advance(TimeSpan.FromMinutes(31));
+
+    session.IsExpired(time).Should().BeTrue();
+}
+```
+
+In a `WebApplicationFactory`, swap it in `ConfigureTestServices`:
+`services.RemoveAll<TimeProvider>(); services.AddSingleton<TimeProvider>(time);`. `Advance` also
+fires timers and `Task.Delay(…, time)` calls created from the fake provider.
+
 ## Mocking Libraries
 
 NSubstitute is the default for new test projects. When the solution already uses another library,
@@ -154,6 +181,7 @@ var user = new UserBuilder().WithEmail("test@example.com").Build();
 
 Examples here use NSubstitute and FluentAssertions. Read the test project's `.csproj` and mirror
 whatever it already references — a second mocking or assertion library in one solution is debt.
+For a new project: FluentAssertions 7.x (pin `[7,8)` — v8+ needs a commercial licence) or Shouldly.
 
 ## Choosing a Tier
 

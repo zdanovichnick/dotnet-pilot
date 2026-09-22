@@ -1,14 +1,14 @@
 ---
 description: "Implement a feature using TDD — writes failing tests first, then production code. --existing adds tests to code that already exists."
 argument-hint: "<task-description> [--complexity easy|hard] [--existing <class|file|project>]"
-effort: high
+effort: medium
 ---
 
 # TDD
 
 `/dotnet-pilot:dotnet:tdd` implements a feature using strict RED-GREEN-REFACTOR discipline.
 
-> **Delegates to**: `dnp-tdd-developer-easy` (sonnet, effort low) or `dnp-tdd-developer-hard` (sonnet, effort high) based on complexity; `dnp-architect` (fable, effort xhigh) for an architectural `[HALT` question.
+> **Delegates to**: `dnp-tdd-developer-easy` (sonnet, effort low) or `dnp-tdd-developer-hard` (opus, effort medium) based on complexity; `dnp-architect` (opus, effort high) for an architectural `[HALT` question.
 
 ## Complexity routing
 
@@ -43,10 +43,10 @@ instead of making that change. Complexity routes as usual.
    - Solution structure (from `mcp__roslyn__get_solution_structure` or solution map)
    - Test project path and conventions
    - Architecture style (clean, vertical-slice, etc.)
-5. The agent follows RED-GREEN-REFACTOR:
-   - **RED**: Write a failing test that specifies the target behavior → `dotnet test` → confirm failure
-   - **GREEN**: Write the minimum production code to pass → `dotnet test` → confirm pass
-   - **REFACTOR**: Clean up without changing behavior → `dotnet test` → confirm still passing
+5. On a `[ROUTING: dotnet-pilot:dnp-tdd-developer-hard]` return from the easy agent — it hands
+   the task back without implementing — spawn `dnp-tdd-developer-hard` with the original brief
+   plus the reasons it gave. On a `[PARTIAL: …]` return, report what was done and what is left
+   to the user rather than re-spawning.
 6. On a `[HALT: <question>]` return, put the question to the user with `AskUserQuestion` — the
    agent has no prompt tool of its own — then re-spawn the same agent with the original brief plus
    the answer. Repeat until it returns a result or the user aborts.

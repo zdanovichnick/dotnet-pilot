@@ -17,7 +17,7 @@ Audit the solution for security vulnerabilities across 6 domains. Return a prior
 
 ## Audit Domains
 
-Run all 6 domains. Use `mcp__roslyn__get_solution_structure` first to identify projects and entry points, then apply domain-specific checks.
+For a full audit, run all 6 domains. Use `mcp__roslyn__get_solution_structure` first to identify projects and entry points, then apply domain-specific checks.
 
 ### 1. Injection Vulnerabilities
 
@@ -37,7 +37,9 @@ Use `Grep` with patterns: `FromSqlRaw`, `ExecuteSqlRaw`, `new SqlCommand`, `Comm
 - `ClockSkew` set to `TimeSpan.Zero` is correct; `TimeSpan.MaxValue` or values > 5 minutes are a finding.
 - `[AllowAnonymous]` on admin-scoped controllers is always CRITICAL.
 
-Use `mcp__roslyn__find_symbol` to locate `AddJwtBearer` and `AddAuthentication` configurations.
+Use `Grep` for `AddJwtBearer`, `AddAuthentication` and `TokenValidationParameters` to locate the
+configuration. These are framework extension methods, so `mcp__roslyn__find_symbol` (which only
+finds symbols declared in the solution's own source) will not see them.
 
 ### 3. Secrets Exposure
 
@@ -45,6 +47,9 @@ Scan all `appsettings*.json`, `*.env`, `launchSettings.json` for:
 - Keys matching: `password`, `apikey`, `api_key`, `secret`, `token`, `connectionstring`, `pwd` (case-insensitive)
 - Connection strings with plaintext credentials (`Password=`, `User ID=` with values)
 - Hardcoded GUID-like tokens in source `.cs` files
+
+`mcp__roslyn__detect_antipatterns` flags string interpolation in `ILogger` calls; check those
+hits for tokens, passwords or connection strings flowing into a log sink.
 
 Flag `appsettings.Development.json` secrets as LOW (acceptable for dev environments, verify absent from prod config).
 
@@ -68,7 +73,8 @@ Parse output. Any package with High or Critical advisory severity is a CRITICAL 
 - Controller actions accepting `string` or `int` from route/query without any validation attribute
 - `ModelState.IsValid` check absent in controllers that are not `[ApiController]`-decorated (ApiController auto-returns 400 on invalid model)
 
-Use `mcp__roslyn__detect_antipatterns` to surface missing validation patterns.
+Use `Grep` for `[FromBody]`, `AbstractValidator<` and `AddValidatorsFromAssembly` and pair each
+request DTO with its validator; no Roslyn tool reports missing validation.
 
 ## Finding Format
 
@@ -96,6 +102,14 @@ Use `mcp__roslyn__detect_antipatterns` to surface missing validation patterns.
 ---
 Domains audited: Injection, Auth/AuthZ, Secrets, CORS, Dependencies, Input Validation
 ```
+
+## Focused Briefs
+
+A brief that carries one finding routed from `/dotnet-pilot:quality:review` wants a verdict on
+that finding, not an audit. Confirm or refute it with a `path:line` citation, reading only what
+settles it — the sink, the route attacker-controlled input takes to it, the policy, filter or
+validator that may already cover it — and skip the six domains and the report format above.
+Answer in the shape the brief asks for.
 
 ## Advisory Invariant
 

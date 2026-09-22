@@ -6,8 +6,9 @@ skills:
   - testing-dotnet
   - ef-core-patterns
   - clean-architecture
-model: sonnet
-effort: high
+  - convention-learner
+model: opus
+effort: medium
 color: blue
 ---
 

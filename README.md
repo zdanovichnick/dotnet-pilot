@@ -199,9 +199,9 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | Command | Usage | What it does |
 | --- | --- | --- |
 | `dotnet:scaffold` | `scaffold [feature\|api\|service\|project] <Name> [--arch vsa\|clean\|ddd]` | Detect the solution's architecture via Roslyn, then scaffold a feature (default), an API surface over an entity (`--minimal` for minimal APIs), a service with interface + DI registration (`--lifetime`), or a new project (`--type`) |
-| `dotnet:create-entity` | `create-entity <name> [--properties '...']` | Create a full entity stack: entity class, EF configuration, repository, service, DI registration, and migration |
+| `dotnet:create-entity` | `create-entity <name> [--properties '...']` | Create a full entity stack: entity class, EF configuration, repository, service, and DI registration, then hand off to `dotnet:add-migration` for the migration |
 | `dotnet:add-endpoint` | `add-endpoint <controller> <method> <route> [--with-dto]` | Add an endpoint to an existing controller or endpoint group |
-| `dotnet:add-migration` | `add-migration <name> [--context <Name>]` | Plan and generate an EF Core migration safely — validates chain, detects breaking changes, targets correct DbContext |
+| `dotnet:add-migration` | `add-migration <name> [--context <Name>]` | Generate an EF Core migration safely — checks for pending migrations, runs `migrations add` with `--context`, has `dnp-ef-migration-planner` inspect the generated `Up()` and removes the migration if it is destructive, then builds and emits an idempotent `migrations script` for review |
 | `dotnet:tdd` | `tdd <task> [--complexity easy\|hard] [--existing <target>]` | Implement a feature using TDD — failing tests first, then production code. `--existing` adds tests to a class, file, or project that already exists without touching production code |
 | `dotnet:run-tests` | `run-tests [project] [--coverage] [--filter ...]` | Run tests with coverage reporting and failure diagnosis |
 | `dotnet:health-check` | `health-check [--fix]` | Validate full solution health — build, tests, NuGet, project references, DI completeness |
@@ -210,12 +210,12 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 
 | Command | Usage | What it does |
 | --- | --- | --- |
-| `quality:review` | `review [--base <ref> \| --staged \| --last-commit \| --scope <glob>] [--depth quick\|standard\|deep]` | Sharded, Workflow-backed .NET review — haiku scouts per diff shard, sonnet confirmers per finding (the Fable architect for architecture findings), one deterministic digest that names every coverage gap |
+| `quality:review` | `review [--base <ref> \| --staged \| --last-commit \| --scope <glob>] [--depth quick\|standard\|deep]` | Sharded, Workflow-backed .NET review — haiku scouts per diff shard (shards validated in JS from the preflight manifest), opus confirmers per finding (routed to the specialist agent for security / performance / DI / architecture), one deterministic digest that names every coverage gap |
 | `quality:check-architecture` | `/dotnet-pilot:quality:check-architecture` | Scan for clean architecture layer violations — forbidden project references, DI issues, package placement |
 | `quality:security-scan` | `/dotnet-pilot:quality:security-scan` | Three-phase audit: `dotnet list package --vulnerable` → `dnp-security-auditor` OWASP scan → combined CRITICAL findings report |
 | `quality:de-sloppify` | `de-sloppify [--scope path]` | Safe refactoring pass — dead code removal, naming normalization, duplication elimination. Requires tests passing first |
 
-> `quality:review` is Workflow-backed. A Node preflight (`scripts/dnp-review-preflight.js`, Node ≥18, no deps) shards the selected diff, haiku scouts read each shard, sonnet confirmers try to refute every finding against the source, and a fixed-format digest reports confirmed, refuted and unconfirmed findings plus every coverage gap — same change set, same report shape, every run. `--depth quick` stops after the scouts (≤6 agents), `standard` adds one confirmer per finding (≤11), `deep` adds four lens sweeps (≤20). Artifacts land in `${CLAUDE_PLUGIN_DATA}/review/<runId>/`; if Claude Code prompts on every run, allow the permission rule `Workflow(dnp-review)`.
+> `quality:review` is Workflow-backed. A Node preflight (`scripts/dnp-review-preflight.js`, Node ≥18, no deps) shards the selected diff and the command hands the manifest's shards to the workflow, which validates them in JS (falling back to per-file, then whole-diff units); haiku scouts read each shard, near-duplicate findings are merged, opus confirmers try to refute every finding against the source, and a fixed-format digest reports confirmed, refuted and unconfirmed findings plus every coverage gap — same change set, same report shape, every run. `--depth quick` stops after the scouts (≤6 agents), `standard` adds one confirmer per finding (≤11), `deep` adds four lens sweeps (≤20). Artifacts land in `${CLAUDE_PLUGIN_DATA}/review/<runId>/`; if Claude Code prompts on every run, allow the permission rule `Workflow(dnp-review)`.
 
 ### Utility — housekeeping
 
@@ -237,30 +237,30 @@ Commands are thin orchestrators — all heavy work happens in one of these 9 age
 | Agent | Model | Effort | Role |
 | --- | --- | --- | --- |
 | `dnp-tdd-developer-easy` | Sonnet | low | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR; also the worker behind `dotnet:scaffold` and `dotnet:add-endpoint` |
-| `dnp-tdd-developer-hard` | Sonnet | high | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration. Returns `[HALT: <question>]` instead of guessing when a design choice is underdetermined |
+| `dnp-tdd-developer-hard` | Opus | medium | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration. Returns `[HALT: <question>]` instead of guessing when a design choice is underdetermined |
 | `dnp-refactor-cleaner` | Sonnet | high | Dead code removal, naming normalization, duplication elimination — behavior preserved, verified by tests after each step |
 
 ### Architecture & data
 
 | Agent | Model | Effort | Role |
 | --- | --- | --- | --- |
-| `dnp-architect` | Fable | xhigh | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation; advises on architectural `[HALT` questions from `dotnet:tdd` and confirms architecture findings in `quality:review` (loads the `clean-architecture` skill) |
+| `dnp-architect` | Opus | high | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation; advises on architectural `[HALT` questions from `dotnet:tdd` and confirms architecture findings in `quality:review` (loads the `clean-architecture` skill) |
 | `dnp-ef-migration-planner` | Sonnet | low | Plans safe EF Core migrations — detects breaking changes, validates chain integrity, targets correct DbContext (loads the `ef-core-patterns` skill) |
 
 ### Review confirmers (fast, focused)
 
 | Agent | Model | Effort | Role |
 | --- | --- | --- | --- |
-| `dnp-security-auditor` | Sonnet | high | OWASP Top 10 for .NET APIs — injection, secrets exposure, auth config, CORS, dependencies, input validation |
-| `dnp-performance-analyst` | Sonnet | high | Async hotspots, EF Core N+1 queries, missing `CancellationToken`, caching gaps, benchmark design |
-| `dnp-di-wiring-checker` | Sonnet | low | Cross-references constructor injection against DI registrations — finds missing services and captive dependencies |
+| `dnp-security-auditor` | Sonnet | high | OWASP Top 10 for .NET APIs — injection, secrets exposure, auth config, CORS, dependencies, input validation; judges a single routed finding when given a focused brief |
+| `dnp-performance-analyst` | Sonnet | high | Async hotspots, EF Core N+1 queries, missing `CancellationToken`, caching gaps, benchmark design; judges a single routed finding when given a focused brief |
+| `dnp-di-wiring-checker` | Sonnet | low | Cross-references constructor injection against DI registrations — finds missing services and captive dependencies; judges a single routed finding when given a focused brief |
 | `dnp-nuget-auditor` | Sonnet | low | Scans for vulnerable, outdated, and version-inconsistent NuGet packages across the solution |
 
 > Agents never prompt the user. A decision an agent cannot make comes back as `[HALT: <question>]`, and the command that spawned it asks you, then re-briefs the agent with the answer. For an architectural question, `dotnet:tdd` first asks `dnp-architect` and lists its pick as the recommended option.
 >
-> Effort is model-gated and **unsupported on Haiku 4.5**, so every agent runs on Sonnet or Fable with an explicit `effort:`; the mechanical ones sit at `effort: low`, which is where the cost/capability trade-off Haiku was reaching for actually lives.
+> Effort is model-gated and **unsupported on Haiku 4.5**, so every agent runs on Sonnet or Opus with an explicit `effort:`; the mechanical ones sit at `effort: low`, which is where the cost/capability trade-off Haiku was reaching for actually lives.
 >
-> Models are tier aliases (`fable`/`sonnet`), not dated IDs, so frontmatter tracks each tier's current default and needs no bump on a model release; the consistency check rejects anything else, because Claude Code's allowlist substitution covers aliases only. Fable access is listed under Requirements.
+> Models are tier aliases (`opus`/`sonnet`), not dated IDs, so frontmatter tracks each tier's current default and needs no bump on a model release; the consistency check rejects anything else, because Claude Code's allowlist substitution covers aliases only.
 
 ---
 
@@ -270,8 +270,8 @@ Hooks run automatically during Claude Code sessions. Advisory hooks warn but don
 
 | Hook | Trigger | What it does |
 | --- | --- | --- |
-| **Global CLAUDE.md Sync** | Before any tool use (once per version) | Injects/updates the DotnetPilot rule block in `~/.claude/CLAUDE.md` — runs once after plugin install/update, then fast-path skips. Toggle `hooks.sync_global_claude_md: false` to disable |
-| **Git Auto-Approve** | Before `git`/`gh` commands from the Bash tool | Returns `permissionDecision: allow` for safe single git/gh commands (status/diff/log/add/commit/branch/switch/push, `gh pr create`, heredoc commits) so commit + PR run without a prompt. Falls through to the normal prompt for chained, multi-line or redirected commands, `git config`, `gh api`, `rebase --exec`, `fetch`/`pull -u`, `push --receive-pack`, and anything from the PowerShell tool. Toggle `hooks.git_autoapprove: false` to disable |
+| **Global CLAUDE.md Sync** | On session start/resume/clear/compact | Injects/updates the DotnetPilot rule block in `~/.claude/CLAUDE.md` — replaces an existing block only when the plugin version is newer, and never rewrites an unparseable `settings.json`. Toggle `hooks.sync_global_claude_md: false` to disable |
+| **Git Auto-Approve** | Before `git`/`gh` commands from the Bash tool | Returns `permissionDecision: allow` for single git/gh commands that pass a per-subcommand allowlist (status/diff/log/add/commit/branch/switch/push, read-only `gh pr`/`run`/`issue`/`repo` verbs, `gh pr create`, one exact heredoc-commit shape) so commit + PR run without a prompt. Falls through to the normal prompt for chained, multi-line or redirected commands; `$`, globs, braces or backslashes anywhere; force pushes and ref deletion; `--output`, `--ext-diff`, `-c`; `reset`/`restore`/`clean`, `checkout` other than `-b`, `git config`, `gh api`, `--no-verify` commits; and anything from the PowerShell tool. Toggle `hooks.git_autoapprove: false` to disable |
 | **DI Registration Check** | After writing/editing `.cs` files | New services missing DI registration |
 | **Migration Guard** | Before writing/editing migration files | Warns when manually editing EF migration files |
 | **Project Scope Guard** | After writing/editing any file | Warns when editing outside the current phase's focused projects (`<Project>.Tests` counts as inside); at most one advisory per project per hour |
@@ -310,18 +310,18 @@ Skills are on-demand knowledge packs loaded by agents when needed — they encod
 
 | Skill | What it teaches |
 | --- | --- |
-| `aspnet-api-patterns` | Minimal APIs, controller patterns, middleware, filters, OpenAPI |
+| `aspnet-api-patterns` | Minimal APIs, controller patterns, `IExceptionHandler` + `AddProblemDetails`, built-in `AddOpenApi`, Asp.Versioning |
 | `ef-core-patterns` | DbContext design, migrations, query optimization, owned entities |
 | `testing-dotnet` | xUnit conventions, NSubstitute, `WebApplicationFactory` over Testcontainers, test tiers, mock fidelity |
 | `clean-architecture` | Layer rules, project layout, dependency direction, shared kernel |
 | `dotnet-project-init` | Solution setup, NuGet config, CI scaffolding |
-| `modern-csharp` | C# 12–14: primary constructors, collection expressions, records, pattern matching, `field` keyword |
-| `error-handling` | `Result<TValue,TError>`, `ProblemDetails`, `GlobalExceptionHandler`, exception boundaries |
+| `modern-csharp` | C# 12–14 gotchas: `field` keyword, extension members, null-conditional assignment, span conversions, async and cancellation |
+| `error-handling` | The single `Result<TValue,TError>` definition, RFC 9457 `ProblemDetails`, `IProblemDetailsService`-backed global handler, exception boundaries |
 | `resilience` | Polly v8 `ResiliencePipelineBuilder`, retry, circuit breaker, timeout, hedging, `IHttpClientFactory` |
 | `caching` | `HybridCache` (.NET 9+), `IOutputCache`, cache-aside, `IMemoryCache`, typed cache keys |
 | `authentication` | JWT bearer, ASP.NET Identity, OIDC, policy-based auth, `IAuthorizationHandler` |
 | `vertical-slice` | Feature folders, `IEndpointGroup`, endpoint filters, no shared base classes |
-| `ddd` | `AggregateRoot<TId>`, value objects, strongly-typed IDs, domain events, repository interfaces |
+| `ddd` | `AggregateRoot<TId>`, value objects (`ComplexProperty` mapping), strongly-typed IDs, domain events via `TimeProvider`, repository-placement variants |
 | `convention-learner` | 6-step protocol: detect naming, folder structure, DI style, test framework, DTO style, error handling before writing any code |
 | `logging` | Serilog setup, message templates (not interpolation), `LogContext`, request logging, PII rules |
 | `opentelemetry` | `ActivitySource`, `IMeterFactory`, OTLP config, Aspire `AddServiceDefaults()`, Serilog correlation |
@@ -625,7 +625,8 @@ Context7 must be enabled at the account level in Claude Code settings.
 | v2.7.0 | ✅ shipped | **Statusline restyle.** The effort segment drops the double-width `⚙` glyph for an `EFF` label, and its configured-level mismatch now reads as a spelled-out `(set: <configured>)` instead of a cramped `≠<configured>`. Every segment gained an emoji icon and a saturated **value** color (labels stay dim), context usage renders as a threshold-colored 10-cell bar, and cost/context/effort now ramp green → yellow → red with pressure — following the icon + progress-bar style of the [official statusline docs](https://code.claude.com/docs/en/statusline). **Context-engineering pass for Claude 5.** The two TDD agents shed 680 lines of guardrail scaffolding — anti-rationalization tables, epistemic-gate and predict-first protocols, `LLM-1..6` self-verification checklists, and six pages of few-shot ideal-output transcripts — keeping the .NET gotchas that the model can't infer. Test-tier selection, mock-fidelity rules, and boundary-coverage tables moved into the `testing-dotnet` skill, loaded on demand instead of inlined. The global `CLAUDE.md` rules block lost a live contradiction ("prefer explicit types" vs "always use `var`") and its duplicated .NET style sections. `dnp-dotnet-priority` stopped re-injecting the 16-line agent roster on every `Agent` call — Claude Code already surfaces agent descriptions. Command references corrected from the never-valid `/DotnetPilot:` prefix to `/dotnet-pilot:` (109 occurrences). New **Comments** rule in the injected global block — default to none, and a comment earns its place only where the code cannot say the thing itself; the test-writer agent's example test dropped its `// Arrange` / `// Act` / `// Assert` labels, which had been demonstrating the opposite of the stated convention. |
 | v3.0.0 | ✅ shipped | **Breaking: pruned to what gets used, then modernized.** 29 → 16 commands — the project/service/API scaffolders folded into `dotnet:scaffold` modes, test generation into `dotnet:tdd --existing`, the pre-commit gate into `project:verify --quick`; the rest removed, with `utility:help` printing a "Did you mean" table for every old name. 15 → 9 agents (planner, verifier, Fable advisor, API scaffolder, build-error resolver, test writer removed; scaffolding now routes to `dnp-tdd-developer-easy`). Agents no longer prompt — they return `[HALT: <question>]` and the command asks; frontmatter dropped the scoped `Bash` form and permission-mode keys plugin subagents never honored. Side-effect commands (`init`, `ship`, `statusline`, `add-migration`) carry `disable-model-invocation`. Skills: Blazor placeholder removed, `when_to_use:` on all 15, `authentication`/`caching`/`resilience` split into `SKILL.md` + `references/`, `testing-dotnet` moved to NSubstitute + Testcontainers. The injected global rules block was cut to what hooks don't already enforce. Hooks: a shared build-state library, a Stop-time verification hook, a subagent-result hook, hardened git auto-approve, array-shaped `solution-map.json` in the scope guard, and a consistency checker + GitHub Actions CI over the hook harness. `quality:review` became Workflow-backed (triage → scout → confirm → report). `CHANGELOG.md` added; `plugin.json` gained `displayName`. |
 | v3.1.0 | ✅ shipped | **Fable for architecture judgment.** `dnp-architect` runs on `fable` at `effort: xhigh`; `quality:review` routes architecture findings to it at `standard`+ depth, and `dotnet:tdd` consults it before surfacing an architectural `[HALT]`, listing its pick as the recommended option. `utility:help` prints the version banner, every command's arguments and the agent / skill / hook rosters. The consistency check rejects any `model:` that is not a family alias. The injected `## Comments` rule leads with minimum, critical-only comments; the hook harness README diagrams its run loop and the hook event contract. |
-| v3.2 | 🔜 backlog | MAUI / mobile support |
+| v3.2.0 | ✅ shipped | **Opus 5.5 for judgment.** `dnp-architect` moves from `fable`/`xhigh` to `opus`/`high` and `dnp-tdd-developer-hard` from `sonnet`/`high` to `opus`/`medium`; every `quality:review` confirmer runs on `opus`. Opus 5.5 matches Fable 5.1 on most work at 40% of the price, its default `medium` effort beats Opus 5 at `high`, and it reports fewer false positives in code review — so Fable is no longer a requirement. Thin orchestrator commands drop to `effort: medium`. The statusline reads `modelSettings[<model>].effortLevel` and no longer reports a user-level top-level `effortLevel` as configured on Opus 5.5 and later, where Claude Code ignores it. Also hardens `dnp-git-autoapprove` (per-subcommand allowlist; closes heredoc, `--output`, force-push and `gh` bypasses), stops the sync hooks from rewriting an unparseable `settings.json`, drops the review workflow's triage agent, makes `add-migration` inspect before it keeps a migration, and corrects stale samples across the skills. |
+| v3.3 | 🔜 backlog | MAUI / mobile support |
 
 ---
 
@@ -634,7 +635,6 @@ Context7 must be enabled at the account level in Claude Code settings.
 | Dependency | Version | Purpose |
 | --- | --- | --- |
 | [Claude Code](https://claude.ai/code) | Latest | AI coding assistant (CLI, desktop, or IDE) |
-| [Fable 5.1](https://www.anthropic.com/claude/fable) | plan-dependent | `dnp-architect` and the review workflow's architecture confirmer run on the `fable` alias; where an allowlist blocks it, Claude Code substitutes the session model and warns (optional) |
 | [.NET SDK](https://dotnet.microsoft.com/) | 10+ | Your .NET project must build |
 | [Node.js](https://nodejs.org/) | 18+ | Hooks are JS scripts executed by Claude Code |
 | [dnp-roslyn](https://github.com/zdanovichnick/dotnet-pilot-mcp-roslyn) | v0.3+ | Roslyn MCP for semantic C# analysis |

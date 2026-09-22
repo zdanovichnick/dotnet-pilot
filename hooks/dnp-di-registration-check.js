@@ -74,6 +74,7 @@ process.stdin.on('end', () => {
     if (!classMatch) process.exit(0);
 
     const className = classMatch[1];
+    if (frameworkActivated(content, className)) process.exit(0);
 
     // Look for constructor with injected parameters.
     // Two shapes: (a) primary constructor `ClassName(... params ...)`
@@ -92,14 +93,10 @@ process.stdin.on('end', () => {
 
     if (types.size === 0) process.exit(0);
 
-    // Check if this class itself needs DI registration
-    // Look for it in common registration patterns across the solution
     const registrationPatterns = [
-      `(?:TryAdd|Add)(?:Keyed)?(?:Scoped|Transient|Singleton)<[^>]*${className}>`,
-      `(?:TryAdd|Add)(?:Keyed)?(?:Scoped|Transient|Singleton)\\(typeof\\([^)]*${className}`,
-      `AddHttpClient<[^>]*${className}>`,
-      `AddDbContext<[^>]*${className}>`,
-      `TryAddEnumerable[^;]*${className}`,
+      `(?:TryAdd|Add)(?:Keyed)?(?:Scoped|Transient|Singleton)\\s*\\([^;]*typeof\\(\\s*${className}\\s*[<)]`,
+      `(?:TryAdd|Add)\\w*[^;(]*\\([^;]*\\bnew\\s+${className}\\s*[(<{]`,
+      `TryAddEnumerable[^;]*\\b${className}\\b`,
     ];
 
     // Quick scan: check Program.cs and extension files in the same solution
@@ -118,6 +115,10 @@ process.stdin.on('end', () => {
             // must NOT count as a real registration (it would false-suppress
             // the advisory).
             const c = stripComments(fs.readFileSync(f, 'utf8'));
+            if (genericRegistrationTargets(c).has(className)) {
+              found = true;
+              break;
+            }
             for (const pattern of registrationPatterns) {
               if (new RegExp(pattern).test(c)) {
                 found = true;
@@ -144,6 +145,69 @@ process.stdin.on('end', () => {
     process.exit(0);
   }
 });
+
+// Controllers, hubs, hosted services, Razor pages, view components, endpoints
+// and conventional middleware are constructed by the framework from the
+// container; they are never registered as services themselves.
+const FRAMEWORK_BASES = new Set(['Controller', 'ControllerBase', 'Hub', 'BackgroundService', 'IHostedService',
+  'PageModel', 'ViewComponent', 'Endpoint', 'EndpointWithoutRequest']);
+const FRAMEWORK_SUFFIX = /(?:Controller|Middleware|Hub|Endpoint)$/;
+
+function frameworkActivated(src, className) {
+  if (FRAMEWORK_SUFFIX.test(className)) return true;
+  const header = src.match(new RegExp(`\\b(?:class|record(?:\\s+class|\\s+struct)?)\\s+${className}\\b([^{;]*)`));
+  if (!header) return false;
+  const colon = header[1].replace(/\([^)]*\)/g, '').indexOf(':');
+  if (colon === -1) return false;
+  const bases = header[1].replace(/\([^)]*\)/g, '').slice(colon + 1).split(/\bwhere\b/)[0];
+  return splitTopLevel(bases).some(b => FRAMEWORK_BASES.has(simpleTypeName(b)));
+}
+
+// Implementation type of every `AddScoped<...>`-style generic registration:
+// the last top-level type argument, so `AddScoped<IRepo<User>, UserRepo>`
+// yields `UserRepo` and `AddScoped<IFooService, FooService>` never yields `Service`.
+const GENERIC_REGISTRATION = /\b(?:TryAdd|Add)(?:Keyed)?(?:Scoped|Transient|Singleton|HttpClient|HostedService|DbContext|DbContextFactory|DbContextPool|PooledDbContextFactory)\s*</g;
+
+function genericRegistrationTargets(src) {
+  const targets = new Set();
+  for (const m of src.matchAll(GENERIC_REGISTRATION)) {
+    let depth = 1;
+    let i = m.index + m[0].length;
+    const start = i;
+    for (; i < src.length && depth > 0; i++) {
+      if (src[i] === '<') depth++;
+      else if (src[i] === '>') depth--;
+      else if (src[i] === ';' || src[i] === '(') break;
+    }
+    if (depth !== 0) continue;
+    const args = splitTopLevel(src.slice(start, i - 1));
+    if (args.length) targets.add(simpleTypeName(args[args.length - 1]));
+  }
+  return targets;
+}
+
+function splitTopLevel(text) {
+  const parts = [];
+  let depth = 0;
+  let cur = '';
+  for (const ch of text) {
+    if (ch === '<') depth++;
+    else if (ch === '>') depth--;
+    if (ch === ',' && depth === 0) {
+      parts.push(cur);
+      cur = '';
+    } else {
+      cur += ch;
+    }
+  }
+  if (cur.trim()) parts.push(cur);
+  return parts.map(p => p.trim()).filter(Boolean);
+}
+
+// `global::My.Ns.Foo<T>?` -> `Foo`
+function simpleTypeName(type) {
+  return type.replace(/<[\s\S]*$/, '').replace(/[?\s]/g, '').split(/[.:]/).pop();
+}
 
 // Remove `//` line comments and `/* */` block comments so commented-out code
 // doesn't register as a real DI call. Not a full C# lexer (won't honor `//`

@@ -73,7 +73,7 @@ process.stdin.on('end', () => {
     }
 
     // Determine which project the edited file belongs to
-    const normalizedPath = filePath.replace(/\\/g, '/');
+    const normalizedPath = path.resolve(cwd, filePath).replace(/\\/g, '/');
 
     // Skip common files that are solution-level
     const fileName = path.basename(filePath);
@@ -134,8 +134,12 @@ function resolveProject(filePath, cwd) {
         let best = null;
         let bestLen = 0;
         for (const [name, info] of projectEntries(map.projects)) {
-          const projDir = path.dirname(info.path).replace(/\\/g, '/');
-          if (projDir && haystack.includes('/' + projDir.toLowerCase() + '/') && projDir.length > bestLen) {
+          const projDir = path.dirname(info.path).replace(/\\/g, '/').replace(/^\.\//, '').toLowerCase();
+          if (!projDir || projDir === '.') continue;
+          const inProject = /^([a-z]:)?\//.test(projDir)
+            ? haystack.startsWith(projDir + '/')
+            : haystack.includes('/' + projDir + '/');
+          if (inProject && projDir.length > bestLen) {
             best = name;
             bestLen = projDir.length;
           }

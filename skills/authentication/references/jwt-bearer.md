@@ -15,17 +15,21 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateLifetime         = true,
             ValidateIssuerSigningKey = true,
             // Zero skew — reject tokens within the default 5-minute grace window
-            ClockSkew = TimeSpan.Zero
+            ClockSkew = TimeSpan.Zero,
+            NameClaimType = "name",
+            RoleClaimType = "role"
         };
 
-        // Map non-standard claim names (e.g., Keycloak uses "preferred_username")
+        // Keep the token's claim names ("sub", "email", "role") instead of remapping them
+        // to ClaimTypes.* URIs.
         options.MapInboundClaims = false;
-        options.TokenValidationParameters.NameClaimType = "preferred_username";
 
         options.Events = new JwtBearerEvents
         {
             OnAuthenticationFailed = ctx =>
             {
+                var logger = ctx.HttpContext.RequestServices
+                    .GetRequiredService<ILoggerFactory>().CreateLogger("JwtBearer");
                 logger.LogWarning(ctx.Exception, "JWT authentication failed");
                 return Task.CompletedTask;
             }
@@ -34,6 +38,12 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 ```
+
+**`MapInboundClaims = false` and the claim-type settings travel together.** With remapping off,
+`ClaimTypes.NameIdentifier` / `ClaimTypes.Role` lookups return null and `IsInRole` returns false
+unless `NameClaimType` / `RoleClaimType` name the raw claims. Read the user id as
+`FindFirstValue("sub")`. Keycloak: `NameClaimType = "preferred_username"`, and realm roles arrive
+nested under `realm_access.roles`, so they need a claims transformation before `IsInRole` sees them.
 
 ### Symmetric Key Validation (internal services without IdP)
 

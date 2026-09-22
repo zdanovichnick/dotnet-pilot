@@ -106,7 +106,7 @@ Files: src/**/*.cs
 |--------------|-----------|
 | `Result<TValue, TError>` / `OneOf<>` | Result/discriminated union pattern |
 | `throw new DomainException` / `throw new ValidationException` | Exception-based |
-| `TypedResults.Problem(...)` / `ValidationProblem(...)` | ProblemDetails (RFC 9110) |
+| `TypedResults.Problem(...)` / `ValidationProblem(...)` | ProblemDetails (RFC 9457) |
 
 ## Applying Conventions
 

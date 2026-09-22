@@ -44,10 +44,22 @@ Load only the file the task needs:
 | Use Case | Strategies (outer → inner) |
 |----------|---------------------------|
 | Database queries | Retry (3x exponential) → Timeout (5s) |
-| HTTP API calls | Retry (3x) → Circuit Breaker → Timeout (10s total) |
+| HTTP API calls | Total timeout (30s) → Retry (3x) → Circuit Breaker → Attempt timeout (10s) |
 | Payment processing | Circuit Breaker → Timeout (30s) — no retry (idempotency risk) |
 | Read-heavy low-latency | Hedging → Timeout |
 | Background job step | Retry (5x linear) → Timeout (60s) |
+
+## Gotchas
+
+- A timeout placed inside the retry is **per attempt**. The worst-case wall time is roughly
+  attempts × attempt-timeout plus back-off delays. Add an outer timeout when callers need a hard cap
+  (`AddStandardResilienceHandler` does this: 30s total, 10s per attempt).
+- **Polly retry stacks with EF Core's `EnableRetryOnFailure`.** EF's retrying execution strategy
+  already retries transient SQL errors (SQL Server default: 6 retries). A Polly retry around the
+  same `SaveChangesAsync` multiplies attempts and latency. Pick one retry layer for database calls.
+  With EF's strategy enabled, a user-initiated transaction must run inside
+  `db.Database.CreateExecutionStrategy().ExecuteAsync(...)`.
+- Retrying a non-idempotent POST can duplicate the side effect. Retry it only with an idempotency key.
 
 ## Do / Don't
 

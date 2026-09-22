@@ -1,7 +1,7 @@
 ---
 description: "Verify readiness before shipping — build, tests, DI completeness, and architecture check. --quick is the pre-commit form."
 argument-hint: "[--quick]"
-effort: high
+effort: medium
 ---
 
 # Verify
@@ -9,7 +9,7 @@ effort: high
 `/dotnet-pilot:project:verify` is the "ready to ship?" gate between active development
 and `/dotnet-pilot:project:ship`. Run it when you think the feature is done.
 
-> **Delegates to**: `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (fable, effort xhigh).
+> **Delegates to**: `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (opus, effort high).
 
 ## `--quick`
 
@@ -25,13 +25,13 @@ staged straight after.
 ```bash
 dotnet build --no-restore
 ```
-On failure: report errors, STOP.
+On failure, report the errors and stop there.
 
 ### 2. Tests
 ```bash
 dotnet test --no-build
 ```
-On failure: report failures, STOP.
+On failure, report the failing tests and stop there.
 
 ### 3. DI completeness
 Spawn `dnp-di-wiring-checker`. Report any missing registrations as FAIL (blocking; WARN with `--quick`).
@@ -57,5 +57,5 @@ Verification Results
 Ready to ship. Run /dotnet-pilot:project:ship.
 ```
 
-If any check fails, stop and list what needs fixing before `/project:ship` is called.
+If any check fails, stop and list what needs fixing before `/dotnet-pilot:project:ship` is called.
 With `--quick`, the last line names the WARN items and the files `git status` reports.

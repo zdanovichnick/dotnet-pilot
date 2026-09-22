@@ -47,7 +47,7 @@ Load only the file the task needs:
 | Use `FallbackPolicy` to require auth by default | Rely on `[Authorize]` placement — it's easy to forget |
 | Use policy-based authorization for permissions | Hard-code role strings in `[Authorize(Roles = "...")]` throughout controllers |
 | Use resource-based authorization for ownership checks | Put ownership logic inside domain services |
-| Map claim names explicitly with `ClaimActions.MapJsonKey` | Assume IdP claim names match `ClaimTypes.*` constants |
+| Pick one claim-name scheme: raw names (`MapInboundClaims = false` + `NameClaimType`/`RoleClaimType`) or `ClaimTypes.*` | Mix `"sub"` lookups with `ClaimTypes.NameIdentifier` lookups — one of them returns null |
 | Store permissions as claims in the token | Re-query the DB for permissions on every request |
 | Use `RequireAuthenticatedUser()` as fallback policy | Open all endpoints and add `[Authorize]` selectively |
 | `AllowAnonymous()` on health check / public endpoints | Forget to exempt health endpoints from the fallback policy |

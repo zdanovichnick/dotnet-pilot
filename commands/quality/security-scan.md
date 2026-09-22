@@ -52,6 +52,5 @@ Domains audited: Injection, Auth/AuthZ, Secrets, CORS, Dependencies, Input Valid
 
 ## Related
 
-- `/dotnet-pilot:dotnet:health-check` — NuGet version audit without the full security scan
+- `/dotnet-pilot:dotnet:health-check` — full solution health: build, tests, NuGet versions, DI
 - `/dotnet-pilot:quality:check-architecture` — architecture compliance (separate concern)
-- `/dotnet-pilot:dotnet:health-check` — full solution health including build and DI

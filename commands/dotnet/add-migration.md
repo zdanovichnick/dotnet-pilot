@@ -1,7 +1,7 @@
 ---
 description: "Plan and generate an EF Core migration safely — validates chain, detects breaking changes, targets correct DbContext."
 argument-hint: "<migration-name> [--context <DbContextName>]"
-effort: high
+effort: medium
 disable-model-invocation: true
 ---
 
@@ -13,22 +13,35 @@ disable-model-invocation: true
 
 ## Execution
 
-1. Read `solution-map.json` for EF context details
-2. If multiple contexts exist and `--context` was not given: stop and ask the user which one — never guess
-3. Spawn `dnp-ef-migration-planner` to:
-   - Check for pending model changes
-   - Detect breaking changes (column drops, type changes)
-   - Validate migration chain integrity
-4. If breaking changes are found:
-   - Present the risks to the developer
-   - Get explicit confirmation before proceeding
-5. Run the migration command:
+Every `dotnet ef` command below carries `--project <InfraProject> --startup-project <ApiProject>`,
+plus `--context <Context>` whenever the solution has more than one `DbContext`.
+
+1. Read `solution-map.json` for the EF contexts and the project pair.
+2. If multiple contexts exist and `--context` was not given: stop and ask the user which one — never guess.
+3. Check there is something to migrate:
+   ```bash
+   dotnet ef migrations has-pending-model-changes --project <InfraProject> --startup-project <ApiProject> --context <Context>
+   ```
+   No pending changes: say so and stop.
+4. Generate the migration:
    ```bash
    dotnet ef migrations add <Name> --project <InfraProject> --startup-project <ApiProject> --context <Context>
    ```
-6. Verify the generated migration:
+5. Spawn `dnp-ef-migration-planner` with the generated `Migrations/<timestamp>_<Name>.cs` path, the
+   context and the project pair. It validates the chain and inspects `Up()` for `DropColumn`,
+   `DropTable`, `AlterColumn` type or nullability changes, and renames EF generated as drop + add.
+6. If it reports breaking changes, present each risk and ask the developer to keep the migration
+   or remove it. On remove:
+   ```bash
+   dotnet ef migrations remove --project <InfraProject> --startup-project <ApiProject> --context <Context>
+   ```
+   then stop, naming the model change to rework (a `RenameColumn`, a default value, a two-step
+   column change).
+7. Verify:
    ```bash
    dotnet build --no-restore
-   dotnet ef database update --dry-run --project <InfraProject> --startup-project <ApiProject>
+   dotnet ef migrations script <PreviousMigration> <Name> --idempotent --project <InfraProject> --startup-project <ApiProject> --context <Context>
    ```
-7. Commit the migration files with: `feat(Infrastructure): add migration <Name>`
+   `<PreviousMigration>` is the one before `<Name>` in `dotnet ef migrations list` (`0` for the
+   first). Read the SQL for anything the planner's summary did not mention.
+8. Commit the migration files with: `feat(Infrastructure): add migration <Name>`

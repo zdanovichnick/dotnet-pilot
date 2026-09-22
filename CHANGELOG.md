@@ -5,6 +5,104 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [3.2.0] - 2026-09-22
+
+### Changed
+
+- Judgment work moves to `opus`, which now resolves to Opus 5.5. It performs at Fable 5.1 level on
+  most work for 40% of the price, and it raises fewer false positives in code review.
+  - `dnp-architect`: `fable`/`xhigh` → `opus`/`high`.
+  - `dnp-tdd-developer-hard`: `sonnet`/`high` → `opus`/`medium`. Medium is Opus 5.5's default effort,
+    and at that level it already outperforms Opus 5 at `high`.
+  - The other seven agents stay on `sonnet`.
+  - Fable access is no longer listed under Requirements.
+- `quality:review` runs every confirmer on `opus` through the workflow's `agent()` model override,
+  including the ones routed to specialist agents; before this, only the architecture route ran above
+  `sonnet`. Scouts stay on `haiku`, and the narrator stays on `sonnet`.
+- The thin orchestrator commands drop from `effort: high` to `effort: medium`: `project:verify`,
+  `quality:check-architecture`, `quality:de-sloppify`, `dotnet:add-migration`, `dotnet:tdd` and
+  `dotnet:scaffold`. Their heavy work runs in agents that set their own effort.
+  `quality:security-scan` keeps `high` because it does its work in the caller's context.
+- `dotnet:create-entity` is now a thin orchestrator at `effort: medium`. It no longer writes the
+  migration itself; it hands off to `dotnet:add-migration`.
+- `dotnet:add-migration` runs in a safer order: check for pending migrations, `migrations add`
+  (always with `--context`), let `dnp-ef-migration-planner` inspect the generated `Up()`,
+  `migrations remove` if it is destructive, build, then emit
+  `migrations script <prev> <new> --idempotent` for review. It no longer uses the non-existent
+  `database update --dry-run`.
+- `quality:review` workflow:
+  - The haiku triage stage is gone. The command passes the preflight manifest's `shards` and
+    `files`, and the workflow validates them in JS. If they are malformed it falls back to per-file
+    `shardPath` grouping, then to the whole diff as one unit.
+  - The scout count is bounded by depth (6/6/7) and by the agent cap, so confirmers keep their
+    slots.
+  - Findings on the same file and category within two lines are merged.
+  - Lens findings are kept only in their own categories.
+  - Confirmers dropped by the cap are labelled "agent cap reached".
+- `dotnet:tdd`, `dotnet:scaffold` and `dotnet:add-endpoint` handle `[ROUTING: …]` and `[PARTIAL …]`
+  verdicts, not only `[HALT: …]`.
+- The TDD agents load `convention-learner`.
+- `dnp-security-auditor`, `dnp-performance-analyst` and `dnp-di-wiring-checker` gain a Focused
+  Briefs section: given one routed finding, they judge that finding instead of auditing the
+  solution.
+- `dnp-refactor-cleaner` never runs `git checkout`, `restore`, `reset` or `stash`, and it reports
+  through `[HALT:` and `[PARTIAL:`.
+- `project:ship` ticks only the checks that actually ran, and passes the PR body through
+  `--body-file -`.
+- `dotnet:health-check --fix` stays within the current major version.
+- `dnp-sync-global-claude-md` runs at SessionStart instead of before every tool call. It replaces
+  the rules block only when the plugin version is newer, compared as semver.
+- `dnp-di-registration-check`:
+  - Skips framework-activated classes: controllers, hubs, middleware,
+    `BackgroundService`/`IHostedService`, page models, view components and FastEndpoints endpoints.
+  - Recognises nested generics, `AddHostedService`, `AddHttpClient` and `AddDbContext`.
+- `dnp-commit-format` also validates the `-am`, `-m"x"` and `--message=` forms.
+- `dnp-stop-verify` and the statusline call `git --no-optional-locks status`, so they no longer
+  contend with a concurrent git command for `index.lock`.
+- **Breaking for `~/.claude/CLAUDE.md`:** the injected rules block drops its `## Git` and `## Jira`
+  sections, and cites RFC 9457 instead of RFC 7807. The next sync removes those sections from the
+  block, so copy them outside the `DotnetPilot` markers to keep them.
+- Skills:
+  - Stale or broken samples corrected across `authentication`, `opentelemetry`, `logging`,
+    `aspnet-api-patterns`, `caching`, `resilience`, `testing-dotnet`, `ef-core-patterns`,
+    `vertical-slice`, `clean-architecture` and `dotnet-project-init`.
+  - `modern-csharp` is cut down to C# 12–14 gotchas, adding an async and cancellation section.
+  - `error-handling` now holds the single `Result<TValue, TError>` definition. `ddd` and
+    `knowledge/common-infrastructure.md` point to it.
+  - New reference files: `error-handling/references/controllers-and-jobs.md` and
+    `ddd/references/ef-mapping.md`.
+- `assets/architecture.svg`: the top agent tier is now Opus, and it holds `dnp-architect` and
+  `dnp-tdd-developer-hard`.
+
+### Security
+
+- `dnp-git-autoapprove` now uses a per-subcommand allowlist. Before this, several commands were
+  auto-approved when they should have prompted:
+  - a heredoc commit that carried a `curl`;
+  - an unquoted `-F -` heredoc;
+  - `--output` writing into `.git/hooks`;
+  - `reset --hard` and `push --force`;
+  - `gh auth token` and `gh repo delete`.
+
+  These now fall through to the normal prompt, along with:
+  - long-option prefixes (`--outp`, `--forc`), `+ref`/`:ref` refspecs, `-c core.hooksPath` and
+    `--exec-path`;
+  - `$`, glob, brace and backslash characters, even inside quotes;
+  - heredoc messages with unbalanced parentheses;
+  - `--no-verify` commits.
+- `dnp-sync-global-claude-md` and `dnp-statusline-sync` no longer overwrite `~/.claude/settings.json`
+  with a near-empty object when the file fails to parse. Both use `hooks/_lib/json-file.js`, which
+  keeps a BOM and writes atomically.
+
+### Fixed
+
+- The statusline's configured-effort lookup now matches Claude Code's rules for Opus 5.5:
+  - A `modelSettings[<model id>].effortLevel` entry is read first in each settings file.
+  - A top-level `effortLevel` in `~/.claude/settings.json` counts only for models older than
+    Opus 5.5. Newer models ignore it, so a global `effortLevel: xhigh` no longer shows a false
+    `(set: xhigh)`.
+  - Project and local settings files still apply their top-level key to every model.
+
 ## [3.1.0] - 2026-09-22
 
 ### Added

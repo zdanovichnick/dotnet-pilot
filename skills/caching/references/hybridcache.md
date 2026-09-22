@@ -26,7 +26,8 @@ builder.Services.AddHybridCache(options =>
     options.MaximumPayloadBytes = 1024 * 1024; // 1 MB
 });
 
-// Optional Redis L2 — add BEFORE AddHybridCache so it's picked up automatically
+// Optional Redis L2 — HybridCache uses whatever IDistributedCache is registered in DI;
+// registration order relative to AddHybridCache doesn't matter.
 builder.Services.AddStackExchangeRedisCache(options =>
     options.Configuration = builder.Configuration.GetConnectionString("Redis"));
 ```
@@ -56,6 +57,17 @@ public class ProductService(HybridCache cache, AppDbContext db)
             cancellationToken: ct) ?? [];
 }
 ```
+
+### Gotchas
+
+- **Instance reuse:** HybridCache deserializes a fresh object on **every hit** unless the cached type
+  is `sealed` and marked `[System.ComponentModel.ImmutableObject(true)]` — only then does it hand out
+  the same L1 instance. Records alone don't qualify.
+- **Never cache tracked EF entities.** Query with `AsNoTracking()` and cache a DTO projection: an
+  entity carries navigations (serialization cycles, over-fetching), and a cached tracked instance
+  attached to a disposed `DbContext` breaks lazy loads and change tracking.
+- The factory runs once per key across concurrent callers (stampede protection) but only
+  **per process** — N instances can still issue N factory calls on a cold L2.
 
 ### Invalidation
 

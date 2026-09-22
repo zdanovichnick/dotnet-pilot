@@ -36,4 +36,8 @@ Solution Health: MyApp.slnx
   References:   PASS (no circular refs)
 ```
 
-If `--fix`: auto-fix simple issues (add missing using statements, update outdated packages).
+If `--fix`: auto-fix simple issues — add missing using statements, and update outdated packages
+within their current major version only. With the `dotnet-outdated-tool` installed that is
+`dotnet outdated --version-lock Major --upgrade`; otherwise `dotnet add package <Id> --version
+<newest same-major version>` per package. Major-version bumps can carry breaking API changes, so
+list them for the user with their current and latest versions instead of applying them.

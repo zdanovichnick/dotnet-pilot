@@ -94,10 +94,12 @@ async function main() {
 
   if (!hookEnabled(cwd, 'post_edit_format')) process.exit(0);
 
-  const projectPath = findNearestCsproj(path.dirname(filePath));
+  // A relative path would walk up to '.' forever: path.dirname('.') === '.'.
+  const absFile = path.resolve(cwd, filePath);
+  const projectPath = findNearestCsproj(path.dirname(absFile));
   if (!projectPath) process.exit(0);
 
-  const result = await runDotnetFormat(projectPath, filePath);
+  const result = await runDotnetFormat(projectPath, absFile);
 
   if (result.code !== 0) {
     emit(`dotnet format failed (exit ${result.code}) — check formatting manually`);

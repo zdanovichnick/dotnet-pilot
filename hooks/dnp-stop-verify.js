@@ -65,7 +65,7 @@ function findSolution(cwd) {
 // true = no modified/untracked .NET source; false = dirty; null = no git answer.
 // Git pathspecs match `*` across directory separators, so `*.cs` covers the tree.
 function sourceTreeClean(cwd) {
-  const r = spawnSync('git', ['status', '--porcelain', '--untracked-files=all', '--', '*.cs', '*.csproj', '*.razor'],
+  const r = spawnSync('git', ['--no-optional-locks', 'status', '--porcelain', '--untracked-files=all', '--', '*.cs', '*.csproj', '*.razor'],
     { cwd, encoding: 'utf8', timeout: 5000 });
   if (r.error || r.status !== 0) return null;
   return r.stdout.trim().length === 0;

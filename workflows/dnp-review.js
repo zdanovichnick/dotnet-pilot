@@ -1,11 +1,10 @@
 export const meta = {
   name: 'dnp-review',
-  description: 'Sharded .NET code review: haiku scouts per diff shard, sonnet confirmers per finding, one deterministic digest',
+  description: 'Sharded .NET code review: haiku scouts per diff shard, opus confirmers per finding, one deterministic digest',
   whenToUse: 'Started by /dotnet-pilot:quality:review after its preflight has written diff shards and a manifest; it has nothing to read without those args.',
   phases: [
-    { title: 'Triage', detail: 'relay manifest.json into shard assignments, cross-checked against fileCount', model: 'haiku' },
     { title: 'Scout', detail: 'one haiku reader per shard, primed with the matching skill packs', model: 'haiku' },
-    { title: 'Confirm', detail: 'one adversarial sonnet check per deduplicated finding; architecture findings go to dnp-architect on fable', model: 'sonnet' },
+    { title: 'Confirm', detail: 'one adversarial opus check per deduplicated finding; security / performance / DI / architecture findings go to their specialist agent', model: 'opus' },
     { title: 'Report', detail: 'deterministic digest; a narrator only when three or more findings survive', model: 'sonnet' },
   ],
 }
@@ -50,8 +49,6 @@ const CATEGORIES = {
     packs: ['clean-architecture', 'ddd'],
     hint: 'Verify the project reference direction in the .csproj files, not just the namespace of the type.',
     agentType: 'dotnet-pilot:dnp-architect',
-    // agent() opts.model overrides the agent's frontmatter, so the fable pin is repeated here.
-    model: 'fable',
   },
   testing: {
     packs: ['testing-dotnet'],
@@ -94,11 +91,12 @@ const SKIP_RULES = [
 ]
 
 // maxAgents bounds every spawn in the run, retries included; maxScouts bounds
-// shard readers so confirmers keep a share of the budget.
+// shard readers so confirmers keep a share of the budget. The shard inventory
+// arrives in args from the preflight, so no agent is spent relaying it.
 const DEPTH = {
-  quick: { maxAgents: 6, maxScouts: 5, confirm: false, route: false, lenses: false },
-  standard: { maxAgents: 11, maxScouts: 5, confirm: true, route: true, lenses: false },
-  deep: { maxAgents: 20, maxScouts: 6, confirm: true, route: true, lenses: true },
+  quick: { maxAgents: 6, maxScouts: 6, confirm: false, route: false, lenses: false },
+  standard: { maxAgents: 11, maxScouts: 6, confirm: true, route: true, lenses: false },
+  deep: { maxAgents: 20, maxScouts: 7, confirm: true, route: true, lenses: true },
 }
 
 const LENSES = [
@@ -109,6 +107,9 @@ const LENSES = [
 ]
 
 const REQUIRED_ARGS = ['manifestPath', 'diffPath', 'shardsDir', 'repoRoot', 'skillsDir', 'runId', 'fileCount', 'depth', 'roslynAvailable']
+// Two readers rarely agree on the exact line of one issue; findings in the same
+// file and category this close together are treated as one.
+const DEDUP_LINE_TOLERANCE = 2
 const NARRATOR_MIN_CONFIRMED = 3
 const NARRATOR_MAX_LINES = 12
 // A confirmation has to point at something a reader can open.
@@ -117,41 +118,6 @@ const CITATION = /[\w\-.\/\\]+\.[A-Za-z0-9]+:\d+/
 // ---------------------------------------------------------------------------
 // Schemas
 // ---------------------------------------------------------------------------
-
-const TRIAGE_SCHEMA = {
-  type: 'object',
-  properties: {
-    fileCount: { type: 'integer' },
-    files: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          path: { type: 'string' },
-          status: { type: 'string' },
-          binary: { type: 'boolean' },
-          lineCount: { type: 'integer' },
-          shardPath: { type: 'string' },
-        },
-        required: ['path', 'binary', 'shardPath'],
-      },
-    },
-    shards: {
-      type: 'array',
-      items: {
-        type: 'object',
-        properties: {
-          name: { type: 'string' },
-          path: { type: 'string' },
-          files: { type: 'array', items: { type: 'string' } },
-          lineCount: { type: 'integer' },
-        },
-        required: ['path', 'files'],
-      },
-    },
-  },
-  required: ['fileCount', 'files', 'shards'],
-}
 
 const FINDING_SCHEMA = {
   type: 'object',
@@ -212,9 +178,21 @@ function findingOrder(a, b) {
 function severityOrder(a, b) {
   return cmp(SEVERITY_RANK[a.severity], SEVERITY_RANK[b.severity]) || findingOrder(a, b)
 }
-// Three-line buckets absorb the off-by-one disagreements two readers have
-// about where an issue "is" without merging distinct issues in one file.
-function dedupKey(f) { return `${f.file}|${f.line == null ? '-' : Math.floor(f.line / 3)}|${f.category}` }
+function findingKey(f) { return `${f.file}|${f.line == null ? '-' : f.line}|${f.category}` }
+
+// Remembers every kept finding by file and category; a new one folds into an
+// earlier one when both lack a line or their lines are within the tolerance.
+function makeDeduper() {
+  const kept = new Map()
+  return function isDuplicate(f) {
+    const group = `${f.file}|${f.category}`
+    if (!kept.has(group)) kept.set(group, [])
+    const lines = kept.get(group)
+    const dup = lines.some(l => (l == null || f.line == null) ? l === f.line : Math.abs(l - f.line) <= DEDUP_LINE_TOLERANCE)
+    if (!dup) lines.push(f.line)
+    return dup
+  }
+}
 function skipRuleFor(file) { return SKIP_RULES.find(r => r.pattern.test(file)) || null }
 
 function packsFor(files, extra) {
@@ -252,15 +230,6 @@ function resolveFile(given, fileSet, repoRoot) {
 // Prompts
 // ---------------------------------------------------------------------------
 
-function triagePrompt(ctx, problems) {
-  return [
-    `Read the review manifest at ${ctx.manifestPath} and relay it as structured output. Do not re-plan or regroup anything: the preflight already decided the shards, you are copying its decision so the workflow can act on it.`,
-    `Return fileCount exactly as the manifest states it (${ctx.fileCount}); files as every entry of the manifest's files array with path, status, binary, lineCount and shardPath (use "" where the manifest has null); shards as every entry of the manifest's shards array with name, path, files (the repo-relative paths listed there) and lineCount.`,
-    'List every entry. A relay that drops files fails validation and is discarded.',
-    problems && problems.length ? `A previous relay was inconsistent: ${problems.slice(0, 5).join('; ')}. Copy the manifest verbatim this time.` : null,
-  ].filter(Boolean).join('\n')
-}
-
 function scoutPrompt(unit, ctx, attempt) {
   const packs = packsFor(unit.files)
   const kept = packs.slice(0, MAX_PACKS_PER_SCOUT)
@@ -273,7 +242,7 @@ function scoutPrompt(unit, ctx, attempt) {
     ...unit.shards.map(s => `- ${s.path}`),
     unit.files.length
       ? `Files in scope (repo-relative): ${unit.files.join(', ')}`
-      : 'Files in scope: every file in the patch; the manifest could not be relayed, so report repo-relative paths exactly as the patch headers spell them.',
+      : 'Files in scope: every file in the patch; the shard inventory was unusable, so report repo-relative paths exactly as the patch headers spell them.',
     ignored.length ? `Ignore these paths even though they appear in the patch: ${ignored.join(', ')}` : null,
     `Repository root: ${ctx.repoRoot}. Open the real file under it whenever the patch lacks context, and report "line" as the current line number in that file (the number Read prints), not an offset inside the diff.`,
     '',
@@ -305,8 +274,8 @@ function lensPrompt(lens, ctx, attempt) {
 function confirmPrompt(f, ctx, attempt) {
   const cat = CATEGORIES[f.category]
   return [
-    'You are an adversarial reviewer. A scout flagged the candidate finding below; your job is to try to REFUTE it against the actual source.',
-    'The default verdict is "refuted". Return "confirmed" only when you opened the file, the problem is real on the changed code (not pre-existing and untouched, not hypothetical, not already handled by a caller, filter or middleware), and "method" cites at least one path:line you read. A confirmation without a citation is discarded.',
+    'You are checking a candidate finding that a fast scout flagged in a diff. Scouts over-report, so judge it on the evidence in the source, not on how the finding is worded.',
+    'Confirm it when the code you opened shows the defect on the changed lines. Refute it when the code does not bear it out: the problem is pre-existing and untouched by the change, hypothetical, or already handled by a caller, filter or middleware. Either way "method" cites the path:line you read; a confirmation without a file:line citation is counted as refuted.',
     '',
     `Finding: ${JSON.stringify({ file: f.file, line: f.line, category: f.category, severity: f.severity, title: f.title, evidence: f.evidence })}`,
     `Source file: ${joinPath(ctx.repoRoot, ...f.file.split('/'))}`,
@@ -371,38 +340,55 @@ async function runKeyed(unit, spawn, critical) {
 }
 
 // ---------------------------------------------------------------------------
-// Triage: relay the manifest, validate the relay, fall back without hiding it.
+// Inventory: the preflight's shards and files arrive in args. Validate them,
+// and fall back without hiding it.
 // ---------------------------------------------------------------------------
 
-// Fatal problems mean the relay cannot serve as the file inventory; soft ones
-// are files it lists but no shard covers, which the report can name as gaps
-// without throwing away everything else.
-function relayProblems(relay, expected) {
-  if (!relay || !Array.isArray(relay.files) || !Array.isArray(relay.shards)) {
-    const fatal = ['relay is missing files or shards']
+// Accepts the array itself or, defensively, a JSON string of it.
+function argArray(value) {
+  if (Array.isArray(value)) return value
+  if (typeof value !== 'string') return null
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed : null
+  } catch (err) {
+    return null
+  }
+}
+
+// Fatal problems mean the inventory cannot drive the scouts; soft ones are
+// files it lists but no shard covers, which the report names as gaps without
+// throwing away everything else.
+function inventoryProblems(inv, expected) {
+  if (!inv) {
+    const fatal = ['args.files or args.shards is missing or not an array']
     return { fatal, soft: [], all: fatal }
   }
   const fatal = []
   const soft = []
-  if (relay.files.length !== expected) fatal.push(`relay lists ${relay.files.length} files, manifest says ${expected}`)
+  if (inv.files.length !== expected) fatal.push(`args.files lists ${inv.files.length} files, fileCount says ${expected}`)
+  const badFiles = inv.files.filter(f => !f || typeof f.path !== 'string' || !f.path).length
+  if (badFiles) fatal.push(`${badFiles} file entr${badFiles === 1 ? 'y has' : 'ies have'} no path`)
   const sharded = new Set()
-  for (const s of relay.shards) {
-    if (!Array.isArray(s.files) || !s.files.length) fatal.push(`shard ${s.path || '?'} lists no files`)
-    else for (const p of s.files) sharded.add(p)
+  for (const sh of inv.shards) {
+    if (!sh || typeof sh.path !== 'string' || !sh.path) { fatal.push('a shard has no path'); continue }
+    if (!Array.isArray(sh.files) || !sh.files.length || sh.files.some(p => typeof p !== 'string')) fatal.push(`shard ${sh.path} lists no valid files`)
+    else for (const p of sh.files) sharded.add(p)
   }
-  const known = new Set(relay.files.map(f => f.path))
-  for (const f of relay.files) if (!f.binary && !sharded.has(f.path)) soft.push(`${f.path} is in no shard`)
+  if (fatal.length) return { fatal, soft, all: fatal }
+  const known = new Set(inv.files.map(f => f.path))
+  for (const f of inv.files) if (!f.binary && !sharded.has(f.path)) soft.push(`${f.path} is in no shard`)
   for (const p of sharded) if (!known.has(p)) fatal.push(`${p} is sharded but not listed in files`)
   return { fatal, soft, all: [...fatal, ...soft] }
 }
 
 function normalizeShards(shards) {
   return shards
-    .map(s => ({
-      name: s.name || shardName(s.path),
-      path: s.path,
-      files: [...new Set(s.files)].sort(cmp),
-      lineCount: Number.isInteger(s.lineCount) ? s.lineCount : 0,
+    .map(sh => ({
+      name: sh.name || shardName(sh.path),
+      path: sh.path,
+      files: [...new Set(sh.files)].sort(cmp),
+      lineCount: Number.isInteger(sh.lineCount) ? sh.lineCount : 0,
     }))
     .sort((a, b) => cmp(a.name, b.name))
 }
@@ -412,43 +398,35 @@ function shardsFromFileMap(files) {
   for (const f of files) {
     if (f.binary || !f.shardPath) continue
     if (!byPath.has(f.shardPath)) byPath.set(f.shardPath, { path: f.shardPath, files: [], lineCount: 0 })
-    const s = byPath.get(f.shardPath)
-    s.files.push(f.path)
-    s.lineCount += Number.isInteger(f.lineCount) ? f.lineCount : 0
+    const sh = byPath.get(f.shardPath)
+    sh.files.push(f.path)
+    sh.lineCount += Number.isInteger(f.lineCount) ? f.lineCount : 0
   }
   return byPath.size ? [...byPath.values()] : null
 }
 
-async function triage(ctx) {
-  phase('Triage')
-  const relayOpts = { label: 'triage: relay manifest', phase: 'Triage', model: 'haiku', schema: TRIAGE_SCHEMA }
-  let relay = await runKeyed('triage', () => agent(triagePrompt(ctx, null), relayOpts), false)
-  let problems = relayProblems(relay, ctx.fileCount)
-  if (problems.all.length && relay) {
-    const shown = problems.all.slice(0, 3).join('; ') + (problems.all.length > 3 ? `; +${problems.all.length - 3} more` : '')
-    log(`triage: relay disagrees with the manifest (${shown}); asking once more`)
-    const again = await runKeyed('triage (recheck)', () => agent(triagePrompt(ctx, problems.all), relayOpts), false)
-    const againProblems = relayProblems(again, ctx.fileCount)
-    if (again && againProblems.all.length < problems.all.length) { relay = again; problems = againProblems }
-  }
-  const files = relay && Array.isArray(relay.files) ? relay.files : []
+function inventory(ctx, a) {
+  const files = argArray(a.files)
+  const shards = argArray(a.shards)
+  const problems = inventoryProblems(files && shards ? { files, shards } : null, ctx.fileCount)
   if (!problems.fatal.length) {
-    if (problems.soft.length) log(`triage: ${problems.soft.length} file(s) sit in no shard; the report lists them under coverage gaps`)
-    return { shards: normalizeShards(relay.shards), files, note: null }
+    if (problems.soft.length) log(`inventory: ${problems.soft.length} file(s) sit in no shard; the report lists them under coverage gaps`)
+    return { shards: normalizeShards(shards), files, note: null }
   }
 
-  const grouped = relay ? shardsFromFileMap(files) : null
-  if (grouped && files.length === ctx.fileCount) {
-    log('triage: using the per-file shardPath grouping from the relay instead of its shards list')
-    return { shards: normalizeShards(grouped), files, note: 'shard list rebuilt from per-file shardPath entries' }
+  const usableFiles = files ? files.filter(f => f && typeof f.path === 'string' && f.path) : []
+  const grouped = usableFiles.length === ctx.fileCount ? shardsFromFileMap(usableFiles) : null
+  if (grouped) {
+    log(`inventory: ${problems.fatal[0]}; using the per-file shardPath grouping instead of the shards list`)
+    return { shards: normalizeShards(grouped), files: usableFiles, note: 'shard list rebuilt from per-file shardPath entries' }
   }
 
-  const reason = `manifest relay unusable after retry: ${problems.fatal.slice(0, 3).join('; ')}`
-  ledger.failed.push({ unit: 'triage', critical: true, reason })
-  log(`triage: ${reason}; reviewing diff.patch as a single unit with no file inventory`)
+  const reason = `shard inventory unusable: ${problems.fatal.slice(0, 3).join('; ')} (manifest: ${ctx.manifestPath})`
+  ledger.failed.push({ unit: 'inventory', critical: true, reason })
+  log(`inventory: ${reason}; reviewing diff.patch as a single unit with no file inventory`)
   return {
-    shards: [{ name: 'diff', path: ctx.diffPath, files: files.map(f => f.path), lineCount: 0 }],
-    files,
+    shards: [{ name: 'diff', path: ctx.diffPath, files: usableFiles.map(f => f.path), lineCount: 0 }],
+    files: usableFiles,
     note: reason,
     inventoryUnknown: true,
   }
@@ -458,6 +436,12 @@ async function triage(ctx) {
 // Scout units: apply skip rules, then fold shards into at most maxScouts
 // readers (largest shard first into the least-loaded unit).
 // ---------------------------------------------------------------------------
+
+// Seats kept for the stages that run after the first scout wave: the lens
+// sweeps and, when findings are confirmed, the narrator.
+function scoutReserve(depthCfg) {
+  return (depthCfg.lenses ? LENSES.length : 0) + (depthCfg.confirm ? 1 : 0)
+}
 
 function buildScoutUnits(shards, depthCfg, inventoryUnknown) {
   const skipped = new Map()
@@ -472,7 +456,9 @@ function buildScoutUnits(shards, depthCfg, inventoryUnknown) {
   const live = classified.filter(s => s.active.length || inventoryUnknown)
   for (const s of classified) if (!s.active.length && !inventoryUnknown) log(`${s.name}: not scouted; every file in it matches a skip rule`)
 
-  const count = Math.min(depthCfg.maxScouts, live.length)
+  // Every first attempt needs a seat, so the unit count comes from the slots
+  // actually left, not from maxScouts alone.
+  const count = Math.min(depthCfg.maxScouts, Math.max(1, slotsLeft() - scoutReserve(depthCfg)), live.length)
   const units = []
   for (let i = 0; i < count; i++) units.push({ index: i, shards: [], lineCount: 0 })
   const ordered = live.slice().sort((a, b) => b.lineCount - a.lineCount || cmp(a.name, b.name))
@@ -532,11 +518,17 @@ async function confirmFinding(f, ctx, depthCfg) {
   const opts = {
     label: `confirm ${f.file.split('/').pop()}:${f.line == null ? '?' : f.line} ${f.category}`,
     phase: 'Confirm',
-    model: routed && cat.model ? cat.model : 'sonnet',
+    // Overrides a routed agent's frontmatter model: the confirmer is the precision gate.
+    model: 'opus',
     schema: VERDICT_SCHEMA,
   }
   if (routed) opts.agentType = routed
   f.routedTo = routed
+  if (slotsLeft() <= 0) {
+    f.verdict = 'unconfirmed'
+    f.note = 'agent cap reached'
+    return f
+  }
   const verdict = await runKeyed(`confirm:${f.key}`, attempt => agent(confirmPrompt(f, ctx, attempt), opts), false)
   if (!verdict) {
     f.verdict = 'unconfirmed'
@@ -577,13 +569,13 @@ function coverageGaps(state) {
     if (uncovered.length) gaps.push(`in no shard, not reviewed: ${uncovered.join(', ')}`)
   }
 
-  if (state.triageNote) gaps.push(`triage: ${state.triageNote}`)
+  if (state.inventoryNote) gaps.push(`inventory: ${state.inventoryNote}`)
   for (const fail of state.failed) {
     if (fail.unit.startsWith('scout:')) {
       const unit = state.units.find(u => `scout:${u.name}` === fail.unit)
       gaps.push(`not reviewed, scout ${fail.unit.slice(6)} failed (${fail.reason}): ${unit ? unit.files.join(', ') : 'files unknown'}`)
     } else if (fail.unit.startsWith('lens:')) {
-      gaps.push(`${fail.unit} sweep failed (${fail.reason}); shard scouts still covered the files`)
+      gaps.push(`${fail.unit} sweep failed (${fail.reason}); shard-scout coverage is reported separately`)
     } else if (fail.unit === 'narrator') {
       gaps.push(`narrator failed (${fail.reason})`)
     }
@@ -701,7 +693,7 @@ async function main() {
     units: [],
     skipped: new Map(),
     findings: [],
-    triageNote: null,
+    inventoryNote: null,
     inventoryUnknown: false,
     narrator: null,
     narratorNote: 'skipped: no findings',
@@ -713,24 +705,23 @@ async function main() {
     return finish(state)
   }
 
-  // Triage
-  const relay = await triage(ctx)
-  state.files = relay.files
-  state.triageNote = relay.note
-  state.inventoryUnknown = Boolean(relay.inventoryUnknown)
-  state.shardCount = relay.shards.length
+  const inv = inventory(ctx, a)
+  state.files = inv.files
+  state.inventoryNote = inv.note
+  state.inventoryUnknown = Boolean(inv.inventoryUnknown)
+  state.shardCount = inv.shards.length
 
   // Scout units and confirm quotas are fixed before any scout runs so the set
   // of findings that gets confirmed does not depend on which shard finishes first.
-  const { units, skipped } = buildScoutUnits(relay.shards, depthCfg, state.inventoryUnknown)
+  const { units, skipped } = buildScoutUnits(inv.shards, depthCfg, state.inventoryUnknown)
   state.units = units
   state.skipped = skipped
-  log(`${relay.shards.length} shards → ${units.length} scout unit(s); ${skipped.size} file(s) skipped by rule; depth ${depth} (≤${depthCfg.maxAgents} agents)`)
+  log(`${inv.shards.length} shards → ${units.length} scout unit(s); ${skipped.size} file(s) skipped by rule; depth ${depth} (≤${depthCfg.maxAgents} agents)`)
 
   const reservedAfterScouts = units.length + (depthCfg.lenses ? LENSES.length : 0) + 1
   const confirmSlots = depthCfg.confirm ? Math.max(0, slotsLeft() - reservedAfterScouts) : 0
   const quota = evenSplit(confirmSlots, Math.max(1, units.length))
-  const seen = new Set()
+  const isDuplicate = makeDeduper()
 
   const scoutStage = async (unit) => {
     const raw = await runKeyed(
@@ -742,10 +733,8 @@ async function main() {
     const fresh = []
     let dupes = 0
     for (const f of normalizeFindings(raw, unit, ctx)) {
-      const key = dedupKey(f)
-      if (seen.has(key)) { dupes++; continue }
-      seen.add(key)
-      f.key = key
+      if (isDuplicate(f)) { dupes++; continue }
+      f.key = findingKey(f)
       fresh.push(f)
     }
     if (dupes) log(`${unit.name}: ${dupes} duplicate finding(s) folded`)
@@ -784,16 +773,16 @@ async function main() {
     if (!r.raw) continue
     let fresh = 0
     let dupes = 0
+    let offLens = 0
     for (const f of normalizeFindings(r.raw, lensUnit, ctx)) {
-      const key = dedupKey(f)
-      if (seen.has(key)) { dupes++; continue }
-      seen.add(key)
-      f.key = key
+      if (!r.lens.categories.includes(f.category)) { offLens++; continue }
+      if (isDuplicate(f)) { dupes++; continue }
+      f.key = findingKey(f)
       f.source = `lens:${r.lens.name}`
       state.findings.push(f)
       fresh++
     }
-    log(`lens ${r.lens.name}: ${fresh} new finding(s), ${dupes} already seen`)
+    log(`lens ${r.lens.name}: ${fresh} new finding(s), ${dupes} already seen${offLens ? `, ${offLens} outside the lens categories dropped` : ''}`)
   }
 
   // Shared confirm pass: whatever the per-unit quotas left over, in a fixed

@@ -17,7 +17,8 @@ Reference material for adding distributed tracing and metrics to ASP.NET Core se
 <!-- Tracing instrumentation -->
 <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.*" />
 <PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.*" />
-<PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.*" />
+<!-- Prerelease only (no stable 1.x yet) — a plain "1.*" range never resolves a beta -->
+<PackageReference Include="OpenTelemetry.Instrumentation.EntityFrameworkCore" Version="1.*-*" />
 <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.*" />
 
 <!-- Exporter -->
@@ -34,10 +35,7 @@ builder.Services.AddOpenTelemetry()
             options.RecordException = true;
             options.Filter = ctx => ctx.Request.Path != "/health"; // exclude health checks
         })
-        .AddEntityFrameworkCoreInstrumentation(options =>
-        {
-            options.SetDbStatementForText = true; // include SQL in spans (dev only)
-        })
+        .AddEntityFrameworkCoreInstrumentation()
         .AddHttpClientInstrumentation()
         .AddSource("MyApp.Orders")  // register custom ActivitySource names
         .AddOtlpExporter())
@@ -48,7 +46,10 @@ builder.Services.AddOpenTelemetry()
         .AddOtlpExporter());
 ```
 
-`SetDbStatementForText = true` captures SQL — disable in production to avoid leaking query parameters containing PII.
+The EF instrumentation no longer has `SetDbStatementForText` (removed in 1.13.0-beta.1): SQL text is
+always captured and sanitized for SQL-like providers. Parameter values are opt-in via
+`OTEL_DOTNET_EXPERIMENTAL_EFCORE_ENABLE_TRACE_DB_QUERY_PARAMETERS=true` — keep that off in production,
+parameters carry PII.
 
 ## Custom Spans (Activity)
 
@@ -83,7 +84,7 @@ public class ProcessOrderHandler(IOrderRepository orders, ActivitySource activit
         catch (Exception ex)
         {
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
-            activity?.RecordException(ex);
+            activity?.AddException(ex); // .NET 9+; RecordException is obsolete
             throw;
         }
     }
@@ -121,20 +122,18 @@ builder.Services.AddSingleton<OrderMetrics>();
 ```
 
 ```csharp
-public class OrderMetrics(IMeterFactory factory)
+public sealed class OrderMetrics
 {
-    private readonly Meter _meter = factory.Create(new MeterOptions("MyApp.Orders") { Version = "1.0" });
-
     private readonly Counter<long> _ordersCreated;
     private readonly Histogram<double> _orderProcessingDuration;
     private readonly UpDownCounter<long> _pendingOrders;
 
     public OrderMetrics(IMeterFactory factory)
     {
-        _meter = factory.Create(new MeterOptions("MyApp.Orders") { Version = "1.0" });
-        _ordersCreated = _meter.CreateCounter<long>("orders.created", "orders", "Total orders created");
-        _orderProcessingDuration = _meter.CreateHistogram<double>("orders.processing_duration", "ms", "Order processing time");
-        _pendingOrders = _meter.CreateUpDownCounter<long>("orders.pending", "orders", "Current pending orders");
+        var meter = factory.Create(new MeterOptions("MyApp.Orders") { Version = "1.0" });
+        _ordersCreated = meter.CreateCounter<long>("orders.created", "orders", "Total orders created");
+        _orderProcessingDuration = meter.CreateHistogram<double>("orders.processing_duration", "ms", "Order processing time");
+        _pendingOrders = meter.CreateUpDownCounter<long>("orders.pending", "orders", "Current pending orders");
     }
 
     public void RecordOrderCreated(string tier)
@@ -195,17 +194,10 @@ Via code (for explicit control):
 
 ## Correlation with Serilog
 
-Add `Serilog.Enrichers.Span` to include `TraceId` and `SpanId` in every log entry, enabling log↔trace correlation in your observability platform:
-
-```xml
-<PackageReference Include="Serilog.Enrichers.Span" Version="3.*" />
-```
-
-```csharp
-builder.Host.UseSerilog((ctx, cfg) =>
-    cfg.Enrich.WithSpan() // adds TraceId and SpanId to log properties
-       ...);
-```
+Serilog 3.1+ stamps `TraceId` and `SpanId` from `Activity.Current` onto every log event natively —
+`Serilog.Enrichers.Span` is deprecated and no longer needed. Text sinks show them only when the
+output template includes `{TraceId}` / `{SpanId}`; structured formatters and the OTLP sink carry
+them automatically.
 
 ## Do / Don't
 
@@ -213,12 +205,12 @@ builder.Host.UseSerilog((ctx, cfg) =>
 |----|-------|
 | Register `ActivitySource` as singleton | Create `new ActivitySource(...)` per request |
 | Tag spans with business-meaningful IDs (order ID, user tier) | Tag spans with PII |
-| Use `SetStatus(Error)` + `RecordException` in catch blocks | Swallow exceptions without marking the span failed |
+| Use `SetStatus(Error)` + `AddException` in catch blocks | Swallow exceptions without marking the span failed |
 | Exclude health check endpoints from tracing | Trace `/health` and `/alive` — creates noise |
-| Disable SQL statement capture in production | Leave `SetDbStatementForText = true` in prod |
+| Keep EF query-parameter capture off in production | Set `OTEL_DOTNET_EXPERIMENTAL_EFCORE_ENABLE_TRACE_DB_QUERY_PARAMETERS` outside dev |
 | Use `ActivityKind.Internal` for internal spans | Leave `ActivityKind` unset on child spans |
 
 ## See Also
 
-- `skills/logging/SKILL.md` — Serilog setup and correlation with spans via `TraceId`
+- `skills/logging/SKILL.md` — Serilog setup; this file owns log↔trace correlation
 - .NET Aspire docs: `AddServiceDefaults()` source in `ServiceDefaults/Extensions.cs`

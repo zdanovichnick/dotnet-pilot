@@ -26,8 +26,13 @@ Reference material for EF Core development.
 
 ### Migration Best Practices
 - One migration per logical change
-- Never edit generated migration files manually
-- Always test with `--dry-run` before applying
+- Generate with `dotnet ef migrations add`, then review and adjust the generated `Up`/`Down`
+  (a rename scaffolded as drop + add must become `RenameColumn`; data moves go in `Sql()`).
+  Never hand-write a migration from scratch — the model snapshot would drift
+- `dotnet ef database update` has no dry-run: review the SQL with
+  `dotnet ef migrations script <from> <to>` (`--idempotent` for scripts run against unknown state)
+- `dotnet ef migrations has-pending-model-changes` (EF Core 8+) fails when the model has changed
+  since the last migration — use it as a CI gate
 - Keep migrations small and reversible
 - Use `migrationBuilder.Sql()` for data migrations, not EF operations
 
@@ -70,5 +75,5 @@ modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assemb
 - Don't forget `CancellationToken` on async queries
 
 ## See Also
-- `references/migration-patterns.md` — detailed migration scenarios
-- `references/performance-patterns.md` — advanced query optimization
+- `skills/ddd/SKILL.md` — value converters and complex properties for DDD entities
+- `skills/testing-dotnet/SKILL.md` — testing queries against the real provider

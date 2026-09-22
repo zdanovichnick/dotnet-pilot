@@ -46,7 +46,7 @@ flowchart TD
     subgraph side["4 · Independent checks"]
         direction LR
         absent["expectStdoutAbsent"]
-        files["expectFiles<br/>path exists and includes fragments"]
+        files["expectFiles<br/>path exists · includes / excludes fragments · or equals exact content"]
         nofiles["expectFilesAbsent"]
     end
 
@@ -121,12 +121,12 @@ flowchart LR
         o_silent["silence only (skip paths)"]
     end
 
-    pre --> h_sync & h_prio & h_redir & h_mig & h_git & h_commit
+    pre --> h_prio & h_redir & h_mig & h_git & h_commit
     post --> h_di & h_scope & h_fmt & h_build & h_stop
     postf --> h_build
     stopE --> h_stop
     sub --> h_sub
-    sess --> h_slsync
+    sess --> h_slsync & h_sync
     slin --> h_sl
 
     h_prio & h_redir & h_mig & h_commit & h_di & h_scope --> o_ctx

@@ -6,21 +6,27 @@ when_to_use: Deciding which project a type belongs in, adding a project referenc
 
 # Clean Architecture for .NET
 
-Reference for architectural decisions.
+Reference for architectural decisions. This skill is the source of truth for layer rules;
+`ddd` documents its one variant (repository interfaces in Domain).
 
 ## Layer Definitions
 
 ### Domain (innermost)
-- **Contains:** Entities, value objects, domain events, domain exceptions, enums
+- **Contains:** Entities, value objects, domain events, domain errors, enums, the `Result<TValue, TError>` type (`skills/error-handling/SKILL.md`)
 - **References:** Nothing (zero project references)
-- **Packages allowed:** MediatR.Contracts (interfaces only), FluentResults
-- **Packages forbidden:** EF Core, ASP.NET Core, any infrastructure
+- **Packages allowed:** none — the BCL covers it (`TimeProvider` included)
+- **Packages forbidden:** EF Core, ASP.NET Core, MediatR, FluentValidation, any infrastructure
 
 ### Application
-- **Contains:** Service interfaces, DTOs, validators, MediatR handlers, mapping profiles
+- **Contains:** Use-case handlers/services, repository and gateway interfaces, DTOs, validators
 - **References:** Domain only
-- **Packages allowed:** MediatR, FluentValidation, AutoMapper
+- **Packages allowed:** FluentValidation; MediatR / AutoMapper only with the licence check below
 - **Packages forbidden:** EF Core, database drivers, HTTP clients
+
+**Licensing:** MediatR 13+ and AutoMapper 15+ are commercial (Lucky Penny Software, since July 2025;
+a free Community edition covers qualifying organisations). Earlier versions stay open source but get
+no fixes. Before adding either, confirm the licence or use a plain handler interface and hand-written
+mapping — neither library is needed for this layering.
 
 ### Infrastructure
 - **Contains:** DbContext, repositories, external service clients, email senders
@@ -31,8 +37,9 @@ Reference for architectural decisions.
 ### API/Web (outermost)
 - **Contains:** Controllers/endpoints, middleware, Program.cs, DI composition root
 - **References:** Application, Infrastructure
-- **Packages allowed:** Swashbuckle, authentication, rate limiting
-- **Responsibility:** Wire everything together, no business logic
+- **Packages allowed:** Microsoft.AspNetCore.OpenApi (built-in `AddOpenApi()`/`MapOpenApi()`), authentication, rate limiting
+- **Responsibility:** Wire everything together, no business logic. Referencing Infrastructure here is
+  the composition root's job, not a violation
 
 ### Tests
 - **References:** Any (unrestricted)
@@ -61,7 +68,7 @@ public static class ApplicationServiceExtensions
     public static IServiceCollection AddApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<IUserService, UserService>();
-        services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationServiceExtensions).Assembly));
+        services.AddValidatorsFromAssembly(typeof(ApplicationServiceExtensions).Assembly);
         return services;
     }
 }
@@ -78,5 +85,5 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 | Domain independence | Domain `.csproj` has 0 `<ProjectReference>` elements |
 | Application → Domain only | Application `.csproj` references only Domain |
 | No reverse dependencies | Domain never references Application/Infrastructure/API |
-| Interface segregation | Application defines interfaces, Infrastructure implements |
+| Interface ownership | Application defines interfaces (Domain, under the DDD variant); Infrastructure implements |
 | Composition root | Only API project wires DI container |

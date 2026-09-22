@@ -12,7 +12,7 @@ This skill discovers everything about a .NET solution needed for DotnetPilot to 
 
 ### 1. Solution File
 - Search for `*.slnx` (modern) or `*.sln` (legacy) in current directory
-- If multiple solutions: ask user which one to use
+- If multiple solutions: stop and return `[HALT: which solution — <list>?]` so the invoking command asks the user; don't pick one
 - Parse project references from solution file
 
 ### 2. Per-Project Analysis
@@ -25,17 +25,26 @@ dotnet list <project.csproj> package      # NuGet packages
 ```
 
 Parse `.csproj` for:
-- `<TargetFramework>` → net8.0, net9.0, net10.0, etc.
+- `<TargetFramework>` → net8.0, net9.0, net10.0, etc. Multi-targeted projects use
+  `<TargetFrameworks>` (plural, `;`-separated) — record every entry, and pass `-f <tfm>` to
+  `dotnet ef` / `dotnet test` when a command must target one
+- Properties can be inherited: check `Directory.Build.props` up the directory tree for
+  `TargetFramework`, `Nullable`, `LangVersion`, and so on
 - `<OutputType>` → Exe, Library
 - `<Sdk>` → Microsoft.NET.Sdk.Web (web), Microsoft.NET.Sdk (classlib)
 - `<IsPackable>` → library intended for NuGet distribution
 - `<RootNamespace>` → namespace convention
 
+**Central Package Management:** when `Directory.Packages.props` exists with
+`<ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>`, `<PackageReference>` items
+carry no `Version`. Versions live in `<PackageVersion>` items in that file, and new packages must be
+added there, not in the `.csproj`. `dotnet list package` still reports the resolved versions.
+
 ### 3. Framework Detection
 
 | Indicator | Detection |
 |-----------|----------|
-| **Test runner** | xunit → `xunit` package; NUnit → `NUnit` package; MSTest → `MSTest.TestAdapter` |
+| **Test runner** | xUnit v2 → `xunit`; xUnit v3 → `xunit.v3`; NUnit → `NUnit`; MSTest → `MSTest.TestAdapter` or `<Project Sdk="MSTest.Sdk/…">` (no package reference at all); TUnit → `TUnit` |
 | **Mocking** | `Moq`, `NSubstitute`, `FakeItEasy` in test project packages |
 | **Assertions** | `FluentAssertions`, `Shouldly` in test project packages |
 | **ORM** | `Microsoft.EntityFrameworkCore` → EF Core; `Dapper` → Dapper |

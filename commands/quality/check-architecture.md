@@ -1,13 +1,13 @@
 ---
 description: "Scan for clean architecture layer violations — forbidden project references, DI issues, package placement."
-effort: high
+effort: medium
 ---
 
 # Check Architecture
 
 `/dotnet-pilot:quality:check-architecture` validates architectural integrity.
 
-> **Delegates to**: `dnp-architect` (fable, effort xhigh).
+> **Delegates to**: `dnp-architect` (opus, effort high).
 
 ## Execution
 

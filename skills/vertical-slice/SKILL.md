@@ -12,9 +12,9 @@ Reference material for structuring .NET APIs by feature rather than by layer.
 
 Organize code by **feature (vertical slice)**, not by technical layer (horizontal). Each slice owns everything needed for one feature: endpoint, handler, DTOs, validation. Two features never share request/response types — coupling through shared DTOs is how VSA projects collapse back into layered code.
 
-**Use when**: ≤10 aggregates, CRUD-heavy API, team prefers feature-branch isolation, or Clean Architecture feels like over-engineering.
+**Use when** most operations read or write a single entity with little business logic (CRUD-heavy APIs), or Clean Architecture feels like over-engineering.
 
-**Avoid when**: rich domain model with 10+ aggregates, complex cross-aggregate business rules, or event sourcing is on the roadmap — prefer Clean Architecture or DDD instead. See `knowledge/decisions/adr-005-multi-architecture.md`.
+**Avoid when** invariants span several entities, business rules outgrow CRUD, or event sourcing is on the roadmap — see "When to Use DDD" in `skills/ddd/SKILL.md`. Aggregate count alone doesn't decide it.
 
 ## Folder Structure
 
@@ -67,7 +67,6 @@ public class CreateOrderEndpoint : IEndpointGroup
     {
         app.MapPost("/orders", HandleAsync)
             .WithName("CreateOrder")
-            .WithOpenApi()
             .AddEndpointFilter<ValidationFilter<CreateOrderRequest>>()
             .RequireAuthorization();
     }
@@ -194,7 +193,7 @@ public class CreateOrderTests(WebApplicationFactory<Program> factory)
 }
 ```
 
-For handler-only unit tests, instantiate the handler directly and pass a real or in-memory DbContext — avoid mocking `DbContext`.
+For handler-only tests, instantiate the handler directly with a `DbContext` pointed at a Testcontainers database (see `skills/testing-dotnet/SKILL.md`). Don't mock `DbContext` or use the EF in-memory provider — it skips constraints, transactions and SQL translation, so tests pass against behaviour production doesn't have.
 
 ## Do / Don't
 

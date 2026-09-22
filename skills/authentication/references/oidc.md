@@ -7,7 +7,9 @@ builder.Services.AddAuthentication(options =>
         options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
     })
     .AddCookie()
-    .AddOpenIdConnect("oidc", options =>
+    // No scheme name argument: registers under OpenIdConnectDefaults.AuthenticationScheme ("OpenIdConnect"),
+    // which DefaultChallengeScheme points at. A custom name ("oidc") must be used in both places.
+    .AddOpenIdConnect(options =>
     {
         options.Authority     = "https://your-idp.example.com";
         options.ClientId      = builder.Configuration["OIDC:ClientId"];

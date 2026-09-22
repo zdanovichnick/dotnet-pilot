@@ -1,12 +1,15 @@
 ## Reading Claims
 
+Claim names below assume `MapInboundClaims = false` with `NameClaimType`/`RoleClaimType` set, as in
+`jwt-bearer.md`. With the default remapping on, the same values sit under `ClaimTypes.*` URIs.
+
 ```csharp
 // In a minimal API endpoint
 app.MapGet("/me", (ClaimsPrincipal user) =>
 {
-    var userId      = user.FindFirstValue(ClaimTypes.NameIdentifier);
-    var email       = user.FindFirstValue(ClaimTypes.Email);
-    var roles       = user.FindAll(ClaimTypes.Role).Select(c => c.Value);
+    var userId      = user.FindFirstValue("sub");
+    var email       = user.FindFirstValue("email");
+    var roles       = user.FindAll("role").Select(c => c.Value);
     var permissions = user.FindAll("permission").Select(c => c.Value);
     return TypedResults.Ok(new { userId, email, roles, permissions });
 }).RequireAuthorization();
@@ -15,7 +18,7 @@ app.MapGet("/me", (ClaimsPrincipal user) =>
 public class CurrentUserService(IHttpContextAccessor accessor)
 {
     public string UserId =>
-        accessor.HttpContext?.User.FindFirstValue(ClaimTypes.NameIdentifier)
+        accessor.HttpContext?.User.FindFirstValue("sub")
         ?? throw new InvalidOperationException("No authenticated user in context");
 
     public bool IsAdmin =>

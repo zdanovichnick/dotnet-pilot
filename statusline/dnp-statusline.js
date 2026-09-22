@@ -29,7 +29,7 @@ const { spawnSync } = require('child_process');
 
 // Installed-version stamp — read by dnp-statusline-sync.js to decide whether to
 // refresh the copy in ~/.claude. Keep in sync with plugin.json on release.
-const STATUSLINE_VERSION = '3.1.0';
+const STATUSLINE_VERSION = '3.2.0';
 
 const DOTNET_MARKERS = ['.sln', '.slnx', '.csproj'];
 
@@ -112,29 +112,44 @@ function c(code, s) {
 //
 // Precedence mirrors Claude Code's own: an env pin wins for the session, then
 // project-local settings, then project, then user. "auto"/"unset" is not a pin.
+// Within each file a per-model `modelSettings[<id>].effortLevel` beats the
+// top-level `effortLevel` — and a top-level `effortLevel` in the USER file no
+// longer applies from Opus 5.5 on (only to the older models matched below).
 const EFFORT_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'];
+const LEGACY_USER_EFFORT = /^claude-(opus-4|opus-5$|sonnet-4|sonnet-5$|fable-5|mythos|haiku)/;
 
-function readEffortLevel(file) {
+function normalizeEffort(v) {
+  return typeof v === 'string' && EFFORT_LEVELS.includes(v.toLowerCase()) ? v.toLowerCase() : '';
+}
+
+function readEffortLevel(file, modelId, userFile) {
+  let settings;
   try {
-    const v = JSON.parse(fs.readFileSync(file, 'utf8')).effortLevel;
-    return typeof v === 'string' && EFFORT_LEVELS.includes(v.toLowerCase()) ? v.toLowerCase() : '';
+    settings = JSON.parse(fs.readFileSync(file, 'utf8')) || {};
   } catch {
     return ''; // absent, unreadable, or malformed — not worth surfacing
   }
+  const perModel = modelId && settings.modelSettings && settings.modelSettings[modelId];
+  const level = normalizeEffort(perModel && perModel.effortLevel);
+  if (level) return level;
+  // Without a model id in the payload, keep the pre-5.5 reading rather than guess.
+  if (userFile && modelId && !LEGACY_USER_EFFORT.test(modelId)) return '';
+  return normalizeEffort(settings.effortLevel);
 }
 
-function configuredEffort(cwd) {
+function configuredEffort(cwd, modelId) {
   const pin = (process.env.CLAUDE_CODE_EFFORT_LEVEL || '').toLowerCase();
   if (pin && pin !== 'auto' && pin !== 'unset') {
     // A real pin IS the level in force; every settings file is overridden by it.
     return EFFORT_LEVELS.includes(pin) ? pin : '';
   }
-  for (const file of [
-    path.join(cwd, '.claude', 'settings.local.json'),
-    path.join(cwd, '.claude', 'settings.json'),
-    path.join(os.homedir(), '.claude', 'settings.json'),
+  const id = (modelId || '').replace(/\[[^\]]*\]$/, '');
+  for (const [file, userFile] of [
+    [path.join(cwd, '.claude', 'settings.local.json'), false],
+    [path.join(cwd, '.claude', 'settings.json'), false],
+    [path.join(os.homedir(), '.claude', 'settings.json'), true],
   ]) {
-    const level = readEffortLevel(file);
+    const level = readEffortLevel(file, id, userFile);
     if (level) return level;
   }
   return '';
@@ -200,7 +215,7 @@ function buildUniversalLine(data, cwd) {
   const effort = data.effort && data.effort.level;
   if (typeof effort === 'string' && effort) {
     let seg = icon(ICON.effort) + c(ANSI.dim, 'EFF ') + c(effortColor(effort), effort);
-    const wanted = configuredEffort(cwd);
+    const wanted = configuredEffort(cwd, data.model && data.model.id);
     if (wanted && wanted !== effort) seg += ' ' + c(ANSI.yellow, `(set: ${wanted})`);
     parts.push(seg);
   }
@@ -295,7 +310,7 @@ function gitSegment(cwd) {
 
   let label = icon(ICON.git) + c(ANSI.brightMagenta, branch);
 
-  const porcelain = git(cwd, ['status', '--porcelain']);
+  const porcelain = git(cwd, ['--no-optional-locks', 'status', '--porcelain']);
   if (porcelain) {
     const dirty = porcelain.split('\n').filter(Boolean).length;
     // Two spaces: ✚ renders double-width in most terminals and visually

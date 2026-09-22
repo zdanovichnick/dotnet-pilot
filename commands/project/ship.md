@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 `/dotnet-pilot:project:ship` creates a pull request for the current branch.
 
-> **Delegates to** (optional pre-flight): `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (fable, effort xhigh). The `gh pr create` call runs in the caller's context.
+> **Delegates to** (optional pre-flight): `dnp-di-wiring-checker` (sonnet, effort low) and `dnp-architect` (opus, effort high). The `gh pr create` call runs in the caller's context.
 
 ## Execution
 
@@ -30,7 +30,9 @@ disable-model-invocation: true
 
 ### Step 3: Generate PR body
 
-Scan the commits since the base branch and build a summary:
+Scan the commits since the base branch and build a summary. Under **.NET Checks**, tick only a
+check that ran in Step 1 and passed. A check that did not run is listed as skipped; one that
+reported findings stays unticked with the count:
 
 ```markdown
 ## Summary
@@ -40,8 +42,8 @@ Scan the commits since the base branch and build a summary:
 - [x] Solution builds cleanly
 - [x] All tests pass
 - [x] DI registrations complete (per `dnp-di-wiring-checker`)
-- [x] No architecture layer violations (per `dnp-architect`)
-- [x] EF migration chain valid (if migrations touched)
+- Architecture scan: skipped
+- EF migration chain: skipped (no migrations touched)
 
 ## Test plan
 - [ ] <suggested manual verification steps based on which projects changed>
@@ -49,12 +51,13 @@ Scan the commits since the base branch and build a summary:
 
 ### Step 4: Create PR
 
+Feed the body on stdin with `--body-file -`. Process substitution (`<(...)`) hands `gh.exe` a
+`/dev/fd` path, which a native Windows `gh.exe` may fail to open.
+
 ```bash
-gh pr create --title "<conventional commit-style title from the lead commit>" \
-  --body-file <(cat <<'EOF'
+gh pr create --title "<conventional commit-style title from the lead commit>" --base <base-branch> --body-file - <<'EOF'
 <generated body>
 EOF
-) --base <base-branch>
 ```
 
 Pass `--draft` if that flag was provided.

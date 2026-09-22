@@ -15,6 +15,10 @@ is moved to the user-scoped path.
 
 ## Execution
 
+Detection follows the `dotnet-project-init` skill — load it for the discovery protocol (solution
+file, per-project analysis, EF contexts, test runners, package management); the steps below are
+what this command does with the answers.
+
 1. Locate the `.sln`/`.slnx` (current directory or nearest parent) and run `dotnet sln list`.
 2. Per project, read the `.csproj`: target framework, type (`web`, `classlib`, `xunit`, `nunit`,
    `mstest`, `worker`, `console`), project references, notable packages. Classes extending

@@ -19,11 +19,11 @@ Use `Result<TValue, TError>` for expected failures in domain and application lay
 
 ## Consequences
 
-- `ProblemDetails` (RFC 7807) maps `Result.Failure` to HTTP error responses at the controller/endpoint level
+- `ProblemDetails` (RFC 9457) maps `Result.Failure` to HTTP error responses at the controller/endpoint level
 - Domain layer has no dependency on `Microsoft.AspNetCore` — errors are plain C# records
 - Callers use `result.Match(onSuccess, onFailure)` — exhaustive handling enforced by compiler
 - Global `IExceptionHandler` handles true exceptions; application errors are handled explicitly
 
 ## See Also
-- `knowledge/common-infrastructure.md` — Result<TValue, TError> implementation
+- `skills/error-handling/SKILL.md` — Result<TValue, TError> implementation
 - `skills/error-handling/SKILL.md` — full error handling patterns

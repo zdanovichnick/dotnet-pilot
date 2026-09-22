@@ -126,15 +126,13 @@ Sends a duplicate request after a delay if the first hasn't returned. Uses the f
     MaxHedgedAttempts = 2,
 
     ShouldHandle = new PredicateBuilder<HttpResponseMessage>()
-        .HandleResult(r => !r.IsSuccessStatusCode),
-
-    ActionGenerator = args => () =>
-        ValueTask.FromResult(Outcome.FromResult(
-            args.PrimaryContext.Properties.GetValue(
-                new ResiliencePropertyKey<HttpResponseMessage>("hedged-result"),
-                null!)))
+        .HandleResult(r => !r.IsSuccessStatusCode)
+    // No ActionGenerator: the default re-invokes the original callback, which is what hedging needs.
 })
 ```
+
+For `HttpClient`, prefer `AddStandardHedgingHandler()` from `Microsoft.Extensions.Http.Resilience`
+over hand-built hedging — it wires per-attempt timeouts and circuit breakers around each hedged call.
 
 Use hedging for latency-sensitive read operations where idempotency is guaranteed.
 

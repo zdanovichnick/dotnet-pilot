@@ -60,12 +60,10 @@ process.stdin.on('end', () => {
     // multi-line messages per its default commit workflow.
     if (/<<[-~]?['"]?[A-Za-z_]/.test(command)) process.exit(0);
 
-    // Extract -m / --message argument (either "..." or '...')
-    let msg = null;
-    const dq = command.match(/(?:-m|--message)\s+"([^"]+)"/);
-    const sq = command.match(/(?:-m|--message)\s+'([^']+)'/);
-    if (dq) msg = dq[1];
-    else if (sq) msg = sq[1];
+    // -m / --message, including combined short flags (`-am`) and an attached
+    // value (`-m"msg"`, `--message="msg"`), with either quote style.
+    const m = command.match(/(?:^|\s)(?:-[a-zA-Z]*m|--message(?:=|(?=\s)))\s*(?:"([^"]*)"|'([^']*)')/);
+    const msg = m ? (m[1] ?? m[2]) : null;
 
     if (!msg) process.exit(0);
 

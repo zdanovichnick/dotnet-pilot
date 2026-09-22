@@ -7,27 +7,8 @@ description: Copy-paste infrastructure implementations — Result pattern, valid
 
 ## Result<TValue, TError>
 
-```csharp
-public readonly record struct Result<TValue, TError>
-{
-    private readonly TValue? _value;
-    private readonly TError? _error;
-
-    private Result(TValue value) { _value = value; IsSuccess = true; }
-    private Result(TError error) { _error = error; IsSuccess = false; }
-
-    public bool IsSuccess { get; }
-    public bool IsFailure => !IsSuccess;
-    public TValue Value => IsSuccess ? _value! : throw new InvalidOperationException("Result has no value.");
-    public TError Error => IsFailure ? _error! : throw new InvalidOperationException("Result has no error.");
-
-    public static Result<TValue, TError> Success(TValue value) => new(value);
-    public static Result<TValue, TError> Failure(TError error) => new(error);
-
-    public TResult Match<TResult>(Func<TValue, TResult> onSuccess, Func<TError, TResult> onFailure)
-        => IsSuccess ? onSuccess(_value!) : onFailure(_error!);
-}
-```
+Defined once in `skills/error-handling/SKILL.md` (implicit conversions, the `default` gotcha, and the
+no-value `Result<Done, TError>` form). Copy it from there.
 
 ## GlobalExceptionHandler (IExceptionHandler)
 

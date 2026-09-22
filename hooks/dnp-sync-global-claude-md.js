@@ -1,23 +1,31 @@
 #!/usr/bin/env node
-// DotnetPilot Global CLAUDE.md Sync — PreToolUse hook
+// DotnetPilot Global CLAUDE.md Sync — SessionStart hook
 //
-// On the first tool use after plugin load/reload, ensures the user's global
-// ~/.claude/CLAUDE.md contains the current version's rule block between
-// <!-- DotnetPilot vX.Y.Z --> and <!-- Dotnet-Pilot-END --> markers.
+// Ensures the user's global ~/.claude/CLAUDE.md carries this plugin version's
+// rule block between <!-- DotnetPilot vX.Y.Z --> and <!-- Dotnet-Pilot-END -->.
 //
-// If the markers don't exist, the block is appended to the end.
-// If they exist with an older version, the block is replaced in-place.
-// If they exist with the current version, the script exits immediately (fast path).
+// No block → appended. An older block → replaced in place. The same or a NEWER
+// block → left alone, so two installs of different versions never rewrite the
+// block back and forth.
 //
-// Advisory only (exit 0 always) — never blocks tool execution.
+// Also sets `autoUpdate: true` on the dotnet-pilot marketplace entry in
+// ~/.claude/settings.json, but only when that entry already exists with a
+// `source` and has no `autoUpdate` of its own. An unreadable or unparseable
+// settings file is never rewritten.
+//
+// Advisory only (exit 0 always) — never blocks.
 
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { hookEnabled } = require('./_lib/config');
+const { isNewer } = require('./_lib/version');
+const { readJsonFile, writeJsonFile } = require('./_lib/json-file');
 
 const MARKER_PREFIX = '<!-- DotnetPilot v';
 const MARKER_END = '<!-- Dotnet-Pilot-END -->';
+const MARKER_START_RE = /<!-- DotnetPilot v([\w.+-]+) -->/;
+const MARKETPLACE_NAME = 'dotnet-pilot-marketplace';
 
 let input = '';
 const stdinTimeout = setTimeout(() => process.exit(0), 10000);
@@ -28,22 +36,20 @@ process.stdin.on('end', () => {
   try {
     let cwd = process.cwd();
     try { cwd = JSON.parse(input).cwd || cwd; } catch { /* payload optional */ }
-    if (hookEnabled(cwd, 'sync_global_claude_md')) sync();
+    if (hookEnabled(cwd, 'sync_global_claude_md')) {
+      const claudeDir = path.join(os.homedir(), '.claude');
+      syncBlock(claudeDir);
+      enableAutoUpdate(claudeDir);
+    }
   } catch {
     // Never fail — advisory only
   }
   process.exit(0);
 });
 
-const MARKETPLACE_NAME = 'dotnet-pilot-marketplace';
-
-function sync() {
+function syncBlock(claudeDir) {
   const pluginJsonPath = path.join(__dirname, '..', '.claude-plugin', 'plugin.json');
-  const plugin = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf8'));
-  const version = plugin.version;
-  const markerStart = `${MARKER_PREFIX}${version} -->`;
-
-  const claudeDir = path.join(os.homedir(), '.claude');
+  const version = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf8')).version;
   const claudeMdPath = path.join(claudeDir, 'CLAUDE.md');
 
   let content = '';
@@ -53,70 +59,40 @@ function sync() {
     // File doesn't exist — will create
   }
 
-  // Fast path: current version already synced
-  if (content.includes(markerStart)) {
-    enableAutoUpdate(claudeDir); // always ensure autoUpdate is set
+  const startMatch = content.match(MARKER_START_RE);
+  if (startMatch && !isNewer(version, startMatch[1])) return;
+
+  let template;
+  try {
+    template = fs.readFileSync(path.join(__dirname, '..', 'rules', 'global-claude-md.md'), 'utf8').trimEnd();
+  } catch {
     return;
   }
 
-  // Read template
-  const templatePath = path.join(__dirname, '..', 'rules', 'global-claude-md.md');
-  let template;
-  try {
-    template = fs.readFileSync(templatePath, 'utf8').trimEnd();
-  } catch {
-    return; // Template missing — can't sync
-  }
-
-  const block = `${markerStart}\n${template}\n${MARKER_END}`;
-
-  // Look for existing DotnetPilot block (any version)
-  const escapedPrefix = MARKER_PREFIX.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const startRegex = new RegExp(escapedPrefix + '[\\d.]+ -->');
-  const startMatch = content.match(startRegex);
+  const block = `${MARKER_PREFIX}${version} -->\n${template}\n${MARKER_END}`;
   const endIdx = content.indexOf(MARKER_END);
 
   if (startMatch && endIdx !== -1 && startMatch.index < endIdx) {
-    // Replace existing block (preserve everything before and after)
     const before = content.substring(0, startMatch.index);
     const after = content.substring(endIdx + MARKER_END.length);
     content = before.trimEnd() + '\n\n' + block + after;
+  } else if (content.length > 0) {
+    content = content.trimEnd() + '\n\n' + block + '\n';
   } else {
-    // Append to end of file
-    if (content.length > 0) {
-      content = content.trimEnd() + '\n\n' + block + '\n';
-    } else {
-      content = block + '\n';
-    }
+    content = block + '\n';
   }
 
-  // Ensure ~/.claude/ exists
-  if (!fs.existsSync(claudeDir)) {
-    fs.mkdirSync(claudeDir, { recursive: true });
-  }
-
+  fs.mkdirSync(claudeDir, { recursive: true });
   fs.writeFileSync(claudeMdPath, content, 'utf8');
-  enableAutoUpdate(claudeDir);
 }
 
 function enableAutoUpdate(claudeDir) {
   const settingsPath = path.join(claudeDir, 'settings.json');
-  let settings = {};
-  try {
-    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-  } catch {
-    // File missing or unparseable — start fresh
-  }
-
-  const marketplaces = settings.extraKnownMarketplaces || {};
-  const entry = marketplaces[MARKETPLACE_NAME] || {};
-
-  // Fast path: already enabled
-  if (entry.autoUpdate === true) return;
+  const file = readJsonFile(settingsPath);
+  if (!file.ok) return;
+  const entry = file.value.extraKnownMarketplaces?.[MARKETPLACE_NAME];
+  if (!entry || typeof entry !== 'object' || !entry.source || entry.autoUpdate !== undefined) return;
 
   entry.autoUpdate = true;
-  marketplaces[MARKETPLACE_NAME] = entry;
-  settings.extraKnownMarketplaces = marketplaces;
-
-  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+  writeJsonFile(settingsPath, file.value, file.bom);
 }

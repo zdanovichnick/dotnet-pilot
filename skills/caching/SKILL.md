@@ -13,7 +13,7 @@ Reference for caching in .NET APIs. Covers HybridCache (L1+L2), output caching, 
 | Option | Best For | Notes |
 |--------|----------|-------|
 | `HybridCache` | Application-level data (entities, computed results) | .NET 9+; L1 in-process + L2 distributed; stampede protection |
-| `IOutputCache` | HTTP response caching (full responses) | Middleware-level; `[OutputCache]` attribute or `.CacheOutput()` |
+| Output caching (`IOutputCacheStore`) | HTTP response caching (full responses) | Middleware-level; `[OutputCache]` attribute or `.CacheOutput()` |
 | `IMemoryCache` | Single-node, simple key-value, no distributed requirement | No stampede protection; use `GetOrCreateAsync` |
 | `IDistributedCache` | Distributed session, custom serialization | Low-level; HybridCache wraps it |
 
@@ -34,7 +34,7 @@ Load only the file the task needs:
 | Use `HybridCache` as the default for application data | Use `IMemoryCache` in a multi-node deployment for shared data |
 | Always set an expiration | Cache indefinitely (memory leak, stale data) |
 | Use typed key factory to avoid magic strings | Scatter `$"product:{id}"` literals across the codebase |
-| Use records or `[Serializable]` value objects as cache values | Cache mutable objects (mutations won't propagate) |
+| Cache sealed, immutable DTOs (see the reuse gotcha in `references/hybridcache.md`) | Cache tracked EF entities or mutable objects (mutations won't propagate) |
 | Scope keys by tenant ID in multi-tenant apps | Share cache entries across tenants |
 | Log cache misses at `Debug` level | Log every cache hit (too noisy) |
 | Invalidate on write (cache-aside write-through) | Let stale data live beyond TTL without a manual eviction path |
