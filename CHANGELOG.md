@@ -5,6 +5,36 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [3.1.0] - 2026-09-22
+
+### Added
+
+- `utility:help` prints a `DotnetPilot vX.Y.Z` banner, every command with its argument hint, and the
+  agent (model / effort), skill and hook rosters — each hook with its `hooks.*` toggle key — ahead of
+  the "Did you mean" table. The consistency check verifies the banner version and that all four
+  rosters and their counts match the directories.
+- `check-consistency.js` rejects any `model:` in agent/command frontmatter or a workflow literal that
+  is not a family alias (`sonnet|opus|haiku|fable|inherit`) — Claude Code's allowlist substitution is
+  documented for aliases only, so a dated ID would lose that fallback.
+- `dnp-architect` focused-brief mode: given one finding or one question, it judges that item instead
+  of auditing the solution. Used by the routed review confirmer and the `dotnet:tdd` HALT consult below.
+
+### Changed
+
+- `dnp-architect` runs on `fable` (was `opus`) at `effort: xhigh` — the one judgment-heavy agent.
+  The other eight agents stay on `sonnet`. Where an organization's model allowlist blocks the
+  alias, Claude Code runs the agent on the session model and warns, so the pin does not break
+  installs without Fable access. README lists Fable access under Requirements.
+- `quality:review` routes `architecture` findings to `dnp-architect` on `fable` at `standard`+ depth
+  (security / performance / DI keep their `sonnet` specialists). Every routed confirmer is told to
+  judge the one finding rather than audit the solution.
+- `dotnet:tdd` answers an architectural `[HALT: <question>]` by consulting `dnp-architect` first and
+  listing its pick as the recommended option; other HALTs reach the user directly.
+- Injected global rules block: `## Comments` now leads with "minimum comments — only critical ones" —
+  a comment earns its place only for a non-obvious why, an invariant a caller must honor, or a
+  deliberate deviation from the surrounding pattern.
+- `hooks/__tests__/README.md` diagrams the harness run loop and the hook event contract.
+
 ## [3.0.0] - 2026-09-22
 
 ### BREAKING
@@ -29,8 +59,7 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 - **`skills/blazor-patterns` removed** (placeholder content).
 - **Injected global rules block trimmed** (`rules/global-claude-md.md`, ~78 → ~47 lines). Rules the
   hooks already enforce — commit format, git auto-approval, format-on-save — and rules the model
-  infers were cut. `## Comments` now leads with "minimum comments — only critical ones". The
-  `## .NET Tooling Priority` section is unchanged.
+  infers were cut. The `## .NET Tooling Priority` section is unchanged.
 - **`hooks.json` no longer declares `$hook_protocol_version`**; `dnp-post-edit-format`'s timeout is
   now `30`. Hook timeouts are in seconds, so the previous `15000` amounted to no timeout at all.
 - **Build-fail state file is schema v2** (`{v, count, lastFail, lastSuccess, lastCommand, lastKind}`).
@@ -67,13 +96,7 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 - `hooks/__tests__/check-consistency.js` — version parity across `plugin.json`, `marketplace.json`,
   and `STATUSLINE_VERSION`; hook registration; agent/command/skill frontmatter; every
   `/dotnet-pilot:<cat>:<name>` reference and backticked `dnp-*` name resolves; README lists every
-  command and agent; every `model:` in agent/command frontmatter or a workflow literal is a family
-  alias (`sonnet|opus|haiku|fable|inherit`) — Claude Code's allowlist substitution is documented
-  for aliases only, so a dated ID would lose that fallback.
-- `utility:help` prints a `DotnetPilot vX.Y.Z` banner, every command with its argument hint, and the
-  agent (model / effort), skill and hook rosters — each hook with its `hooks.*` toggle key — ahead of
-  the "Did you mean" table. The consistency check verifies the banner version and that all four
-  rosters and their counts match the directories.
+  command and agent.
 - `.github/workflows/hooks.yml` — runs the hook harness and consistency check on Ubuntu and Windows,
   plus `claude plugin validate --strict` over `agents/`, `commands/`, and `skills/`; the manifest
   validation is advisory (`continue-on-error`) because `--strict` warns that the repo's root `CLAUDE.md`
@@ -97,16 +120,6 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 
 ### Changed
 
-- `dnp-architect` runs on `fable` (was `opus`) at `effort: xhigh` — the one judgment-heavy agent.
-  The other eight agents stay on `sonnet`. Where an organization's model allowlist blocks the
-  alias, Claude Code runs the agent on the session model and warns, so the pin does not break
-  installs without Fable access.
-- `quality:review` routes `architecture` findings to `dnp-architect` on `fable` at `standard`+ depth
-  (security / performance / DI keep their `sonnet` specialists). Every routed confirmer is told to
-  judge the one finding rather than audit the solution.
-- `dotnet:tdd` answers an architectural `[HALT: <question>]` by consulting `dnp-architect` first and
-  listing its pick as the recommended option; other HALTs reach the user directly. `dnp-architect`
-  gained a focused-brief mode for those consults and for routed review findings.
 - `testing-dotnet` skill: examples use NSubstitute instead of Moq and `WebApplicationFactory` over a
   Testcontainers SQL Server instead of the in-memory EF provider; a mocking-library comparison table
   covers Moq and FakeItEasy for existing projects.
