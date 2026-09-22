@@ -67,7 +67,9 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 - `hooks/__tests__/check-consistency.js` — version parity across `plugin.json`, `marketplace.json`,
   and `STATUSLINE_VERSION`; hook registration; agent/command/skill frontmatter; every
   `/dotnet-pilot:<cat>:<name>` reference and backticked `dnp-*` name resolves; README lists every
-  command and agent.
+  command and agent; every `model:` in agent/command frontmatter or a workflow literal is a family
+  alias (`sonnet|opus|haiku|fable|inherit`) — Claude Code's allowlist substitution is documented
+  for aliases only, so a dated ID would lose that fallback.
 - `utility:help` prints a `DotnetPilot vX.Y.Z` banner, every command with its argument hint, and the
   agent (model / effort), skill and hook rosters — each hook with its `hooks.*` toggle key — ahead of
   the "Did you mean" table. The consistency check verifies the banner version and that all four
@@ -95,10 +97,16 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 
 ### Changed
 
-- `dnp-architect` runs on `fable` (was `opus`) at `effort: xhigh` — the one judgment-heavy, rarely
-  spawned agent. The other eight agents stay on `sonnet`. Where an organization's model allowlist
-  blocks the alias, Claude Code runs the agent on the session model and warns, so the pin does not
-  break installs without Fable access.
+- `dnp-architect` runs on `fable` (was `opus`) at `effort: xhigh` — the one judgment-heavy agent.
+  The other eight agents stay on `sonnet`. Where an organization's model allowlist blocks the
+  alias, Claude Code runs the agent on the session model and warns, so the pin does not break
+  installs without Fable access.
+- `quality:review` routes `architecture` findings to `dnp-architect` on `fable` at `standard`+ depth
+  (security / performance / DI keep their `sonnet` specialists). Every routed confirmer is told to
+  judge the one finding rather than audit the solution.
+- `dotnet:tdd` answers an architectural `[HALT: <question>]` by consulting `dnp-architect` first and
+  listing its pick as the recommended option; other HALTs reach the user directly. `dnp-architect`
+  gained a focused-brief mode for those consults and for routed review findings.
 - `testing-dotnet` skill: examples use NSubstitute instead of Moq and `WebApplicationFactory` over a
   Testcontainers SQL Server instead of the in-memory EF provider; a mocking-library comparison table
   covers Moq and FakeItEasy for existing projects.

@@ -32,7 +32,7 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 - **`dnp-commit-format` skips heredoc commits.** Claude Code's default multi-line commit workflow (`-m "$(cat <<'EOF'...)"`) is deliberately excluded — the hook only validates plain `-m "..."` strings.
 - **Commands are thin orchestrators.** Heavy logic belongs in agents. A command file is the spec that Claude reads when the slash command fires; it should enumerate steps and which agents to spawn, not re-implement their work.
 - **Agent frontmatter `tools:` is a whitelist.** Adding a tool requires justification. Use exact tool names — `Bash`, not a scoped form — because plugin subagents honor only exact names and `mcp__<server>__*`.
-- **Model tier by agent role.** Architecture → fable (the one judgment-heavy, rarely spawned agent; where an org allowlist blocks the alias, Claude Code runs it on the session model and warns); implementation/review → sonnet; mechanical checks (DI, NuGet audit, migration planning, routine TDD) → sonnet at `effort: low`.
+- **Model tier by agent role.** Architecture → fable (the one judgment-heavy agent, also the review confirmer for architecture findings and the adviser on architectural HALTs; where an org allowlist blocks the alias, Claude Code runs it on the session model and warns); implementation/review → sonnet; mechanical checks (DI, NuGet audit, migration planning, routine TDD) → sonnet at `effort: low`.
 - **Every agent and command declares `effort:`.** Model tier sets capability, `effort:` (`low|medium|high|xhigh|max`) sets reasoning spend within it. Do NOT pair `effort:` with `model: haiku` — effort is unsupported on Haiku 4.5 and the field is silently dropped, which is why the mechanical agents run on sonnet at `effort: low` instead of haiku.
 - **Agent prompts carry gotchas, not guardrails.** Write what is specific to .NET and to this
   plugin — missing DI registration throwing at runtime, migrations needing their own step, the
@@ -120,7 +120,8 @@ the roster — read `agents/dnp-*.md` for detail. What the descriptions don't te
 - **Agents never prompt the user.** Plugin subagents have no question tool. An agent that needs a
   decision returns `[HALT: <question>]` with the options and what each commits the design to; the
   invoking command asks the user and re-spawns the agent with the answer (`commands/dotnet/tdd.md`
-  is the model). Write new agents the same way.
+  is the model; for an architectural question it gets a `dnp-architect` recommendation first and
+  shows it as the recommended option). Write new agents the same way.
 - **Scaffolding is TDD work.** `dotnet:scaffold` and `dotnet:add-endpoint` brief
   `dnp-tdd-developer-easy` with the target files and detected conventions — there is no separate
   scaffolder agent.
@@ -163,8 +164,10 @@ key to `plugin.json`, it would replace that scan (the consistency check fails on
 triage relays the manifest into shard assignments (cross-checked in JS against `fileCount`; a
 disagreeing relay falls back to the preflight sharding), one haiku scout per shard primed with the skill
 packs `PATH_PACKS` maps from the file paths, one adversarial sonnet confirmer per deduplicated finding
-(a confirmation without a `file:line` citation is refuted; security / performance / DI findings route to
-`dnp-security-auditor`, `dnp-performance-analyst`, `dnp-di-wiring-checker` at `standard`+), and a sonnet
+(a confirmation without a `file:line` citation is refuted; security / performance / DI / architecture
+findings route to `dnp-security-auditor`, `dnp-performance-analyst`, `dnp-di-wiring-checker`,
+`dnp-architect` at `standard`+ — the architecture route runs on `fable`, the rest on `sonnet`, and a
+routed confirmer is told to judge the one finding, not audit the solution), and a sonnet
 narrator only when three or more findings survive. `renderMarkdown()` builds the digest in JS, so the
 same manifest yields the same section order every run. Depth caps total agents: `quick` 6 (scouts only),
 `standard` 11, `deep` 20 (adds four lens sweeps). The result always carries

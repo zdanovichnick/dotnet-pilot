@@ -35,7 +35,7 @@ allowed-tools: Bash(node:*), Workflow, ToolSearch
 | depth | agents | stages |
 |---|---|---|
 | `quick` | ≤6 | triage + haiku scouts; findings are reported unconfirmed |
-| `standard` | ≤11 | + one sonnet confirmer per finding; security / performance / DI findings are routed to `dnp-security-auditor`, `dnp-performance-analyst` and `dnp-di-wiring-checker` |
+| `standard` | ≤11 | + one sonnet confirmer per finding; security / performance / DI / architecture findings are routed to `dnp-security-auditor`, `dnp-performance-analyst`, `dnp-di-wiring-checker` and `dnp-architect` (the last on Fable) |
 | `deep` | ≤20 | + four haiku lens sweeps (security, performance, architecture, testing) over the whole diff |
 
 Run artifacts live under `${CLAUDE_PLUGIN_DATA}/review/<runId>/` (`diff.patch`, `shards/`, `manifest.json`). Generated code, `Migrations/`, `bin`/`obj`, lockfiles and non-.NET assets are listed under Coverage gaps rather than reviewed.

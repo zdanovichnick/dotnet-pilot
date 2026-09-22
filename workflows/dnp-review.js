@@ -5,7 +5,7 @@ export const meta = {
   phases: [
     { title: 'Triage', detail: 'relay manifest.json into shard assignments, cross-checked against fileCount', model: 'haiku' },
     { title: 'Scout', detail: 'one haiku reader per shard, primed with the matching skill packs', model: 'haiku' },
-    { title: 'Confirm', detail: 'one adversarial sonnet check per deduplicated finding', model: 'sonnet' },
+    { title: 'Confirm', detail: 'one adversarial sonnet check per deduplicated finding; architecture findings go to dnp-architect on fable', model: 'sonnet' },
     { title: 'Report', detail: 'deterministic digest; a narrator only when three or more findings survive', model: 'sonnet' },
   ],
 }
@@ -49,6 +49,9 @@ const CATEGORIES = {
   architecture: {
     packs: ['clean-architecture', 'ddd'],
     hint: 'Verify the project reference direction in the .csproj files, not just the namespace of the type.',
+    agentType: 'dotnet-pilot:dnp-architect',
+    // agent() opts.model overrides the agent's frontmatter, so the fable pin is repeated here.
+    model: 'fable',
   },
   testing: {
     packs: ['testing-dotnet'],
@@ -310,6 +313,7 @@ function confirmPrompt(f, ctx, attempt) {
     `Diff context: ${f.shardPath || ctx.diffPath}`,
     `Category guidance: ${cat.hint}`,
     `Reference: ${cat.packs.map(p => skillFile(ctx.skillsDir, p)).join(', ')}`,
+    f.routedTo ? `Scope: you are the ${shortAgent(f.routedTo)} specialist for this one finding; judge it alone, with no solution-wide audit or report.` : null,
     ctx.roslyn
       ? 'Roslyn: mcp__roslyn__* tools can be loaded with ToolSearch when a semantic check (references, DI registrations, call sites) settles the question faster than grep.'
       : 'Roslyn: mcp__roslyn__* tools are not available in this session; use Read and Grep.',
@@ -528,7 +532,7 @@ async function confirmFinding(f, ctx, depthCfg) {
   const opts = {
     label: `confirm ${f.file.split('/').pop()}:${f.line == null ? '?' : f.line} ${f.category}`,
     phase: 'Confirm',
-    model: 'sonnet',
+    model: routed && cat.model ? cat.model : 'sonnet',
     schema: VERDICT_SCHEMA,
   }
   if (routed) opts.agentType = routed

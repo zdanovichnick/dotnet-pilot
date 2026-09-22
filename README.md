@@ -210,7 +210,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 
 | Command | Usage | What it does |
 | --- | --- | --- |
-| `quality:review` | `review [--base <ref> \| --staged \| --last-commit \| --scope <glob>] [--depth quick\|standard\|deep]` | Sharded, Workflow-backed .NET review — haiku scouts per diff shard, sonnet confirmers per finding, one deterministic digest that names every coverage gap |
+| `quality:review` | `review [--base <ref> \| --staged \| --last-commit \| --scope <glob>] [--depth quick\|standard\|deep]` | Sharded, Workflow-backed .NET review — haiku scouts per diff shard, sonnet confirmers per finding (the Fable architect for architecture findings), one deterministic digest that names every coverage gap |
 | `quality:check-architecture` | `/dotnet-pilot:quality:check-architecture` | Scan for clean architecture layer violations — forbidden project references, DI issues, package placement |
 | `quality:security-scan` | `/dotnet-pilot:quality:security-scan` | Three-phase audit: `dotnet list package --vulnerable` → `dnp-security-auditor` OWASP scan → combined CRITICAL findings report |
 | `quality:de-sloppify` | `de-sloppify [--scope path]` | Safe refactoring pass — dead code removal, naming normalization, duplication elimination. Requires tests passing first |
@@ -244,7 +244,7 @@ Commands are thin orchestrators — all heavy work happens in one of these 9 age
 
 | Agent | Model | Effort | Role |
 | --- | --- | --- | --- |
-| `dnp-architect` | Fable | xhigh | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation (loads the `clean-architecture` skill) |
+| `dnp-architect` | Fable | xhigh | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation; advises on architectural `[HALT` questions from `dotnet:tdd` and confirms architecture findings in `quality:review` (loads the `clean-architecture` skill) |
 | `dnp-ef-migration-planner` | Sonnet | low | Plans safe EF Core migrations — detects breaking changes, validates chain integrity, targets correct DbContext (loads the `ef-core-patterns` skill) |
 
 ### Review confirmers (fast, focused)
@@ -256,11 +256,11 @@ Commands are thin orchestrators — all heavy work happens in one of these 9 age
 | `dnp-di-wiring-checker` | Sonnet | low | Cross-references constructor injection against DI registrations — finds missing services and captive dependencies |
 | `dnp-nuget-auditor` | Sonnet | low | Scans for vulnerable, outdated, and version-inconsistent NuGet packages across the solution |
 
-> Agents never prompt the user. A decision an agent cannot make comes back as `[HALT: <question>]`, and the command that spawned it asks you, then re-briefs the agent with the answer.
+> Agents never prompt the user. A decision an agent cannot make comes back as `[HALT: <question>]`, and the command that spawned it asks you, then re-briefs the agent with the answer. For an architectural question, `dotnet:tdd` first asks `dnp-architect` and lists its pick as the recommended option.
 >
 > Effort is model-gated and **unsupported on Haiku 4.5**, so every agent runs on Sonnet or Fable with an explicit `effort:`; the mechanical ones sit at `effort: low`, which is where the cost/capability trade-off Haiku was reaching for actually lives.
 >
-> Models are tier aliases (`fable`/`sonnet`), not dated IDs, so frontmatter tracks each tier's current default and needs no bump on a model release. Where an organization's model allowlist blocks `fable`, Claude Code runs `dnp-architect` on the session model and shows a warning naming both.
+> Models are tier aliases (`fable`/`sonnet`), not dated IDs, so frontmatter tracks each tier's current default and needs no bump on a model release; the consistency check rejects anything else, because Claude Code's allowlist substitution covers aliases only. Fable access is listed under Requirements.
 
 ---
 
@@ -633,6 +633,7 @@ Context7 must be enabled at the account level in Claude Code settings.
 | Dependency | Version | Purpose |
 | --- | --- | --- |
 | [Claude Code](https://claude.ai/code) | Latest | AI coding assistant (CLI, desktop, or IDE) |
+| [Fable 5.1](https://www.anthropic.com/claude/fable) | plan-dependent | `dnp-architect` and the review workflow's architecture confirmer run on the `fable` alias; where an allowlist blocks it, Claude Code substitutes the session model and warns (optional) |
 | [.NET SDK](https://dotnet.microsoft.com/) | 10+ | Your .NET project must build |
 | [Node.js](https://nodejs.org/) | 18+ | Hooks are JS scripts executed by Claude Code |
 | [dnp-roslyn](https://github.com/zdanovichnick/dotnet-pilot-mcp-roslyn) | v0.3+ | Roslyn MCP for semantic C# analysis |

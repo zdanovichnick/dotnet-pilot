@@ -12,7 +12,8 @@
 //   - hook timeouts are seconds (a value >= 600 is almost certainly ms)
 //   - every hook resolves its toggle through _lib/config.js
 //   - harness fixtures use the real PostToolUse field (`tool_response`)
-//   - every agent and command declares `effort:`; none pairs it with haiku
+//   - every agent and command declares `effort:`; none pairs it with haiku;
+//     every `model:` (frontmatter or workflow literal) is a family alias
 //   - agent `tools:` use documented forms only (no `Bash(...)`, no
 //     AskUserQuestion, no `permissionMode` — plugin subagents ignore them)
 //   - every /dotnet-pilot:<cat>:<name> reference resolves to a command file,
@@ -27,6 +28,12 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..', '..');
 const problems = [];
 const rel = p => path.relative(ROOT, p).replace(/\\/g, '/');
+
+// Claude Code substitutes a blocked family alias with the newest permitted
+// model of that family and warns; a dated ID gets no such fallback.
+const MODEL_ALIASES = ['sonnet', 'opus', 'haiku', 'fable', 'inherit'];
+const MODEL_ALIAS = new RegExp(`^(${MODEL_ALIASES.join('|')})$`);
+const modelValue = fm => (fm.model || '').replace(/^["']|["']$/g, '');
 
 function read(p) {
   try { return fs.readFileSync(p, 'utf8'); } catch { return null; }
@@ -115,6 +122,7 @@ for (const file of agentFiles) {
   if (fm.name !== name) problems.push(`${rel(file)}: frontmatter name "${fm.name}" != file name`);
   if (!fm.effort) problems.push(`${rel(file)}: missing effort:`);
   if (fm.effort && /^haiku/.test(fm.model || '')) problems.push(`${rel(file)}: effort: is dropped on haiku`);
+  if (fm.model && !MODEL_ALIAS.test(modelValue(fm))) problems.push(`${rel(file)}: model: "${fm.model}" is not a family alias (${MODEL_ALIASES.join('|')})`);
   if (fm.permissionMode) problems.push(`${rel(file)}: permissionMode is ignored for plugin subagents`);
   const tools = (fm.tools || '').split(',').map(t => t.trim()).filter(Boolean);
   for (const t of tools) {
@@ -134,12 +142,19 @@ for (const file of commandFiles) {
   if (!fm.description) problems.push(`${rel(file)}: missing description:`);
   if (!fm.effort) problems.push(`${rel(file)}: missing effort:`);
   if (fm.effort && /^haiku/.test(fm.model || '')) problems.push(`${rel(file)}: effort: is dropped on haiku`);
+  if (fm.model && !MODEL_ALIAS.test(modelValue(fm))) problems.push(`${rel(file)}: model: "${fm.model}" is not a family alias (${MODEL_ALIASES.join('|')})`);
 }
 
-const workflowNames = listFiles(path.join(ROOT, 'workflows'), f => f.endsWith('.js')).map(f => {
+const workflowFiles = listFiles(path.join(ROOT, 'workflows'), f => f.endsWith('.js'));
+const workflowNames = workflowFiles.map(f => {
   const m = /name:\s*['"]([^'"]+)['"]/.exec(read(f) || '');
   return m ? m[1] : path.basename(f, '.js');
 });
+for (const file of workflowFiles) {
+  for (const m of (read(file) || '').matchAll(/\bmodel:\s*['"]([^'"]+)['"]/g)) {
+    if (!MODEL_ALIAS.test(m[1])) problems.push(`${rel(file)}: model '${m[1]}' is not a family alias (${MODEL_ALIASES.join('|')})`);
+  }
+}
 
 // --- skills ---
 const skillNames = fs.existsSync(path.join(ROOT, 'skills')) ? fs.readdirSync(path.join(ROOT, 'skills')) : [];

@@ -8,7 +8,7 @@ effort: high
 
 `/dotnet-pilot:dotnet:tdd` implements a feature using strict RED-GREEN-REFACTOR discipline.
 
-> **Delegates to**: `dnp-tdd-developer-easy` (sonnet, effort low) or `dnp-tdd-developer-hard` (sonnet, effort high) based on complexity.
+> **Delegates to**: `dnp-tdd-developer-easy` (sonnet, effort low) or `dnp-tdd-developer-hard` (sonnet, effort high) based on complexity; `dnp-architect` (fable, effort xhigh) for an architectural `[HALT` question.
 
 ## Complexity routing
 
@@ -50,5 +50,11 @@ instead of making that change. Complexity routes as usual.
 6. On a `[HALT: <question>]` return, put the question to the user with `AskUserQuestion` — the
    agent has no prompt tool of its own — then re-spawn the same agent with the original brief plus
    the answer. Repeat until it returns a result or the user aborts.
+   When the question is architectural — which layer or project a type belongs in, a cross-layer
+   contract, a pattern the solution does not use yet — first spawn `dnp-architect` with the HALT
+   block verbatim and the solution structure, and ask for the option the layer rules favor plus
+   the one fact that decides it. Put that option first, marked recommended, with its one-line
+   rationale; the user still chooses. Business-rule ambiguity, naming, test scope and blocked
+   steps go to the user directly.
 7. Agent handles DI registration, project references, and build verification as part of the cycle.
 8. Report: tests created, production files created/modified, build status, DI status.
