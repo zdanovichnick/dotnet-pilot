@@ -11,11 +11,12 @@
 - Whatever the surrounding file already does wins over all of the above.
 
 ## Comments
-Default to none — names, small methods, and structure carry the intent. A comment earns its place
-only for a non-obvious **why** (a workaround and the constraint forcing it), an invariant or
-ordering a caller must honor, or a deliberate deviation from the surrounding pattern. Never
-restate the line below it; never leave commented-out code or an unowned `// TODO`. `///` XML docs
-belong on public API surface other teams consume, not on internals.
+Minimum comments — only critical ones. Default to none; names, small methods, and structure carry
+the intent. A comment is critical only when the code cannot say it: a non-obvious **why** (a
+workaround and the constraint forcing it), an invariant or ordering a caller must honor, or a
+deliberate deviation from the surrounding pattern. Never restate the line below it; never leave
+commented-out code or an unowned `// TODO`. `///` XML docs belong on public API surface other
+teams consume, not on internals.
 
 ## Error Handling
 - `Result<TValue, TError>` for expected/business failures in domain and application code;

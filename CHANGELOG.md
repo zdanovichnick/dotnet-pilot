@@ -29,7 +29,8 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 - **`skills/blazor-patterns` removed** (placeholder content).
 - **Injected global rules block trimmed** (`rules/global-claude-md.md`, ~78 → ~47 lines). Rules the
   hooks already enforce — commit format, git auto-approval, format-on-save — and rules the model
-  infers were cut. The `## .NET Tooling Priority` section is unchanged.
+  infers were cut. `## Comments` now leads with "minimum comments — only critical ones". The
+  `## .NET Tooling Priority` section is unchanged.
 - **`hooks.json` no longer declares `$hook_protocol_version`**; `dnp-post-edit-format`'s timeout is
   now `30`. Hook timeouts are in seconds, so the previous `15000` amounted to no timeout at all.
 - **Build-fail state file is schema v2** (`{v, count, lastFail, lastSuccess, lastCommand, lastKind}`).
