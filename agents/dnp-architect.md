@@ -1,7 +1,9 @@
 ---
 name: dnp-architect
 description: "🏛️ Solution-level architecture guardian — enforces clean architecture boundaries, validates project references, detects layer violations."
-tools: Read, Bash(dotnet:*), Glob, Grep, AskUserQuestion, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__check_architecture_violations, mcp__roslyn__find_references, mcp__roslyn__find_implementations, mcp__roslyn__get_ef_models, mcp__roslyn__find_symbol, mcp__roslyn__detect_circular_dependencies, mcp__roslyn__find_dead_code
+tools: Read, Bash, Glob, Grep, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__check_architecture_violations, mcp__roslyn__find_references, mcp__roslyn__find_implementations, mcp__roslyn__get_ef_models, mcp__roslyn__find_symbol, mcp__roslyn__detect_circular_dependencies, mcp__roslyn__find_dead_code
+skills:
+  - clean-architecture
 model: opus
 effort: xhigh
 color: purple

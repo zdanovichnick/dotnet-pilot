@@ -1,11 +1,12 @@
 ---
 name: modern-csharp
 description: C# 12–14 language features with practical patterns — primary constructors, collection expressions, records, pattern matching, nullable reference types, and more.
+when_to_use: Modernizing C# or reviewing idiom — primary constructors, collection expressions, records, pattern matching, nullable annotations.
 ---
 
 # Modern C# (12–14)
 
-Reference for language features available in .NET 8+. Used by `dnp-planner` and `dnp-tdd-developer-hard`.
+Reference for language features available in .NET 8+.
 
 ## Primary Constructors (C# 12)
 

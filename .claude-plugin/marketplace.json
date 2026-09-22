@@ -1,5 +1,6 @@
 {
   "name": "dotnet-pilot-marketplace",
+  "description": "DotnetPilot — .NET development plugin for Claude Code, with its Roslyn MCP companion.",
   "owner": {
     "name": "Nick Zdanovych",
     "email": "zdanovichnick@gmail.com"
@@ -8,8 +9,8 @@
     {
       "name": "dotnet-pilot",
       "source": "./",
-      "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, 16 skills, convention-aware scaffolders, security/performance/refactoring agents, and project lifecycle commands.",
-      "version": "2.7.0",
+      "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, convention-aware scaffolding, TDD agents, security and performance review, and project lifecycle commands.",
+      "version": "3.0.0",
       "keywords": [
         "dotnet",
         "csharp",

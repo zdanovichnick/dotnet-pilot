@@ -1,11 +1,12 @@
 ---
 name: ddd
 description: Domain-Driven Design patterns for .NET — aggregates, value objects, strongly-typed IDs, domain events, repositories, and layer rules.
+when_to_use: Modelling aggregates, value objects, domain events, or strongly-typed IDs; reviewing a Domain project for leaked infrastructure.
 ---
 
 # Domain-Driven Design Patterns
 
-Reference material for applying DDD tactical patterns in .NET. Used by `dnp-architect` and `dnp-planner`.
+Reference material for applying DDD tactical patterns in .NET.
 
 ## When to Use DDD
 

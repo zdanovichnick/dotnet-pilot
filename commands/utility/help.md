@@ -8,51 +8,33 @@ effort: low
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v2.2.1 — .NET development plugin for Claude Code
-28 commands · 14 agents · 8 hooks · 16 skill packs
+DotnetPilot — .NET development plugin for Claude Code
 
 PROJECT — project lifecycle
-  project:init               Initialize for a .NET solution — discover projects, create
-                             .planning/, generate PROJECT.md and solution map
-  project:next               Auto-detect and suggest the next step based on current state
+  project:init               Initialize for a .NET solution — discover projects, write the
+                             user-scoped .planning/ (config.json, solution-map.json)
   project:verify             Verify readiness before shipping — build, tests, DI
-                             completeness, and architecture check
+                             completeness, architecture check; --quick is the pre-commit form
   project:ship               Create a pull request — runs final checks and invokes
                              gh pr create
-  project:checkpoint         Ordered quality gate: build → tests → format check →
-                             architecture warning → DI warning → git status summary
 
 DOTNET — scaffolding & solution management
+  dotnet:scaffold            Scaffold a feature, API surface, service, or project matching
+                             the solution's architecture (feature|api|service|project)
   dotnet:create-entity       Create a full entity stack: entity class, EF configuration,
                              repository, service, DI registration, and migration
-  dotnet:create-api          Create API controller or minimal API endpoint with DTOs,
-                             validation, DI registration, and OpenAPI attributes
-  dotnet:add-service         Create a service with interface, implementation, DI
-                             registration, and test scaffold
   dotnet:add-endpoint        Add an endpoint to an existing controller or endpoint group
   dotnet:add-migration       Plan and generate an EF Core migration safely — validates
                              chain, detects breaking changes, targets correct DbContext
-  dotnet:add-project         Add a new project to the solution with correct references
-                             and layer placement
-  dotnet:write-tests         Generate tests for existing code — unit, integration, or
-                             WebApplicationFactory tests
-  dotnet:tdd                 Implement a feature using TDD — writes failing tests first,
-                             then production code
+  dotnet:tdd                 Implement a feature using TDD — failing tests first, then
+                             production code; --existing <target> adds tests to existing code
   dotnet:run-tests           Run tests with coverage reporting and failure diagnosis
   dotnet:health-check        Validate full solution health — build, tests, NuGet, project
                              references, DI completeness
-  dotnet:scaffold            Detect solution architecture and scaffold a feature with
-                             the appropriate style (VSA, Clean Architecture, DDD)
-  dotnet:build-fix           Run dotnet build and auto-fix errors — iterative repair loop,
-                             up to 5 cycles before halting
 
 QUALITY — safety checks
-  quality:commit-check       Commit quality gate — build, test, format check, DI
-                             verification, and architecture check
   quality:review             Code review current changes with .NET-specific focus — async
                              patterns, LINQ, naming, DI
-  quality:check-packages     Package vulnerability scan, version consistency check, and
-                             upgrade recommendations
   quality:check-architecture Scan for clean architecture layer violations — forbidden
                              project references, DI issues, package placement
   quality:security-scan      OWASP audit — NuGet CVEs, secrets exposure, auth config,
@@ -62,11 +44,24 @@ QUALITY — safety checks
 
 UTILITY — housekeeping
   utility:help               Show this help text
-  utility:quick-fix          Quick fix — bypass the full pipeline for small changes
-  utility:status             Show current project state — phase, progress, recent activity
-  utility:settings           View and modify DotnetPilot configuration
-  utility:show-solution      Show the .NET solution structure — projects, references,
-                             packages, namespaces, layers
+  utility:statusline         Install the .NET-aware statusline
 
 Usage: /dotnet-pilot:<command>   e.g. /dotnet-pilot:dotnet:create-entity Product
+
+Did you mean — commands removed in v3.0.0 and where their job went
+  dotnet:add-project         → dotnet:scaffold project <Name> --type <classlib|web|xunit|worker|console>
+  dotnet:add-service         → dotnet:scaffold service <Name> [--lifetime ...]
+  dotnet:create-api          → dotnet:scaffold api <Entity> [--minimal]
+  dotnet:write-tests         → dotnet:tdd --existing <class|file|project>
+  dotnet:build-fix           → run dotnet build and fix inline; the dnp-build-verify hook
+                               escalates after repeated failures
+  project:checkpoint         → project:verify --quick
+  quality:commit-check       → project:verify --quick
+  quality:check-packages     → dotnet:health-check (NuGet section) or quality:security-scan
+  project:next               → Plan Mode + TaskCreate (Claude Code native)
+  utility:status             → git status + TaskList (Claude Code native)
+  utility:quick-fix          → just ask in the conversation — no command needed
+  utility:settings           → edit .planning/config.json (keys: hooks/_lib/config.js)
+  utility:show-solution      → mcp__roslyn__get_solution_structure, or .planning/solution-map.json
+                               (schema documented in project:init)
 ```

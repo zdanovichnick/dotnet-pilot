@@ -1,11 +1,12 @@
 ---
 name: aspnet-api-patterns
 description: ASP.NET Core API patterns — controllers vs minimal API, middleware, error handling, versioning, and authentication setup.
+when_to_use: Adding or changing endpoints, middleware, or API versioning; deciding between controllers and minimal APIs.
 ---
 
 # ASP.NET Core API Patterns
 
-Reference for API development. Used by `dnp-api-scaffolder` and `dnp-planner`.
+Reference for API development.
 
 ## Controller vs Minimal API Decision
 

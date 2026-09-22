@@ -1,6 +1,7 @@
 ---
 name: convention-learner
 description: Protocol for detecting and replicating existing project conventions before generating new code — naming, folder structure, DI registration, test framework, DTOs, and error handling.
+when_to_use: Before generating any code in an existing solution, to mirror its naming, folders, DI style, test framework, DTO shape, and error handling.
 ---
 
 # Convention Learner

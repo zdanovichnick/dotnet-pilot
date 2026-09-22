@@ -1,11 +1,12 @@
 ---
 name: clean-architecture
 description: .NET clean architecture enforcement — layer rules, dependency direction, DI registration patterns, and project reference validation.
+when_to_use: Deciding which project a type belongs in, adding a project reference, or reviewing layer violations.
 ---
 
 # Clean Architecture for .NET
 
-Reference for architectural decisions. Used by `dnp-architect` and `dnp-planner`.
+Reference for architectural decisions.
 
 ## Layer Definitions
 

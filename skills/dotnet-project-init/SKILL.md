@@ -1,6 +1,7 @@
 ---
 name: dotnet-project-init
 description: Discovers .NET solution context — projects, frameworks, test runners, EF contexts, architecture style, and package management.
+when_to_use: First contact with a solution — building solution-map.json, adding a project, or answering which projects, frameworks, and test runners exist.
 ---
 
 # .NET Project Initialization Skill

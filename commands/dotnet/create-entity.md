@@ -23,4 +23,4 @@ effort: high
    - **DI registration:** Register repository and service
    - **Migration:** Run `dotnet ef migrations add Add<Entity>Table`
 3. Verify each step builds
-4. Suggest: `/dotnet-pilot:dotnet:create-api <entity>` to add API endpoints
+4. Suggest: `/dotnet-pilot:dotnet:scaffold api <entity>` to add API endpoints

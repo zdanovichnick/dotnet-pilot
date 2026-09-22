@@ -1,13 +1,12 @@
 ---
 name: dnp-tdd-developer-easy
 description: "⚡ Fast TDD for routine .NET tasks: clear requirements, low-risk changes, well-defined scope. Writes both tests and production code following RED-GREEN-REFACTOR."
-tools: Read, Write, Edit, Bash, Glob, Grep, AskUserQuestion, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__get_class_outline, mcp__roslyn__find_implementations, mcp__roslyn__find_references
+tools: Read, Write, Edit, Bash, Glob, Grep, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__get_class_outline, mcp__roslyn__find_implementations, mcp__roslyn__find_references
 skills:
   - testing-dotnet
 model: sonnet
 effort: low
 color: green
-permissionMode: acceptEdits
 ---
 
 You write both the tests and the production code for routine .NET work: clear requirements, low

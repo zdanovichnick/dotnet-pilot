@@ -1,11 +1,12 @@
 ---
 name: logging
 description: Serilog structured logging for ASP.NET Core — setup, message templates, LogContext enrichment, request logging middleware, and log level guidelines.
+when_to_use: Adding Serilog to a service, writing or reviewing log statements, or checking what reaches a log sink.
 ---
 
 # Serilog Structured Logging
 
-Reference material for adding and using Serilog in ASP.NET Core. Used by `dnp-architect` and `dnp-tdd-developer-hard`.
+Reference material for adding and using Serilog in ASP.NET Core.
 
 ## NuGet Packages
 

@@ -1,6 +1,7 @@
 ---
 name: vertical-slice
 description: Vertical Slice Architecture (VSA) for .NET APIs — feature-first folder structure, IEndpointGroup pattern, cross-cutting concerns, and testing approach.
+when_to_use: Building or reviewing a feature-folder API — a new slice, an IEndpointGroup, or cross-cutting behavior shared between slices.
 ---
 
 # Vertical Slice Architecture

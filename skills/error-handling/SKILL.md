@@ -1,11 +1,12 @@
 ---
 name: error-handling
 description: Result pattern, ProblemDetails (RFC 7807), global exception boundaries, and typed error records for .NET APIs.
+when_to_use: Choosing between Result<T> and exceptions, adding ProblemDetails responses, or wiring a global exception handler.
 ---
 
 # Error Handling Patterns
 
-Reference for structured error handling in .NET APIs. Used by `dnp-planner`, `dnp-api-scaffolder`, and `dnp-tdd-developer-hard`.
+Reference for structured error handling in .NET APIs.
 
 ## Philosophy: When to Use Results vs Exceptions
 

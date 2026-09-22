@@ -1,11 +1,12 @@
 ---
 name: opentelemetry
 description: OpenTelemetry SDK for .NET — tracing, custom spans, metrics, .NET Aspire integration, and OTLP exporter configuration.
+when_to_use: Adding tracing, custom spans, metrics, or an OTLP exporter; wiring telemetry into a .NET Aspire app.
 ---
 
 # OpenTelemetry for .NET
 
-Reference material for adding distributed tracing and metrics to ASP.NET Core services. Used by `dnp-architect` and `dnp-tdd-developer-hard`.
+Reference material for adding distributed tracing and metrics to ASP.NET Core services.
 
 ## NuGet Packages
 

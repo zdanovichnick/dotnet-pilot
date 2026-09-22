@@ -1,11 +1,12 @@
 ---
 name: ef-core-patterns
 description: EF Core best practices reference — safe migrations, query optimization, configuration patterns, and common pitfalls.
+when_to_use: Writing or reviewing EF Core queries, entity configurations, or migrations; before running dotnet ef migrations add.
 ---
 
 # EF Core Patterns
 
-Reference material for EF Core development. Used by `dnp-ef-migration-planner` and `dnp-planner`.
+Reference material for EF Core development.
 
 ## Migration Safety
 

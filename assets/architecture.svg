@@ -19,19 +19,19 @@
 <line x1="400" y1="65" x2="400" y2="88" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrowE)"/>
 <rect x="26" y="92" width="748" height="104" rx="8" fill="#161b22" stroke="#58a6ff66" stroke-width="1"/>
 <rect x="36" y="82" width="142.4" height="20" rx="10" fill="#161b22" stroke="#58a6ff99" stroke-width="1"/>
-<text x="46" y="96" fill="#58a6ff" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="start" font-weight="600">📋  Commands (21)</text>
+<text x="46" y="96" fill="#58a6ff" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="start" font-weight="600">📋  Commands (16)</text>
 <rect x="47.6" y="118" width="160" height="52" rx="6" fill="#0d1a2d" stroke="#58a6ff99" stroke-width="1"/>
 <text x="127.6" y="137" fill="#58a6ff" font-size="13" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Pipeline</text>
-<text x="127.6" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">init · next · verify · ship</text>
+<text x="127.6" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">init · verify · ship</text>
 <rect x="229.2" y="118" width="160" height="52" rx="6" fill="#0d1a2d" stroke="#58a6ff99" stroke-width="1"/>
 <text x="309.2" y="137" fill="#58a6ff" font-size="13" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Dotnet</text>
-<text x="309.2" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">scaffold · migrate · service</text>
+<text x="309.2" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">scaffold · create-entity · tdd</text>
 <rect x="410.8" y="118" width="160" height="52" rx="6" fill="#0d1a2d" stroke="#58a6ff99" stroke-width="1"/>
 <text x="490.8" y="137" fill="#58a6ff" font-size="13" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Quality</text>
-<text x="490.8" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">commit-check · review · check-*</text>
+<text x="490.8" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">review · security-scan · check-*</text>
 <rect x="592.4" y="118" width="160" height="52" rx="6" fill="#0d1a2d" stroke="#58a6ff99" stroke-width="1"/>
 <text x="672.4" y="137" fill="#58a6ff" font-size="13" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Utility</text>
-<text x="672.4" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">help · quick-fix · status</text>
+<text x="672.4" y="155" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle">help · statusline</text>
 <line x1="400" y1="197" x2="400" y2="212" stroke="#484f58" stroke-width="1.5" marker-end="url(#arrowE)"/>
 <text x="406" y="210" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="start">advisory</text>
 <rect x="26" y="216" width="748" height="68" rx="8" fill="#1c1600" stroke="#e3b34166" stroke-width="1"/>
@@ -53,23 +53,25 @@
 <text x="406" y="298" fill="#8b949e" font-size="10" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="start">spawns</text>
 <rect x="26" y="306" width="748" height="208" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
 <rect x="36" y="296" width="120.8" height="20" rx="10" fill="#161b22" stroke="#e6edf399" stroke-width="1"/>
-<text x="46" y="310" fill="#e6edf3" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="start" font-weight="600">🤖  Agents (8)</text>
+<text x="46" y="310" fill="#e6edf3" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="start" font-weight="600">🤖  Agents (9)</text>
 <rect x="36" y="344" width="80" height="24" rx="12" fill="#d2a8ff1a" stroke="#d2a8ff88" stroke-width="1"/>
 <text x="76" y="360" fill="#d2a8ff" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Opus</text>
-<rect x="126" y="334" width="316" height="44" rx="6" fill="#1c1024" stroke="#d2a8ff" stroke-width="1"/>
-<text x="284" y="360" fill="#d2a8ff" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-planner</text>
-<rect x="450" y="334" width="316" height="44" rx="6" fill="#1c1024" stroke="#d2a8ff" stroke-width="1"/>
-<text x="608" y="360" fill="#d2a8ff" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-architect</text>
+<rect x="126" y="334" width="640" height="44" rx="6" fill="#1c1024" stroke="#d2a8ff" stroke-width="1"/>
+<text x="446" y="360" fill="#d2a8ff" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-architect</text>
 <rect x="36" y="402" width="80" height="24" rx="12" fill="#79c0ff1a" stroke="#79c0ff88" stroke-width="1"/>
-<text x="76" y="418" fill="#79c0ff" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Sonnet</text>
-<rect x="126" y="392" width="316" height="44" rx="6" fill="#0d1a2d" stroke="#79c0ff" stroke-width="1"/>
-<text x="284" y="418" fill="#79c0ff" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-verifier</text>
-<rect x="450" y="392" width="316" height="44" rx="6" fill="#0d1a2d" stroke="#79c0ff" stroke-width="1"/>
-<text x="608" y="418" fill="#79c0ff" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-test-writer</text>
+<text x="76" y="418" fill="#79c0ff" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Sonnet/high</text>
+<rect x="126" y="392" width="154" height="44" rx="6" fill="#0d1a2d" stroke="#79c0ff" stroke-width="1"/>
+<text x="203" y="418" fill="#79c0ff" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-tdd-developer-hard</text>
+<rect x="288" y="392" width="154" height="44" rx="6" fill="#0d1a2d" stroke="#79c0ff" stroke-width="1"/>
+<text x="365" y="418" fill="#79c0ff" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-refactor-cleaner</text>
+<rect x="450" y="392" width="154" height="44" rx="6" fill="#0d1a2d" stroke="#79c0ff" stroke-width="1"/>
+<text x="527" y="418" fill="#79c0ff" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-security-auditor</text>
+<rect x="612" y="392" width="154" height="44" rx="6" fill="#0d1a2d" stroke="#79c0ff" stroke-width="1"/>
+<text x="689" y="418" fill="#79c0ff" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-performance-analyst</text>
 <rect x="36" y="460" width="80" height="24" rx="12" fill="#3fb9501a" stroke="#3fb95088" stroke-width="1"/>
-<text x="76" y="476" fill="#3fb950" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Haiku</text>
+<text x="76" y="476" fill="#3fb950" font-size="11" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" text-anchor="middle" font-weight="600">Sonnet/low</text>
 <rect x="126" y="450" width="154" height="44" rx="6" fill="#0d1c10" stroke="#3fb950" stroke-width="1"/>
-<text x="203" y="476" fill="#3fb950" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-api-scaffolder</text>
+<text x="203" y="476" fill="#3fb950" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-tdd-developer-easy</text>
 <rect x="288" y="450" width="154" height="44" rx="6" fill="#0d1c10" stroke="#3fb950" stroke-width="1"/>
 <text x="365" y="476" fill="#3fb950" font-size="11" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" text-anchor="middle">dnp-ef-migration-planner</text>
 <rect x="450" y="450" width="154" height="44" rx="6" fill="#0d1c10" stroke="#3fb950" stroke-width="1"/>

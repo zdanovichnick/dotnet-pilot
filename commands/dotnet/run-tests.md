@@ -8,7 +8,7 @@ effort: medium
 
 `/dotnet-pilot:dotnet:run-tests` executes tests with detailed reporting.
 
-> **Delegates to**: `dnp-test-writer` (sonnet, effort high) — only on test failures, to diagnose and suggest fixes.
+> Runs in the caller's context; spawns no agent. Fixes that need production code go through `/dotnet-pilot:dotnet:tdd`.
 
 ## Execution
 
@@ -25,6 +25,7 @@ effort: medium
    - Total tests, passed, failed, skipped
    - For failures: extract test name, error message, stack trace
 5. If failures found:
-   - Spawn `dnp-test-writer` to diagnose and suggest fixes
-   - Present: "N tests failed. Would you like to auto-fix?"
+   - Read each failing test and the code under test; name the likely cause per failure
+   - When the fix is a production change, offer `/dotnet-pilot:dotnet:tdd <behavior>` rather than
+     editing here; when the test itself is stale, say so and cite the assertion
 6. Report summary with pass rate

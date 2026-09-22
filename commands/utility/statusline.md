@@ -2,6 +2,7 @@
 description: "Install and wire the DotnetPilot .NET-aware statusline."
 argument-hint: "[--manual] — print the settings.json snippet instead of editing it"
 effort: low
+disable-model-invocation: true
 ---
 
 # Statusline
@@ -45,7 +46,7 @@ failure recorded", not a guaranteed green build.
      where `<HOME>` is the absolute home directory (use an absolute path, not `~`, for shell safety on
      Windows). `refreshInterval` lets `BUILD ✗` / branch state refresh out-of-band.
    - **If a `statusLine` already exists** (e.g. another plugin's or a custom one), **do not overwrite
-     silently.** Use `AskUserQuestion` to offer:
+     silently.** Ask the user to choose:
      - **Replace** — back up the current block to `~/.claude/dnp-statusline.prev.json`, then write the
        DotnetPilot `statusLine`.
      - **Keep existing** — abort wiring and print the manual snippet (see below) so the user can decide

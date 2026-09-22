@@ -1,11 +1,13 @@
 ---
 name: testing-dotnet
-description: .NET testing patterns — xUnit conventions, integration tests with WebApplicationFactory, mocking strategies, and test organization.
+description: .NET testing patterns — xUnit conventions, integration tests with WebApplicationFactory over Testcontainers, NSubstitute mocking, and test organization.
+when_to_use: Writing or reviewing tests — choosing unit vs integration, substituting a dependency, standing up WebApplicationFactory, or deciding whether a mock proves anything.
+argument-hint: "<class or endpoint under test> [--tier unit|integration]"
 ---
 
 # .NET Testing Patterns
 
-Reference for test generation. Used by `dnp-test-writer`, `dnp-tdd-developer-easy`, `dnp-tdd-developer-hard`, and `dnp-planner`.
+Reference for writing and reviewing tests.
 
 ## Test Organization
 
@@ -31,13 +33,23 @@ tests/
 ```csharp
 public class UserServiceTests
 {
-    private readonly Mock<IUserRepository> _repo;
+    private readonly IUserRepository _repo = Substitute.For<IUserRepository>();
     private readonly UserService _sut; // system under test
 
     public UserServiceTests()
     {
-        _repo = new Mock<IUserRepository>();
-        _sut = new UserService(_repo.Object);
+        _sut = new UserService(_repo);
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_WhenUserExists_ReturnsUser()
+    {
+        var user = new User(Guid.NewGuid(), "test@example.com");
+        _repo.GetByIdAsync(user.Id, Arg.Any<CancellationToken>()).Returns(user);
+
+        var result = await _sut.GetByIdAsync(user.Id, CancellationToken.None);
+
+        result.Should().Be(user);
     }
 }
 ```
@@ -68,24 +80,37 @@ public class DatabaseTests : IClassFixture<DatabaseFixture>
 
 ## Integration Tests with WebApplicationFactory
 
+The factory swaps the app's database for one running in a Testcontainers container
+(`Testcontainers.MsSql`; `Testcontainers.PostgreSql` for Npgsql), so tests run against the same
+provider as production. Docker must be available where the tests run.
+
 ```csharp
-public class UserEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public sealed class ApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
+{
+    private readonly MsSqlContainer _db = new MsSqlBuilder().Build();
+
+    public Task InitializeAsync() => _db.StartAsync();
+
+    async Task IAsyncLifetime.DisposeAsync()
+    {
+        await _db.DisposeAsync();
+        await base.DisposeAsync();
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder) =>
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseSqlServer(_db.GetConnectionString()));
+        });
+}
+
+public class UserEndpointTests : IClassFixture<ApiFactory>
 {
     private readonly HttpClient _client;
 
-    public UserEndpointTests(WebApplicationFactory<Program> factory)
-    {
-        _client = factory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureTestServices(services =>
-            {
-                // Replace real DB with in-memory
-                services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
-                services.AddDbContext<ApplicationDbContext>(options =>
-                    options.UseInMemoryDatabase("TestDb"));
-            });
-        }).CreateClient();
-    }
+    public UserEndpointTests(ApiFactory factory) => _client = factory.CreateClient();
 
     [Fact]
     public async Task CreateUser_Returns201WithLocation()
@@ -99,13 +124,20 @@ public class UserEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 }
 ```
 
-## Mocking Comparison
+Under xUnit v2 `IAsyncLifetime.DisposeAsync` returns `Task`, so the explicit implementation above
+keeps it apart from `WebApplicationFactory.DisposeAsync()` (`ValueTask`). xUnit v3 unifies both on
+`ValueTask` and the explicit form is no longer needed.
 
-| Feature | Moq | NSubstitute | FakeItEasy |
-|---------|-----|-------------|------------|
-| Syntax | `mock.Setup(x => x.Method()).Returns(value)` | `sub.Method().Returns(value)` | `A.CallTo(() => fake.Method()).Returns(value)` |
-| Verify | `mock.Verify(x => x.Method(), Times.Once)` | `sub.Received(1).Method()` | `A.CallTo(() => fake.Method()).MustHaveHappenedOnceExactly()` |
-| Popularity | Most popular | Growing | Niche |
+## Mocking Libraries
+
+NSubstitute is the default for new test projects. When the solution already uses another library,
+mirror it — the same behavior in each:
+
+| Feature | NSubstitute | Moq | FakeItEasy |
+|---------|-------------|-----|------------|
+| Return | `sub.Method().Returns(value)` | `mock.Setup(x => x.Method()).Returns(value)` | `A.CallTo(() => fake.Method()).Returns(value)` |
+| Verify | `sub.Received(1).Method()` | `mock.Verify(x => x.Method(), Times.Once)` | `A.CallTo(() => fake.Method()).MustHaveHappenedOnceExactly()` |
+| Argument match | `Arg.Any<T>()`, `Arg.Is<T>(x => …)` | `It.IsAny<T>()`, `It.Is<T>(x => …)` | `A<T>.Ignored`, `A<T>.That.Matches(x => …)` |
 
 ## Test Data
 
@@ -120,8 +152,8 @@ var user = fixture.Create<User>();
 var user = new UserBuilder().WithEmail("test@example.com").Build();
 ```
 
-Examples here use Moq because it is the most common. Read the test project's `.csproj` and
-mirror whatever it already references — a second mocking library in one solution is debt.
+Examples here use NSubstitute and FluentAssertions. Read the test project's `.csproj` and mirror
+whatever it already references — a second mocking or assertion library in one solution is debt.
 
 ## Choosing a Tier
 
@@ -134,7 +166,7 @@ Prefer the highest tier that is still fast and deterministic for the behavior in
 | New API endpoint | Integration via `WebApplicationFactory` — routing + DI + middleware |
 | Bug fix at a service boundary | Integration — the bug lives where components meet |
 | Edge case in pure domain logic | Unit — fast, exhaustive, precise |
-| EF Core query behavior | Integration against a real provider; the in-memory provider diverges from SQL Server on ordering, transactions, and raw SQL |
+| EF Core query behavior | Integration against the real provider in a Testcontainers container; the in-memory provider diverges from SQL Server on ordering, transactions, and raw SQL |
 | Validation rules | Unit — `[Theory]` coverage is economical |
 | Cross-service workflow | Integration plus one system-level test |
 
@@ -164,7 +196,7 @@ it. Mock-only coverage at a boundary means nothing has proven the integration wo
 
 | Boundary | Real-implementation approach |
 |---|---|
-| Database | `WebApplicationFactory` + provider under test, or Testcontainers |
+| Database | `WebApplicationFactory` over a Testcontainers database (the `ApiFactory` above) |
 | External HTTP API | `HttpClient` against WireMock or a test-mode endpoint |
 | Message queue | Real broker in a container |
 | Cache | Real `IMemoryCache`, or Redis in a container |

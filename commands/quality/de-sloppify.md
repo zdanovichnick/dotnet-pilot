@@ -13,7 +13,7 @@ effort: high
 ## Pre-flight
 
 1. Verify tests pass: `dotnet test`
-2. If tests fail: **stop** — do not clean broken code. Run `/dotnet-pilot:dotnet:build-fix` first if the build is broken.
+2. If tests fail: **stop** — do not clean broken code. Fix the build and the failing tests first.
 
 ## Execution
 
@@ -55,4 +55,4 @@ Files modified: 5
 
 - `/dotnet-pilot:dotnet:health-check` — identify issues before cleaning
 - `/dotnet-pilot:quality:check-architecture` — architecture compliance check
-- `/dotnet-pilot:project:checkpoint` — verify the solution is clean after de-sloppify
+- `/dotnet-pilot:project:verify --quick` — verify the solution is clean after de-sloppify

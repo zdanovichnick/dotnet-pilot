@@ -1,7 +1,9 @@
 ---
 name: dnp-ef-migration-planner
 description: "🗄️ EF Core migration safety — validates migration chain, detects data loss risks, ensures correct DbContext targeting."
-tools: Read, Bash(dotnet:*), Glob, Grep, mcp__roslyn__get_ef_models, mcp__roslyn__get_solution_structure
+tools: Read, Bash, Glob, Grep, mcp__roslyn__get_ef_models, mcp__roslyn__get_solution_structure
+skills:
+  - ef-core-patterns
 model: sonnet
 effort: low
 color: green

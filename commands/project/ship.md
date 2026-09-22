@@ -2,6 +2,7 @@
 description: "Create a pull request for completed work — runs final checks and invokes gh pr create."
 argument-hint: "[--draft to create a draft PR]"
 effort: medium
+disable-model-invocation: true
 ---
 
 # Ship

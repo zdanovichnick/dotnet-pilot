@@ -2,6 +2,7 @@
 description: "Plan and generate an EF Core migration safely — validates chain, detects breaking changes, targets correct DbContext."
 argument-hint: "<migration-name> [--context <DbContextName>]"
 effort: high
+disable-model-invocation: true
 ---
 
 # Add Migration
@@ -13,13 +14,13 @@ effort: high
 ## Execution
 
 1. Read `solution-map.json` for EF context details
-2. If multiple contexts exist and `--context` not specified: ask which context via AskUserQuestion
+2. If multiple contexts exist and `--context` was not given: stop and ask the user which one — never guess
 3. Spawn `dnp-ef-migration-planner` to:
    - Check for pending model changes
    - Detect breaking changes (column drops, type changes)
    - Validate migration chain integrity
-4. If breaking changes found and `config.gates.migration_confirm` is true:
-   - Present risks to developer
+4. If breaking changes are found:
+   - Present the risks to the developer
    - Get explicit confirmation before proceeding
 5. Run the migration command:
    ```bash
