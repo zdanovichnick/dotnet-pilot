@@ -12,7 +12,9 @@ const { hookEnabled } = require('./_lib/config');
 
 const HOOK_NAME = 'dnp-post-edit-format';
 const STDIN_TIMEOUT_MS = 10_000;
-const FORMAT_TIMEOUT_MS = 12_000;
+// Must stay below the hook's `timeout` in hooks.json (30s) so the advisory
+// still gets written when `dotnet format` is slow.
+const FORMAT_TIMEOUT_MS = 25_000;
 
 function emit(message) {
   process.stdout.write(JSON.stringify({

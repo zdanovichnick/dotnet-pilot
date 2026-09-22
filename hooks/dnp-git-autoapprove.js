@@ -14,8 +14,17 @@
 //     approved ONLY when the command ENDS at the heredoc terminator — any
 //     trailing `&& ...` / `; ...` chaining fails the anchor and is NOT approved.
 //   - Any other command containing shell chaining/substitution/redirection
-//     (`&&`, `||`, `;`, `|`, backtick, `$(`, `>`, `<`) is NOT approved.
-//   - Only an allow-listed set of git/gh subcommands is approved.
+//     (`&&`, `||`, `&`, `;`, `|`, backtick, `$(`, `>`, `<`, or a second line)
+//     is NOT approved.
+//   - Only an allow-listed set of git/gh subcommands is approved. `git config`
+//     and `gh api` are deliberately absent: the first can install command
+//     aliases and the second is an arbitrary write to GitHub.
+//   - Flags that make git run another program (`rebase --exec`/`-x`, the
+//     `--upload-pack`/`--receive-pack` overrides) are NOT approved. Global
+//     options such as `-c key=val` or `--exec-path` sit between `git` and the
+//     subcommand, so they already fail the `^git\s+<subcommand>` anchor.
+//   - Only the Bash tool is handled; PowerShell's `;`/`&` semantics differ and
+//     its commands keep the normal prompt.
 //
 // Gated by `.planning/config.json` -> `hooks.git_autoapprove` (default-on when
 // the file is absent). Set it to `false` to restore manual confirmation.
@@ -28,12 +37,15 @@ const { hookEnabled } = require('./_lib/config');
 const HOOK_NAME = 'dnp-git-autoapprove';
 
 // Allow-listed git subcommands (read + write + outward-facing).
-const GIT_SUBCMD = /^git\s+(status|diff|log|show|add|commit|branch|switch|checkout|restore|stash|rev-parse|describe|tag|fetch|pull|push|remote|config|cherry-pick|merge|rebase|reset)\b/;
+const GIT_SUBCMD = /^git\s+(status|diff|log|show|add|commit|branch|switch|checkout|restore|stash|rev-parse|describe|tag|fetch|pull|push|remote|cherry-pick|merge|rebase|reset)\b/;
 // Allow-listed gh subcommands.
-const GH_SUBCMD = /^gh\s+(pr|repo|issue|run|api|auth|browse|release|workflow)\b/;
+const GH_SUBCMD = /^gh\s+(pr|repo|issue|run|auth|browse|release|workflow)\b/;
 
 // Shell constructs that could smuggle a non-git command alongside an approved one.
-const DANGEROUS = /(\|\||&&|;|\||`|\$\(|>|<)/;
+const DANGEROUS = /(\|\||&&|&|;|\||`|\$\(|>|<|[\r\n])/;
+// Subcommand options that execute another program. `-u` is only the
+// upload-pack shorthand on fetch/pull (on push it is --set-upstream).
+const SUSPICIOUS_FLAGS = /\s(--exec(=|\s)|-[a-zA-Z]*x\b|--upload-pack|--receive-pack)|^git\s+(fetch|pull)\b[\s\S]*\s-u\b/;
 
 // The Claude Code default commit: `git commit ... -m "$(cat <<'EOF' ... \nEOF\n)"`.
 // Approve only when the heredoc terminator is the tail of the command (no trailing chain).
@@ -55,6 +67,7 @@ function isAutoApprovable(command) {
 
   // Any other command must be a single, un-chained git/gh invocation.
   if (DANGEROUS.test(cmd)) return false;
+  if (SUSPICIOUS_FLAGS.test(cmd)) return false;
   return GIT_SUBCMD.test(cmd) || GH_SUBCMD.test(cmd);
 }
 
@@ -77,6 +90,7 @@ process.stdin.on('end', () => {
   try {
     const data = JSON.parse(input);
     if (!data || typeof data !== 'object' || !('tool_input' in data)) process.exit(0);
+    if (data.tool_name && data.tool_name !== 'Bash') process.exit(0);
 
     const cwd = data.cwd || process.cwd();
     if (!hookEnabled(cwd, 'git_autoapprove')) process.exit(0);

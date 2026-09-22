@@ -14,6 +14,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { hookEnabled } = require('./_lib/config');
 
 const MARKER_PREFIX = '<!-- DotnetPilot v';
 const MARKER_END = '<!-- Dotnet-Pilot-END -->';
@@ -25,7 +26,9 @@ process.stdin.on('data', chunk => input += chunk);
 process.stdin.on('end', () => {
   clearTimeout(stdinTimeout);
   try {
-    sync();
+    let cwd = process.cwd();
+    try { cwd = JSON.parse(input).cwd || cwd; } catch { /* payload optional */ }
+    if (hookEnabled(cwd, 'sync_global_claude_md')) sync();
   } catch {
     // Never fail — advisory only
   }

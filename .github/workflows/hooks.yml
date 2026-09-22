@@ -1,0 +1,68 @@
+name: hooks
+
+on:
+  push:
+    branches: [master]
+    paths-ignore:
+      - 'mcp/**'
+  pull_request:
+    paths-ignore:
+      - 'mcp/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Hook harness
+        run: node hooks/__tests__/run.js
+
+      - name: Consistency check
+        run: node hooks/__tests__/check-consistency.js
+
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Claude Code CLI
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate agents, commands and skills
+        run: |
+          claude plugin validate agents --strict
+          claude plugin validate commands --strict
+          claude plugin validate skills --strict
+
+      # Advisory: under --strict the validator warns that the root CLAUDE.md is
+      # not loaded as plugin context. It is this repo's own development guide,
+      # so the warning is expected and must not fail the build.
+      - name: Validate manifests
+        continue-on-error: true
+        run: |
+          claude plugin validate .claude-plugin/plugin.json --strict
+          claude plugin validate . --strict

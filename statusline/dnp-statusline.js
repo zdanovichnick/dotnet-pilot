@@ -29,7 +29,7 @@ const { spawnSync } = require('child_process');
 
 // Installed-version stamp — read by dnp-statusline-sync.js to decide whether to
 // refresh the copy in ~/.claude. Keep in sync with plugin.json on release.
-const STATUSLINE_VERSION = '2.7.0';
+const STATUSLINE_VERSION = '3.0.0';
 
 const DOTNET_MARKERS = ['.sln', '.slnx', '.csproj'];
 
@@ -382,18 +382,18 @@ function nearestTargetFramework(cwd) {
   return '';
 }
 
-// ---- build-fail state (shared contract with hooks/dnp-build-verify.js) -----
-// Path scheme MUST match getFailCountPath() in hooks/dnp-build-verify.js. The
-// file exists only after a failed `dotnet build/test` and is deleted on success,
-// so its absence cannot prove a passing build — we surface failures only. This
-// also covers test failures, which that hook records in the same file.
+// ---- build-fail state (shared contract with hooks/_lib/build-state.js) -----
+// This file is copied standalone to ~/.claude, so it cannot require the hook
+// library; the path scheme below MUST match statePath() there exactly, or the
+// statusline reads the wrong (or no) file. A green build writes count:0 rather
+// than deleting the file, so only a non-zero count with a fresh lastFail lights
+// the segment. Test failures are recorded in the same file.
 function buildFailState(cwd) {
-  // Shared contract with hooks/dnp-build-verify.js:getFailCountPath — the sha1
-  // scheme must match exactly, or the statusline reads the wrong (or no) file.
   const hash = crypto.createHash('sha1').update(cwd).digest('hex');
   const filePath = path.join(os.tmpdir(), `dnp-build-fail-${hash}.json`);
   try {
     const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (!data.count || !data.lastFail) return 0;
     const lastFail = new Date(data.lastFail).getTime();
     if (Date.now() - lastFail >= 60 * 60 * 1000) return 0; // stale (>1h) — ignore
     return data.count || 0;

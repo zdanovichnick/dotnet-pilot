@@ -84,9 +84,14 @@ process.stdin.on('end', () => {
 
     // Use solution-map.json for exact project boundary matching
     const editedProject = resolveProject(normalizedPath, cwd);
-    const belongsToFocus = editedProject && focusProjects.includes(editedProject);
+    if (!editedProject) process.exit(0);
 
-    if (!belongsToFocus && editedProject) {
+    // A focused project's own test project is part of the same work.
+    const belongsToFocus = focusProjects.some(f =>
+      editedProject === f ||
+      (editedProject.startsWith(f + '.') && /Tests?$/i.test(editedProject)));
+
+    if (!belongsToFocus && !recentlyAdvised(cwd, editedProject)) {
       emit(`SCOPE ADVISORY: Editing file in \`${editedProject}\` ` +
         `but current phase focuses on [${focusProjects.join(', ')}]. Is this intentional?`);
     }
@@ -94,6 +99,26 @@ process.stdin.on('end', () => {
     process.exit(0);
   }
 });
+
+// One advisory per project per hour: the same out-of-scope project is usually
+// edited many times in a row, and repeating the nudge adds nothing.
+function recentlyAdvised(cwd, project) {
+  const hash = crypto.createHash('sha1').update(cwd + '\n' + project).digest('hex');
+  const markerPath = path.join(os.tmpdir(), `dnp-scope-advised-${hash}`);
+  try {
+    if (Date.now() - fs.statSync(markerPath).mtimeMs < 60 * 60 * 1000) return true;
+  } catch { /* no marker yet */ }
+  try { fs.writeFileSync(markerPath, project); } catch {}
+  return false;
+}
+
+// solution-map.json lists `projects` as an array of { name, path, ... }; older
+// hand-written maps keyed an object by project name. Both resolve to pairs.
+function projectEntries(projects) {
+  if (Array.isArray(projects)) return projects.filter(p => p && p.name && p.path).map(p => [p.name, p]);
+  if (projects && typeof projects === 'object') return Object.entries(projects).filter(([, p]) => p && p.path);
+  return [];
+}
 
 function resolveProject(filePath, cwd) {
   // Try solution-map.json for exact matching (repo-local or user-scoped)
@@ -108,7 +133,7 @@ function resolveProject(filePath, cwd) {
         const haystack = filePath.toLowerCase();
         let best = null;
         let bestLen = 0;
-        for (const [name, info] of Object.entries(map.projects)) {
+        for (const [name, info] of projectEntries(map.projects)) {
           const projDir = path.dirname(info.path).replace(/\\/g, '/');
           if (projDir && haystack.includes('/' + projDir.toLowerCase() + '/') && projDir.length > bestLen) {
             best = name;

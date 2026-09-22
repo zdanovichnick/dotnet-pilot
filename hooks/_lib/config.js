@@ -47,6 +47,13 @@ function hookEnabled(cwd, hookKey) {
   return config.hooks?.[hookKey] !== false;
 }
 
+// Opt-in `hooks.*` booleans (e.g. stop_verify_block): default-OFF when the
+// config or the key is absent — the inverse of hookEnabled.
+function hookFlag(cwd, hookKey) {
+  const config = loadConfig(cwd);
+  return config?.hooks?.[hookKey] === true;
+}
+
 function resolvePlanningDir(cwd) {
   // Useful for hooks that read more than config.json (e.g., STATE.md).
   const local = path.join(cwd, '.planning');
@@ -79,6 +86,7 @@ module.exports = {
   resolveConfigPath,
   loadConfig,
   hookEnabled,
+  hookFlag,
   projectModelEnabled,
   statuslineAutoEnable,
   resolvePlanningDir,
