@@ -1,5 +1,5 @@
 ---
-description: "List all DotnetPilot commands grouped by category."
+description: "List DotnetPilot commands with their arguments, plus the agent, skill and hook rosters and a 'Did you mean' table for names removed in v3.0.0."
 effort: low
 ---
 
@@ -8,45 +8,86 @@ effort: low
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot — .NET development plugin for Claude Code
+DotnetPilot v3.0.0 — .NET development plugin for Claude Code
+Usage: /dotnet-pilot:<category>:<command> [args]      e.g. /dotnet-pilot:dotnet:create-entity Product
 
-PROJECT — project lifecycle
-  project:init               Initialize for a .NET solution — discover projects, write the
-                             user-scoped .planning/ (config.json, solution-map.json)
-  project:verify             Verify readiness before shipping — build, tests, DI
-                             completeness, architecture check; --quick is the pre-commit form
-  project:ship               Create a pull request — runs final checks and invokes
-                             gh pr create
+COMMANDS (16)
 
-DOTNET — scaffolding & solution management
-  dotnet:scaffold            Scaffold a feature, API surface, service, or project matching
-                             the solution's architecture (feature|api|service|project)
-  dotnet:create-entity       Create a full entity stack: entity class, EF configuration,
-                             repository, service, DI registration, and migration
-  dotnet:add-endpoint        Add an endpoint to an existing controller or endpoint group
-  dotnet:add-migration       Plan and generate an EF Core migration safely — validates
-                             chain, detects breaking changes, targets correct DbContext
-  dotnet:tdd                 Implement a feature using TDD — failing tests first, then
-                             production code; --existing <target> adds tests to existing code
-  dotnet:run-tests           Run tests with coverage reporting and failure diagnosis
-  dotnet:health-check        Validate full solution health — build, tests, NuGet, project
-                             references, DI completeness
+  project — lifecycle
+    project:init            [--refresh]
+        Discover the solution and write the user-scoped .planning/ (config.json, solution-map.json)
+    project:verify          [--quick]
+        Build, tests, DI completeness, architecture check; --quick is the pre-commit form
+    project:ship            [--draft]
+        Final checks, then gh pr create
 
-QUALITY — safety checks
-  quality:review             Code review current changes with .NET-specific focus — async
-                             patterns, LINQ, naming, DI
-  quality:check-architecture Scan for clean architecture layer violations — forbidden
-                             project references, DI issues, package placement
-  quality:security-scan      OWASP audit — NuGet CVEs, secrets exposure, auth config,
-                             CORS, and input validation gaps
-  quality:de-sloppify        Safe refactoring pass — dead code removal, naming
-                             normalization, duplication elimination
+  dotnet — scaffolding & solution management
+    dotnet:scaffold         [feature|api|service|project] <Name> [--arch vsa|clean|ddd] [--minimal]
+                            [--lifetime scoped|transient|singleton] [--type classlib|web|xunit|worker|console]
+        Generate code that matches the solution's architecture; feature is the default mode
+    dotnet:create-entity    <Name> [--properties 'Name:string, Age:int, Email:string']
+        Entity class, EF configuration, repository, service, DI registration, migration
+    dotnet:add-endpoint     <Controller> <http-method> <route> [--with-dto]
+        Add an endpoint to an existing controller or endpoint group
+    dotnet:add-migration    <Name> [--context <DbContext>]
+        Validate the migration chain, detect breaking changes, target the right DbContext
+    dotnet:tdd              <task> [--complexity easy|hard] [--existing <class|file|project>]
+        Failing tests first, then production code; --existing adds tests to code that already exists
+    dotnet:run-tests        [project] [--coverage] [--filter <pattern>]
+        Run tests with coverage reporting and failure diagnosis
+    dotnet:health-check     [--fix]
+        Build, tests, NuGet, project references, DI completeness
 
-UTILITY — housekeeping
-  utility:help               Show this help text
-  utility:statusline         Install the .NET-aware statusline
+  quality — safety checks
+    quality:review          [--base <ref> | --staged | --last-commit | --scope <glob>]
+                            [--depth quick|standard|deep]
+        Sharded review: haiku scouts per diff shard, sonnet confirmers per finding, one deterministic
+        digest. Runs the dnp-review workflow; allow the permission rule Workflow(dnp-review) once
+    quality:check-architecture
+        Clean-architecture layer violations: forbidden project references, DI issues, package placement
+    quality:security-scan   [--scope <Project>]
+        OWASP audit: NuGet CVEs, secrets exposure, auth config, CORS, input validation
+    quality:de-sloppify     [--scope <path>]
+        Dead code removal, naming normalization, duplication elimination; needs a green test run first
 
-Usage: /dotnet-pilot:<command>   e.g. /dotnet-pilot:dotnet:create-entity Product
+  utility — housekeeping
+    utility:help            This text
+    utility:statusline      [--manual]
+        Install the .NET-aware statusline; --manual prints the settings.json snippet instead
+
+AGENTS (9) — spawned by commands; a decision they cannot make returns as [HALT: <question>]
+  dnp-tdd-developer-easy     sonnet / low    Routine TDD; also runs dotnet:scaffold and dotnet:add-endpoint
+  dnp-tdd-developer-hard     sonnet / high   Complex TDD: architectural choices, cross-layer changes
+  dnp-refactor-cleaner       sonnet / high   Dead code, naming, duplication; behavior verified by tests
+  dnp-architect              opus / xhigh    Layer boundaries, project references, package placement
+  dnp-ef-migration-planner   sonnet / low    Migration chain, data-loss risk, DbContext targeting
+  dnp-security-auditor       sonnet / high   OWASP Top 10 for APIs, secrets, auth config, input validation
+  dnp-performance-analyst    sonnet / high   Async hotspots, N+1 queries, caching gaps, allocation pressure
+  dnp-di-wiring-checker      sonnet / low    Constructor injection cross-checked against DI registrations
+  dnp-nuget-auditor          sonnet / low    Vulnerable, outdated and version-inconsistent packages
+
+SKILLS (15) — knowledge packs agents load on demand
+  architecture     clean-architecture · vertical-slice · ddd · convention-learner · dotnet-project-init
+  api & data       aspnet-api-patterns · ef-core-patterns · error-handling · authentication
+  cross-cutting    caching · resilience · logging · opentelemetry
+  language & test  modern-csharp · testing-dotnet
+
+HOOKS (13) — advisory (exit 0); switch one off with hooks.<key>: false in .planning/config.json
+  dnp-sync-global-claude-md    (sync_global_claude_md)   inject the .NET rules block into ~/.claude/CLAUDE.md
+  dnp-dotnet-priority          (dotnet_priority)         steer .NET work to dnp-* agents and mcp__roslyn__*
+  dnp-code-analyzer-redirect   (code_analyzer_redirect)  code-analyzer MCP has no C#; use mcp__roslyn__*
+  dnp-migration-guard          (migration_guard)         warn before a hand edit under Migrations/
+  dnp-git-autoapprove          (git_autoapprove)         auto-allow safe single git/gh commands (Bash only)
+  dnp-commit-format            (commit_format)           conventional-commit check on git commit -m "..."
+  dnp-di-registration-check    (di_check)                new .cs class with no DI registration
+  dnp-project-scope-guard      (project_scope_guard)     edit outside .planning/STATE.md focus_projects
+  dnp-post-edit-format         (post_edit_format)        dotnet format on every saved .cs file
+  dnp-build-verify             (build_verify)            build/test failure streak: warn at 3, escalate at 5
+  dnp-stop-verify              (stop_verify)             nudge to build/test before stopping after .cs edits
+                                                         (stop_verify_block: true makes it block instead)
+  dnp-subagent-result          (subagent_result)         show [HALT / [PARTIAL / [ROUTING: from dnp-* agents
+  dnp-statusline-sync          (statusline.auto_enable)  refresh ~/.claude/dnp-statusline.js at session start
+                                                         (auto_enable: true also wires settings.json)
 
 Did you mean — commands removed in v3.0.0 and where their job went
   dotnet:add-project         → dotnet:scaffold project <Name> --type <classlib|web|xunit|worker|console>
@@ -64,4 +105,6 @@ Did you mean — commands removed in v3.0.0 and where their job went
   utility:settings           → edit .planning/config.json (keys: hooks/_lib/config.js)
   utility:show-solution      → mcp__roslyn__get_solution_structure, or .planning/solution-map.json
                                (schema documented in project:init)
+
+Docs: README.md (full reference) · CHANGELOG.md (every removed name) · hooks/_lib/config.js (toggle keys)
 ```

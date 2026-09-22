@@ -5,7 +5,9 @@
 //   node hooks/__tests__/check-consistency.js
 //
 // Invariants (each states a fact that lives in more than one file):
-//   - one version across plugin.json, marketplace.json and STATUSLINE_VERSION
+//   - one version across plugin.json, marketplace.json, STATUSLINE_VERSION
+//     and the banner utility:help prints
+//   - utility:help lists every command, agent, skill and hook, with counts
 //   - every hooks/dnp-*.js is registered in hooks.json, and vice versa
 //   - hook timeouts are seconds (a value >= 600 is almost certainly ms)
 //   - every hook resolves its toggle through _lib/config.js
@@ -140,12 +142,35 @@ const workflowNames = listFiles(path.join(ROOT, 'workflows'), f => f.endsWith('.
 });
 
 // --- skills ---
-for (const dir of fs.existsSync(path.join(ROOT, 'skills')) ? fs.readdirSync(path.join(ROOT, 'skills')) : []) {
+const skillNames = fs.existsSync(path.join(ROOT, 'skills')) ? fs.readdirSync(path.join(ROOT, 'skills')) : [];
+for (const dir of skillNames) {
   const skill = path.join(ROOT, 'skills', dir, 'SKILL.md');
   const fm = frontmatter(read(skill));
   if (!fm) { problems.push(`skills/${dir}/SKILL.md: missing or no frontmatter`); continue; }
   if (fm.name !== dir) problems.push(`skills/${dir}/SKILL.md: frontmatter name "${fm.name}" != directory`);
   if (!fm.description) problems.push(`skills/${dir}/SKILL.md: missing description:`);
+}
+
+// --- help ---
+// utility:help is the printed roster; it must name everything the directories hold.
+const helpPath = path.join(ROOT, 'commands', 'utility', 'help.md');
+const help = read(helpPath) || '';
+if (plugin?.version && !help.includes(`DotnetPilot v${plugin.version}`)) {
+  problems.push(`${rel(helpPath)}: banner does not read "DotnetPilot v${plugin.version}"`);
+}
+const rosters = [
+  ['COMMANDS', commandKeys, 'command'],
+  ['AGENTS', agentNames, 'agent'],
+  ['SKILLS', skillNames, 'skill'],
+  ['HOOKS', hookScripts.map(s => s.replace(/\.js$/, '')), 'hook'],
+];
+for (const [heading, names, kind] of rosters) {
+  const claim = new RegExp(`^${heading} \\((\\d+)\\)`, 'm').exec(help);
+  if (!claim) problems.push(`${rel(helpPath)}: no "${heading} (N)" heading`);
+  else if (Number(claim[1]) !== names.length) problems.push(`${rel(helpPath)}: claims ${claim[1]} ${kind}s; repo holds ${names.length}`);
+  for (const name of names) {
+    if (!help.includes(name)) problems.push(`${rel(helpPath)}: does not list ${kind} ${name}`);
+  }
 }
 
 // --- references ---

@@ -221,7 +221,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 
 | Command | Usage | What it does |
 | --- | --- | --- |
-| `utility:help` | `/dotnet-pilot:utility:help` | Show all commands with descriptions, plus a "Did you mean" table for command names removed in v3.0.0 |
+| `utility:help` | `/dotnet-pilot:utility:help` | Print the version banner, every command with its arguments, the agent / skill / hook rosters (each hook with its `hooks.*` toggle key), and a "Did you mean" table for command names removed in v3.0.0 |
 | `utility:statusline` | `statusline [--manual]` | Install the .NET-aware statusline and wire it into `~/.claude/settings.json` (backs up any existing statusLine) |
 
 ---

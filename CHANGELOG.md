@@ -68,6 +68,10 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
   and `STATUSLINE_VERSION`; hook registration; agent/command/skill frontmatter; every
   `/dotnet-pilot:<cat>:<name>` reference and backticked `dnp-*` name resolves; README lists every
   command and agent.
+- `utility:help` prints a `DotnetPilot vX.Y.Z` banner, every command with its argument hint, and the
+  agent (model / effort), skill and hook rosters — each hook with its `hooks.*` toggle key — ahead of
+  the "Did you mean" table. The consistency check verifies the banner version and that all four
+  rosters and their counts match the directories.
 - `.github/workflows/hooks.yml` — runs the hook harness and consistency check on Ubuntu and Windows,
   plus `claude plugin validate --strict` over `agents/`, `commands/`, and `skills/`; the manifest
   validation is advisory (`continue-on-error`) because `--strict` warns that the repo's root `CLAUDE.md`

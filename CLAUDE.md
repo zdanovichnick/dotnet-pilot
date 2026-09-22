@@ -54,7 +54,7 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 node hooks/__tests__/run.js                # hook harness
 node hooks/__tests__/check-consistency.js  # versions, frontmatter, README tables, command/agent references
 ```
-The harness runs every hook against fixture JSON payloads and asserts: exit code 0, stdout is empty or valid `hookSpecificOutput` JSON, and expected `[dnp-<name>]` message fragments appear. The consistency check fails on a version mismatch, a missing `effort:`/`description:`, a `/dotnet-pilot:<cat>:<name>` reference to a command file that does not exist, or a backticked `dnp-*` name that is neither an agent nor a hook. Run both before publishing or after editing any hook, command, or agent.
+The harness runs every hook against fixture JSON payloads and asserts: exit code 0, stdout is empty or valid `hookSpecificOutput` JSON, and expected `[dnp-<name>]` message fragments appear. The consistency check fails on a version mismatch, a missing `effort:`/`description:`, a `/dotnet-pilot:<cat>:<name>` reference to a command file that does not exist, a backticked `dnp-*` name that is neither an agent nor a hook, or a `utility:help` roster whose banner version, counts, or names disagree with the directories. Run both before publishing or after editing any hook, command, or agent.
 
 **Manual end-to-end** from a test .NET project directory:
 
@@ -77,7 +77,7 @@ dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # update
 ```
 
 **Checklist before publishing:**
-- Bump the version in `plugin.json`, `marketplace.json`, and `STATUSLINE_VERSION` in `statusline/dnp-statusline.js` (all three must match — the consistency check enforces it)
+- Bump the version in `plugin.json`, `marketplace.json`, `STATUSLINE_VERSION` in `statusline/dnp-statusline.js`, and the `DotnetPilot vX.Y.Z` banner in `commands/utility/help.md` (all four must match — the consistency check enforces it)
 - Roslyn server has its own version in `mcp/dotnet-pilot-mcp-roslyn/src/DotnetPilot.Mcp.Roslyn/DotnetPilot.Mcp.Roslyn.csproj` (`<Version>` tag) — bump separately before `dotnet pack`
 - Add the `CHANGELOG.md` entry; keep `README.md` command/agent/skill tables in sync with the directories
 
