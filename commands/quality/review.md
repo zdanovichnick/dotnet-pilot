@@ -1,46 +1,41 @@
 ---
-description: "Code review current changes with .NET-specific focus — async patterns, LINQ, naming, DI."
-argument-hint: "[--depth quick|standard|deep]"
-effort: high
+description: "Sharded .NET code review of the current changes — haiku scouts per diff shard, sonnet confirmers per finding, one deterministic digest."
+argument-hint: "[--base <ref> | --staged | --last-commit | --scope <glob>] [--depth quick|standard|deep]"
+effort: medium
+allowed-tools: Bash(node:*), Workflow, ToolSearch
 ---
 
 # Code Review
 
-`/dotnet-pilot:quality:review` reviews staged or recent changes.
+`/dotnet-pilot:quality:review` runs the `/dotnet-pilot:dnp-review` workflow: a Node preflight shards the diff, haiku scouts read each shard, sonnet confirmers try to refute every finding, and a fixed-format digest reports what was confirmed, refuted and left uncovered. Same change set, same report shape, every run.
 
-> **Delegates to**: the stock Claude Code `code-reviewer` agent (not a DotnetPilot-specific reviewer).
+## Steps
 
-## Execution
+1. **Parse `$ARGUMENTS`.** At most one selection flag: `--base <ref>` (merge-base of `<ref>` and HEAD up to HEAD), `--staged`, `--last-commit`, or `--scope <glob>` (working tree limited to a git pathspec). No flag means the whole working tree, untracked files included. `--depth quick|standard|deep` defaults to `standard`. Anything else: show the argument hint and stop.
 
-This command delegates to the stock `code-reviewer` agent with a .NET-specific focus.
-The DotnetPilot-specific `dnp-code-reviewer` was retired in v1.0.0 — stock Claude Code
-review plus the checklist below is equivalent in quality and does not drift as Claude
-evolves.
+2. **Preflight.** From the repository under review run:
+   ```
+   node "${CLAUDE_PLUGIN_ROOT}/scripts/dnp-review-preflight.js" --repo "<cwd>" --out "${CLAUDE_PLUGIN_DATA}/review" <selection flag, if any>
+   ```
+   It prints one JSON manifest. `ok: false` → print `error` and stop. `fileCount: 0` → say "nothing to review (mode: <mode>)" and stop. Otherwise keep `scriptPath`, `manifestPath`, `diffPath`, `shardsDir`, `repoRoot`, `skillsDir`, `runId` and `fileCount`.
 
-1. Get changed files: `git diff --name-only HEAD~1` (or staged changes with `git diff --cached --name-only`).
-2. Filter to `.cs` files.
-3. Spawn the stock `code-reviewer` agent (via Task tool) with:
-   - Changed file contents
-   - Diff context
-   - Depth directive (see below)
-   - The .NET checklist in the "Focus areas" section
-4. Present findings prioritized by severity.
+3. **Probe Roslyn.** `ToolSearch` with query `+roslyn`; `roslynAvailable` is `true` when any `mcp__roslyn__*` tool is returned, otherwise `false`.
 
-## Depth levels
+4. **Run the workflow.**
+   ```
+   Workflow({ scriptPath: <manifest.scriptPath>,
+              args: { manifestPath, diffPath, shardsDir, repoRoot, skillsDir, runId, fileCount, depth, roslynAvailable } })
+   ```
+   `args` is a JSON object, never a stringified one. If the tool asks for permission on every run, the permission rule `Workflow(dnp-review)` silences it.
 
-- **quick** — naming + compilation risk + obvious bugs
-- **standard** — + async/await pitfalls + DI lifetime issues + nullable ref-type violations
-- **deep** — + N+1 EF queries + thread-safety + performance + OWASP (injection, auth)
+5. **Report.** Print `result.markdown` verbatim, then `result.summary` as the closing line. The digest is the deliverable: do not re-summarize or re-rank its findings. `result.ok === false` means the workflow did not start; its `markdown` says why. `result.broken === true` means some shards were never read; say so and point at the Coverage gaps section.
 
-## Focus areas for .NET review
+## Depth
 
-Pass this checklist verbatim to the reviewer so the output is .NET-aware:
+| depth | agents | stages |
+|---|---|---|
+| `quick` | ≤6 | triage + haiku scouts; findings are reported unconfirmed |
+| `standard` | ≤11 | + one sonnet confirmer per finding; security / performance / DI findings are routed to `dnp-security-auditor`, `dnp-performance-analyst` and `dnp-di-wiring-checker` |
+| `deep` | ≤20 | + four haiku lens sweeps (security, performance, architecture, testing) over the whole diff |
 
-- Async methods end with `Async`; no `.Result` / `.Wait()`; `CancellationToken` propagated.
-- No `async void` except event handlers; no fire-and-forget without error handling.
-- LINQ: `Any()` not `Count() > 0`; `AsNoTracking()` on read-only EF queries; no N+1.
-- Nullable reference types respected; no `null!` suppression without justification.
-- Constructor injection over property/service-locator; interface-based dependencies.
-- Specific exception types (no `catch (Exception)` without rethrow); ProblemDetails for API errors.
-- Controller attributes: `[ApiController]`, `[ProducesResponseType]`, route consistency.
-- For DI lifetime concerns or architecture violations, run `/dotnet-pilot:dotnet:health-check` instead — the Roslyn-backed checks are more accurate than line-by-line review.
+Run artifacts live under `${CLAUDE_PLUGIN_DATA}/review/<runId>/` (`diff.patch`, `shards/`, `manifest.json`). Generated code, `Migrations/`, `bin`/`obj`, lockfiles and non-.NET assets are listed under Coverage gaps rather than reviewed.
