@@ -58,6 +58,12 @@ jobs:
           claude plugin validate commands --strict
           claude plugin validate skills --strict
 
+      # Advisory until the npm release of Claude Code ships mod support: an older CLI
+      # has no engine to load hooks/mods/ and cannot run its tests.
+      - name: Test mods
+        continue-on-error: true
+        run: claude plugin test .
+
       # Advisory: under --strict the validator warns that the root CLAUDE.md is
       # not loaded as plugin context. It is this repo's own development guide,
       # so the warning is expected and must not fail the build.

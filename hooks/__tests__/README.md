@@ -160,3 +160,6 @@ flowchart LR
 - Before bumping the plugin version.
 - CI runs both scripts on Ubuntu and Windows (`.github/workflows/hooks.yml`), then validates
   agents, commands and skills with `claude plugin validate --strict`.
+- The mod under `hooks/mods/` is tested separately: `claude plugin test .` from the repo root runs
+  `hooks/mods/*.test.ts` (needs a Claude Code build with mod support). `check-consistency.js` keeps its
+  build markers identical to `dnp-build-verify.js`.

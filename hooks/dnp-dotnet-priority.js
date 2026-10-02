@@ -7,10 +7,14 @@
 //
 // Advisory only (exit 0 always) — never blocks tool execution.
 
+const fs = require('fs');
+const path = require('path');
 const { isDotNetProject } = require('./_lib/dotnet');
 const { hookEnabled } = require('./_lib/config');
 
 const HOOK_NAME = 'dnp-priority-router';
+// The routing text is shared with the prompt.compose mod (hooks/mods/routing.ts).
+const ROUTING_FILE = path.join(__dirname, '_lib', 'routing.md');
 
 function emit(message) {
   process.stdout.write(JSON.stringify({
@@ -46,11 +50,7 @@ process.stdin.on('end', () => {
       process.exit(0);
     }
 
-    emit(
-      `.NET solution detected. For .NET work prefer the dotnet-pilot:dnp-* agents over generic ` +
-      `equivalents — /dotnet-pilot:utility:help lists the full roster.\n` +
-      `Inspect C# with mcp__roslyn__* (semantic); mcp__*code-analyzer__* has no C# support.`
-    );
+    emit(fs.readFileSync(ROUTING_FILE, 'utf8').trim());
   } catch {
     // Advisory only — never fail
   }

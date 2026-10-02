@@ -12,6 +12,8 @@
 //   - hook timeouts are seconds (a value >= 600 is almost certainly ms)
 //   - every hook resolves its toggle through _lib/config.js
 //   - harness fixtures use the real PostToolUse field (`tool_response`)
+//   - the mod module's build markers equal dnp-build-verify.js's, and both the
+//     Node routing hook and the routing mod read hooks/_lib/routing.md
 //   - every agent and command declares `effort:`; none pairs it with haiku;
 //     every `model:` (frontmatter or workflow literal) is a family alias
 //   - agent `tools:` use documented forms only (no `Bash(...)`, no
@@ -233,6 +235,36 @@ for (const name of agentNames) {
 const commandCountClaims = [...readme.matchAll(/list (\d+) commands/g)].map(m => Number(m[1]));
 for (const n of commandCountClaims) {
   if (n !== commandKeys.length) problems.push(`README.md claims ${n} commands; commands/ holds ${commandKeys.length}`);
+}
+
+// --- mods ---
+// hooks/mods/build-classify.ts duplicates the marker tables of hooks/dnp-build-verify.js: a mod
+// module has no Node and cannot require the CommonJS hook. They must classify identically.
+for (const m of hooksJson?.modules || []) {
+  if (!fs.existsSync(path.join(hooksDir, m))) problems.push(`hooks.json modules: ${m} does not exist`);
+}
+const markerTables = src => {
+  const norm = s => s.replace(/;\s*$/gm, '').replace(/\s+/g, ' ').trim();
+  const pick = re => { const hit = re.exec(src); return hit ? norm(hit[0]) : null; };
+  return {
+    command: pick(/const DOTNET_CMD = .*$/m),
+    fail: pick(/const FAIL_MARKERS = \[[\s\S]*?\n\];?/),
+    success: pick(/const SUCCESS_MARKERS = \[[\s\S]*?\n\];?/),
+  };
+};
+const nodeMarkers = markerTables(read(path.join(hooksDir, 'dnp-build-verify.js')) || '');
+const modMarkers = markerTables(read(path.join(hooksDir, 'mods', 'build-classify.ts')) || '');
+for (const k of Object.keys(nodeMarkers)) {
+  if (!nodeMarkers[k] || nodeMarkers[k] !== modMarkers[k]) {
+    problems.push(`hooks/mods/build-classify.ts: ${k} markers differ from hooks/dnp-build-verify.js`);
+  }
+}
+if (!fs.existsSync(path.join(hooksDir, '_lib', 'routing.md'))) problems.push('hooks/_lib/routing.md is missing');
+if (!/routing\.md/.test(read(path.join(hooksDir, 'dnp-dotnet-priority.js')) || '')) {
+  problems.push('hooks/dnp-dotnet-priority.js does not read the shared _lib/routing.md');
+}
+if (!/routing\.md/.test(read(path.join(hooksDir, 'mods', 'routing.ts')) || '')) {
+  problems.push('hooks/mods/routing.ts does not read the shared _lib/routing.md');
 }
 
 // --- report ---

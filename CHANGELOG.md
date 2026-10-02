@@ -5,6 +5,34 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [3.3.0] - 2026-10-02
+
+### Added
+
+- A Claude Code **mod** (`hooks/mods/register.ts`, declared in `hooks/hooks.json` under `modules`)
+  with two features. It is additive: the Node hooks stay, so builds without mod support behave as
+  before.
+  - **Build-failure toasts.** After `dotnet build` / `dotnet test` through the Bash or PowerShell
+    tool, the mod classifies the output with the same markers as `dnp-build-verify` and shows a toast
+    at the 3rd and 5th consecutive failure. The streak lives in the mod's session state and goes
+    stale after an hour. It does not replace the `os.tmpdir()` state file the statusline and
+    `dnp-stop-verify` read.
+  - **Routing roster in the system prompt.** In a .NET project (a `.sln`/`.slnx`/`.csproj` within
+    five parent directories) a `prompt.compose` hook appends the routing guidance once as a
+    session-scoped section, instead of nudging on every `Agent` call.
+- `userConfig` toggles `build_status` and `routing` (both default on). A mod cannot read the
+  user-scoped `.planning/config.json`, so these replace the `hooks.*` keys for the mod only.
+- `hooks/_lib/routing.md`: the routing text, read by both `dnp-dotnet-priority` and the routing mod.
+- `types/index.d.ts`: the mod's `$.state` contract. `.claude-plugin/types/` (written by the engine)
+  is git-ignored.
+- `check-consistency.js` asserts that the mod's marker tables equal `dnp-build-verify.js`'s and that
+  both routing consumers read `_lib/routing.md`; `claude plugin test` covers the mod in CI.
+
+### Notes
+
+- With the routing mod active, the `Agent`-call nudge is redundant. Set `hooks.dotnet_priority: false`
+  in `.planning/config.json` to drop it; this is not done automatically.
+
 ## [3.2.0] - 2026-09-22
 
 ### Changed
