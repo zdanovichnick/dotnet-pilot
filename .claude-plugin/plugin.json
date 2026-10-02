@@ -1,7 +1,7 @@
 {
   "name": "dotnet-pilot",
   "displayName": "DotnetPilot",
-  "version": "3.3.0",
+  "version": "3.4.0",
   "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, convention-aware scaffolding, TDD agents, security and performance review, and project lifecycle commands.",
   "author": {
     "name": "Nick Zdanovych",
@@ -35,6 +35,18 @@
       "title": "Routing roster in system prompt",
       "description": "Add the dotnet-pilot routing guidance to the system prompt once per session in .NET projects (requires a Claude Code build with mods).",
       "default": true
+    },
+    "pressure": {
+      "type": "boolean",
+      "title": "Pressure meter",
+      "description": "Score repeated red dotnet runs, re-edits and corrections 0–100 in the status line, warn on test edits that loosen a test after a red run, and add a short system-prompt section while the score is high (requires a Claude Code build with mods).",
+      "default": true
+    },
+    "pressure_test_guard_block": {
+      "type": "boolean",
+      "title": "Block loosening test edits under high pressure",
+      "description": "Deny an Edit that skips, removes or comments out a test assertion while the pressure score is 60 or higher. Off by default; the warning toast shows regardless.",
+      "default": false
     }
   }
 }

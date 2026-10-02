@@ -5,6 +5,28 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [3.4.0] - 2026-10-02
+
+### Added
+
+- **Pressure meter mod** (`hooks/mods/pressure.ts`). Anthropic's interpretability research on
+  Claude Sonnet 4.5 ("Emotion concepts and their function") found a *desperation* representation
+  that rises under mounting failure and causally raises reward hacking — editing tests so they pass.
+  A mod cannot read activations, so this one scores the observable proxy:
+  - **Score 0–100** in the status line (`pressure N steady|strained|high`): red `dotnet build`
+    +25, red `dotnet test` +30, a file re-edited after a red run +10, a correction in the prompt
+    +10, a loosening test edit +25; a green run −45. Stale after an hour. `/dnp-pressure` lists the
+    events behind the score.
+  - **Test-integrity guard.** After a red run, an `Edit` to a test file that adds `Skip`/`Ignore`,
+    removes an assertion or a test attribute, or comments an assertion out gets a toast. With the
+    new `pressure_test_guard_block` option it is denied while the score is ≥ 60; off by default,
+    consistent with the advisory-hooks rule.
+  - **Prompt section while high.** At ≥ 60 a session-scoped `prompt.compose` section asks the
+    model to state the blocker or return `[HALT: …]` rather than retry, and not to alter tests.
+    It disappears once a green run brings the score down.
+- `userConfig` options `pressure` (default on) and `pressure_test_guard_block` (default off).
+- `types/index.d.ts` gains the `pressure` state contract.
+
 ## [3.3.0] - 2026-10-02
 
 ### Added
