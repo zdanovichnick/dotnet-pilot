@@ -5,6 +5,29 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [3.5.0] - 2026-10-03
+
+### Fixed
+
+- **Test-integrity guard covers `Write`.** `pressure.ts` hooked only `Edit`, so overwriting a test
+  file with `Write` bypassed the toast, the pressure bump and the opt-in block. A `Write` to a test
+  file is now compared with the file on disk and judged by the same `integrityReasons`; a new file
+  has nothing to loosen and is not flagged. Bash/PowerShell writes are still not inspected.
+- **Pressure status is visible from session start.** The mod cleared its status line whenever the
+  score was 0, which is every fresh session, so nothing showed until a `dotnet` run moved it. It now
+  shows `pressure 0 steady` from `session.start` and after a green run brings the score back to 0.
+- **Correction detection** matched `again`, `wrong` and `revert` anywhere ("try again with…",
+  "what's wrong with this query?"). It now needs a phrase about a failing result ("still fails",
+  "doesn't work", "same error again", "revert that").
+
+### Changed
+
+- **`dnp-post-edit-format` formats at Stop.** It used to run `dotnet format` (an MSBuild project
+  load, up to 25 s) after every `.cs` save and could rewrite the file under the model, leaving its
+  next `Edit` with a stale `old_string`. The PostToolUse leg now only queues the path; the Stop
+  leg runs one `dotnet format --include <files>` per project and reports failures through
+  `systemMessage`. The PostToolUse timeout drops from 30 s to 5 s.
+
 ## [3.4.0] - 2026-10-02
 
 ### Added

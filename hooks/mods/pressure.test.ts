@@ -1,6 +1,6 @@
 import { test, expect, mock } from 'claude-code/testing'
 
-import { integrityReasons, isTestFile, labelOf } from './pressure'
+import { integrityReasons, isCorrection, isTestFile, labelOf } from './pressure'
 
 const FAILED = 'Build FAILED.\n  error CS1002: ; expected\n    1 Error(s)'
 const TESTS_FAILED = 'Failed!  - Failed:     2, Passed:    10'
@@ -9,9 +9,15 @@ const COMPOSE_ARGS = { model: 'm', promptModel: 'm', surfaces: [], tools: [], ou
 
 const stubEngine = (on: any) => {
   mock.clock(on)
-  const out = { toasts: [] as string[], status: [] as (string | undefined)[], text: FAILED }
+  const out = { toasts: [] as string[], status: [] as (string | undefined)[], text: FAILED, files: {} as Record<string, string> }
   on('tool.call', { tool: 'Bash' }, async () => ({ result: { stdout: out.text }, text: out.text, isError: out.text !== GREEN }))
   on('tool.call', { tool: 'Edit' }, async () => ({ result: {}, text: 'ok' }))
+  on('tool.call', { tool: 'Write' }, async () => ({ result: {}, text: 'ok' }))
+  on('fs.read', async (_$: unknown, e: { path: string }) => {
+    const key = e.path.replace(/\\/g, '/')
+    if (!(key in out.files)) throw new Error('ENOENT')
+    return { value: out.files[key] }
+  })
   on('ui.toast', async (_$: unknown, e: { text: string }) => {
     out.toasts.push(e.text)
     return { value: undefined }
@@ -30,6 +36,9 @@ const build = ($: any) => $.tool.call({ tool: 'Bash', command: 'dotnet build App
 const runTests = ($: any) => $.tool.call({ tool: 'Bash', command: 'dotnet test App.slnx' })
 const edit = ($: any, file_path: string, old_string: string, new_string: string) =>
   $.tool.call({ tool: 'Edit', file_path, old_string, new_string })
+
+const write = ($: any, file_path: string, content: string) =>
+  $.tool.call({ tool: 'Write', file_path, content })
 
 test('labels follow the thresholds', async () => {
   expect(labelOf(0)).toBe('steady')
@@ -74,6 +83,35 @@ test('a loosening test edit after a red run toasts but does not block by default
   expect(out.toasts[0]).toContain('not the test')
 })
 
+test('a Write that guts a test file after a red run is flagged like an Edit', async ($, on) => {
+  const out = stubEngine(on)
+  const path = 'D:/repo/App.Tests/OrderTests.cs'
+  out.files[path] = '[Fact]\npublic void X()\n{\n    Assert.Equal(1, total);\n}'
+  await build($)
+  await write($, path, '[Fact]\npublic void X()\n{\n}')
+  expect(out.toasts.length).toBe(1)
+  expect(out.toasts[0]).toContain('removes the assertion')
+})
+
+test('a Write that creates a new test file is not flagged', async ($, on) => {
+  const out = stubEngine(on)
+  await build($)
+  await write($, 'D:/repo/App.Tests/NewTests.cs', '[Fact]\npublic void X() { Assert.True(true); }')
+  expect(out.toasts).toEqual([])
+})
+
+test('pressure_test_guard_block denies a gutting Write once the score is high', { options: { pressure_test_guard_block: true } }, async ($, on) => {
+  const out = stubEngine(on)
+  const path = 'D:/repo/App.Tests/OrderTests.cs'
+  out.files[path] = 'Assert.Equal(1, total);'
+  await build($)
+  out.text = TESTS_FAILED
+  await runTests($)
+  await runTests($)
+  const ran = await write($, path, 'var _ = total;')
+  expect(typeof ran.deny).toBe('string')
+})
+
 test('the same edit with no red run recorded is not flagged', async ($, on) => {
   const out = stubEngine(on)
   await edit($, 'D:/repo/App.Tests/OrderTests.cs', 'Assert.Equal(1, total);', '// Assert.Equal(1, total);')
@@ -110,4 +148,13 @@ test('pressure:false registers nothing', { options: { pressure: false } }, async
   await build($)
   await build($)
   expect(out.status).toEqual([])
+})
+
+test('corrections are phrases about a failing result, not the words again or wrong', async () => {
+  for (const text of ['still fails', 'that is still broken', "it doesn't work", 'same error again', 'revert that change', 'stop changing the tests']) {
+    expect(isCorrection(text)).toBe(true)
+  }
+  for (const text of ['try again with the new endpoint', "what's wrong with this query?", 'add a revert button to the UI']) {
+    expect(isCorrection(text)).toBe(false)
+  }
 })

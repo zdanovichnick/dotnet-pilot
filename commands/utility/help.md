@@ -8,7 +8,7 @@ effort: low
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v3.4.0 — .NET development plugin for Claude Code
+DotnetPilot v3.5.0 — .NET development plugin for Claude Code
 Usage: /dotnet-pilot:<category>:<command> [args]      e.g. /dotnet-pilot:dotnet:create-entity Product
 
 COMMANDS (16)
@@ -82,7 +82,7 @@ HOOKS (13) — advisory (exit 0) except dnp-git-autoapprove, which grants permis
   dnp-commit-format            (commit_format)           conventional-commit check on git commit -m "..."
   dnp-di-registration-check    (di_check)                new .cs class with no DI registration
   dnp-project-scope-guard      (project_scope_guard)     edit outside .planning/STATE.md focus_projects
-  dnp-post-edit-format         (post_edit_format)        dotnet format on every saved .cs file
+  dnp-post-edit-format         (post_edit_format)        dotnet format over the .cs files saved in a turn (at Stop)
   dnp-build-verify             (build_verify)            build/test failure streak: warn at 3, escalate at 5
   dnp-stop-verify              (stop_verify)             nudge to build/test before stopping after .cs edits
                                                          (stop_verify_block: true makes it block instead)

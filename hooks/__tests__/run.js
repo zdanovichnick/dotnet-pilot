@@ -109,7 +109,16 @@ const crypto = require('crypto');
 function sha1(s) { return crypto.createHash('sha1').update(s).digest('hex'); }
 const buildStatePath = cwd => path.join(os.tmpdir(), `dnp-build-fail-${sha1(cwd)}.json`);
 const editMarkerPath = cwd => path.join(os.tmpdir(), `dnp-cs-edit-${sha1(cwd)}.json`);
+const formatQueuePath = cwd => path.join(os.tmpdir(), `dnp-format-queue-${sha1(cwd)}.json`);
 const scopeAdvisedPath = (cwd, project) => path.join(os.tmpdir(), `dnp-scope-advised-${sha1(cwd + '\n' + project)}`);
+
+// --- dnp-post-edit-format fixtures ---
+// PostToolUse queues the saved file; Stop formats the queue and clears it. No .csproj
+// exists above this dir, so the Stop leg has nothing to run and must stay silent.
+const formatDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-format-'));
+const formatFile = path.join(formatDir, 'Thing.cs');
+fs.writeFileSync(formatFile, 'public class Thing { }\n');
+const formatSkipDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-format-skip-'));
 
 // --- dnp-build-verify fixtures ---
 // Its own .NET dir so the state file the hook writes can be asserted and removed.
@@ -486,6 +495,34 @@ const CASES = [
     input: { cwd: workspace, tool_input: {} },
     expectExit: 0,
     expectEmpty: true,
+  },
+
+  {
+    name: 'post-edit-format: a saved .cs file is queued, not formatted in the turn',
+    hook: 'dnp-post-edit-format.js',
+    runtime: 'node',
+    input: { cwd: formatDir, hook_event_name: 'PostToolUse', tool_name: 'Edit', tool_input: { file_path: formatFile } },
+    expectExit: 0,
+    expectEmpty: true,
+    expectFiles: [{ path: formatQueuePath(formatDir), includes: ['Thing.cs'] }],
+  },
+  {
+    name: 'post-edit-format: a Migrations/ file is never queued',
+    hook: 'dnp-post-edit-format.js',
+    runtime: 'node',
+    input: { cwd: formatSkipDir, hook_event_name: 'PostToolUse', tool_name: 'Edit', tool_input: { file_path: migrationFile } },
+    expectExit: 0,
+    expectEmpty: true,
+    expectFilesAbsent: [formatQueuePath(formatSkipDir)],
+  },
+  {
+    name: 'post-edit-format: Stop drains the queue silently when no project owns the file',
+    hook: 'dnp-post-edit-format.js',
+    runtime: 'node',
+    input: { cwd: formatDir, hook_event_name: 'Stop' },
+    expectExit: 0,
+    expectEmpty: true,
+    expectFilesAbsent: [formatQueuePath(formatDir)],
   },
 
   // --- dnp-dotnet-priority ---

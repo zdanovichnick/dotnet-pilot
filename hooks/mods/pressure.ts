@@ -29,7 +29,9 @@ const WEIGHT = {
   green: -45,
 } as const
 
-const CORRECTION = /\b(still (fails|broken|wrong|not working)|again|doesn't work|does not work|not fixed|wrong|revert|stop (doing|changing))\b/i
+const CORRECTION = /\b(still (fails|failing|broken|wrong|not working)|(doesn't|does not|didn't|did not) work|not fixed|same (error|failure) again|revert (that|this|it)|stop (doing|changing))\b/i
+
+export const isCorrection = (text: string) => CORRECTION.test(text)
 
 const TEST_PATH = /(^|[\\/])(tests?|[^\\/]*\.tests?)([\\/]|$)|tests?\.cs$/i
 const ASSERTION = /\b(Assert\.|\.Should\(|\.Should[A-Z]|\.Must\(|Shouldly|Expect\()/
@@ -74,11 +76,50 @@ const bump = async ($: Engine, kind: PressureEvent['kind'], delta: number, detai
     }
     return next
   })
-  $.ui.status(next.score === 0 ? undefined : `pressure ${next.score} ${labelOf(next.score)}`)
+  showStatus($, next.score)
   return next
 }
 
+const showStatus = ($: Engine, score: number) => $.ui.status(`pressure ${score} ${labelOf(score)}`)
+
 const fileName = (path: string) => path.slice(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1)
+
+// `before` and `after` are the file text a tool call replaces and leaves; `before` is undefined
+// for a file that does not exist yet, which has nothing to loosen.
+const guardFileChange = async <E extends { file_path: string }, R extends { deny?: string }>(
+  $: Engine,
+  blockTestGuard: boolean,
+  e: E,
+  next: (e: E) => Promise<R>,
+  change: () => Promise<{ before: string | undefined; after: string }>,
+): Promise<R | { deny: string }> => {
+  const prev = await read($, state)
+  const current = prev?.score ?? 0
+
+  if (isTestFile(e.file_path) && prev !== undefined && prev.red) {
+    const { before, after } = await change()
+    const reasons = before === undefined ? [] : integrityReasons(before, after)
+    if (reasons.length > 0) {
+      const detail = `${fileName(e.file_path)}: ${reasons.join(', ')}`
+      await bump($, 'test-integrity', WEIGHT.testIntegrity, detail)
+      const message = `Test edit after a red run ${reasons.join(', ')} — fix the code or report the blocker, not the test (${fileName(e.file_path)})`
+      if (blockTestGuard && current >= HIGH_AT) {
+        $.ui.toast(`Blocked: ${message}`)
+        return { deny: `${message}. The pressure_test_guard_block option is on; make the production code pass, or return [HALT: <blocker>].` }
+      }
+      $.ui.toast(message)
+    }
+  }
+
+  const ran = await next(e)
+  if (ran.deny !== undefined || prev === undefined || !prev.red) return ran
+  if (prev.editedAfterFail.includes(e.file_path)) {
+    await bump($, 're-edit', WEIGHT.reEditAfterFail, `${fileName(e.file_path)} edited again after a red run`)
+  } else {
+    await update($, state, p => (p === undefined ? p : { ...p, editedAfterFail: [...p.editedAfterFail, e.file_path].slice(-20) }))
+  }
+  return ran
+}
 
 export const registerPressure = (on: On, blockTestGuard: boolean) => {
   for (const tool of ['Bash', 'PowerShell'] as const) {
@@ -96,36 +137,18 @@ export const registerPressure = (on: On, blockTestGuard: boolean) => {
     })
   }
 
-  on('tool.call', { tool: 'Edit' }, async ($, e, next) => {
-    const prev = await read($, state)
-    const current = prev?.score ?? 0
+  on('tool.call', { tool: 'Edit' }, async ($, e, next) =>
+    guardFileChange($, blockTestGuard, e, next, async () => ({ before: e.old_string, after: e.new_string })))
 
-    if (isTestFile(e.file_path) && prev !== undefined && prev.red) {
-      const reasons = integrityReasons(e.old_string, e.new_string)
-      if (reasons.length > 0) {
-        const detail = `${fileName(e.file_path)}: ${reasons.join(', ')}`
-        await bump($, 'test-integrity', WEIGHT.testIntegrity, detail)
-        const message = `Test edit after a red run ${reasons.join(', ')} — fix the code or report the blocker, not the test (${fileName(e.file_path)})`
-        if (blockTestGuard && current >= HIGH_AT) {
-          $.ui.toast(`Blocked: ${message}`)
-          return { deny: `${message}. The pressure_test_guard_block option is on; make the production code pass, or return [HALT: <blocker>].` }
-        }
-        $.ui.toast(message)
-      }
-    }
-
-    const ran = await next(e)
-    if (ran.deny !== undefined || prev === undefined || !prev.red) return ran
-    if (prev.editedAfterFail.includes(e.file_path)) {
-      await bump($, 're-edit', WEIGHT.reEditAfterFail, `${fileName(e.file_path)} edited again after a red run`)
-    } else {
-      await update($, state, p => (p === undefined ? p : { ...p, editedAfterFail: [...p.editedAfterFail, e.file_path].slice(-20) }))
-    }
-    return ran
-  })
+  // A Write replaces the whole file, so the guard compares it with what is on disk.
+  on('tool.call', { tool: 'Write' }, async ($, e, next) =>
+    guardFileChange($, blockTestGuard, e, next, async () => {
+      const onDisk = await $.fs.read(e.file_path).catch(() => undefined)
+      return { before: typeof onDisk === 'string' ? onDisk : undefined, after: e.content }
+    }))
 
   on('prompt.submit', async ($, e, next) => {
-    if (e.origin.kind === 'composer' && CORRECTION.test(e.text)) {
+    if (e.origin.kind === 'composer' && isCorrection(e.text)) {
       const prev = await read($, state)
       if (prev !== undefined && prev.score > 0) await bump($, 'correction', WEIGHT.correction, 'correction in the prompt')
     }
@@ -133,6 +156,7 @@ export const registerPressure = (on: On, blockTestGuard: boolean) => {
   })
 
   on('session.start', async ($, e, next) => {
+    showStatus($, (await read($, state))?.score ?? 0)
     $.command.register({ name: 'dnp-pressure', description: 'Show the dotnet-pilot pressure score and the events behind it', immediate: true })
     return next(e)
   })

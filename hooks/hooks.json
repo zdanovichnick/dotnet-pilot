@@ -18,7 +18,7 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-post-edit-format.js\"",
-            "timeout": 30
+            "timeout": 5
           },
           {
             "type": "command",
@@ -126,6 +126,11 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-stop-verify.js\"",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-post-edit-format.js\"",
+            "timeout": 30
           }
         ]
       }
