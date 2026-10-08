@@ -1,7 +1,7 @@
 {
   "name": "dotnet-pilot",
   "displayName": "DotnetPilot",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, convention-aware scaffolding, TDD agents, security and performance review, and project lifecycle commands.",
   "author": {
     "name": "Nick Zdanovych",
@@ -51,8 +51,15 @@
     "pixel_city": {
       "type": "boolean",
       "title": "Pixel city band",
-      "description": "Draw an animated pixel-art city above the prompt in the terminal: day/night sky, windows that light with tool activity, a storm on a failed dotnet build/test and a rainbow when it goes green. /city controls it (requires a Claude Code build with mods).",
+      "description": "Draw an animated pixel-art band above the prompt in the terminal: a city, beach, running dinosaur or time-lapse sunset under a day/night sky that reacts to tool activity, with a storm on a failed dotnet build/test and a rainbow when it goes green. /city controls it (requires a Claude Code build with mods).",
       "default": false
+    },
+    "pixel_city_scene": {
+      "type": "string",
+      "title": "Pixel band scene",
+      "description": "The scene the pixel band starts with: city, beach, dino (a running T-rex that jumps the cacti; meteors instead of rain in a storm) or sunset (a time-lapse sunrise-to-sunset over mountains and a lake). /city <scene> switches it for the session.",
+      "options": ["city", "beach", "dino", "sunset"],
+      "default": "city"
     }
   }
 }

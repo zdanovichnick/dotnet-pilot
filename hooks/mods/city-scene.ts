@@ -1,18 +1,11 @@
-import type { PixelCityWeather } from '../../types'
+import { canvas, celestial, daylightAt, hash, mix } from './pixel-canvas'
+import type { Canvas, Light, Rgb, SceneInput } from './pixel-canvas'
+import { beach } from './scene-beach'
+import { dino } from './scene-dino'
+import { sunset } from './scene-sunset'
 
-export type SceneInput = {
-  columns: number
-  rows: number
-  hour: number
-  frame: number
-  weather: PixelCityWeather
-  energy: number
-  isWorking: boolean
-  cometAge: number
-  flash: boolean
-}
-
-type Rgb = number
+export { daylightAt, luminance, mix } from './pixel-canvas'
+export type { SceneInput } from './pixel-canvas'
 
 // Each terminal cell is an upper half block: foreground paints the top pixel,
 // background the bottom one, so a band of `rows` cells is `rows * 2` pixels tall.
@@ -36,39 +29,6 @@ const RAINBOW: readonly Rgb[] = [0x9a4dff, 0x4db8ff, 0x4dff7a, 0xfff04d, 0xffa64
 const NEAR_NIGHT: readonly Rgb[] = [0x141726, 0x1a1d30, 0x1d1a2e, 0x15202a]
 const NEAR_DAY: readonly Rgb[] = [0x4a5468, 0x565f78, 0x5d566e, 0x4b5f6b]
 const CAR_BODIES: readonly Rgb[] = [0xe63946, 0xf1c40f, 0x2ecc71, 0xecf0f1]
-
-const clamp01 = (t: number) => Math.min(1, Math.max(0, t))
-
-export const mix = (a: Rgb, b: Rgb, t: number): Rgb => {
-  const k = clamp01(t)
-  const channel = (shift: number) => {
-    const from = (a >> shift) & 0xff
-    const to = (b >> shift) & 0xff
-    return Math.round(from + (to - from) * k) << shift
-  }
-  return channel(16) | channel(8) | channel(0)
-}
-
-export const luminance = (c: Rgb) =>
-  0.2126 * ((c >> 16) & 0xff) + 0.7152 * ((c >> 8) & 0xff) + 0.0722 * (c & 0xff)
-
-const hash = (...values: number[]) => {
-  let h = 2166136261
-  for (const v of values) {
-    h = Math.imul(h ^ (v | 0), 16777619)
-    h ^= h >>> 13
-    h = Math.imul(h, 0x5bd1e995)
-  }
-  h ^= h >>> 15
-  return (h >>> 0) / 4294967296
-}
-
-const smooth = (edge0: number, edge1: number, x: number) => {
-  const t = clamp01((x - edge0) / (edge1 - edge0))
-  return t * t * (3 - 2 * t)
-}
-
-export const daylightAt = (hour: number) => smooth(5.5, 8, hour) * (1 - smooth(17, 20.5, hour))
 
 const skyAt = (hour: number): readonly [Rgb, Rgb] => {
   const h = ((hour % 24) + 24) % 24
@@ -105,36 +65,13 @@ const skyline = (columns: number, height: number, layer: number): Building[] => 
   return out
 }
 
-export const pixels = (input: SceneInput): Uint32Array => {
-  const { columns: W, rows, hour, frame, weather, energy, isWorking, cometAge } = input
-  const H = rows * 2
-  const px = new Uint32Array(W * H)
-  const daylight = daylightAt(hour)
-  const night = 1 - daylight
-  const isStorm = weather === 'storm'
-  const stormBeat = Math.floor(frame / 2)
-  const flash = input.flash || (isStorm && hash(stormBeat, 77) < 0.03)
+const backdrop = (c: Canvas, input: SceneInput, l: Light) => {
+  const { W, H } = c
+  const { weather, frame, cometAge } = input
 
-  const set = (x: number, y: number, c: Rgb) => {
-    if (x >= 0 && x < W && y >= 0 && y < H) px[y * W + x] = c
-  }
-  const get = (x: number, y: number) => px[y * W + x] ?? 0
-  const blend = (x: number, y: number, c: Rgb, t: number) => {
-    if (x >= 0 && x < W && y >= 0 && y < H) set(x, y, mix(get(x, y), c, t))
-  }
-
-  let [top, bottom] = skyAt(hour)
-  if (isStorm) {
-    top = mix(top, 0x1f232d, 0.7)
-    bottom = mix(bottom, 0x3a3f4b, 0.7)
-  }
-  if (flash) {
-    top = mix(top, 0xe8ecff, 0.65)
-    bottom = mix(bottom, 0xe8ecff, 0.45)
-  }
   for (let y = 0; y < H; y++) {
-    const c = mix(top, bottom, y / (H - 1))
-    for (let x = 0; x < W; x++) px[y * W + x] = c
+    const row = mix(l.top, l.bottom, y / (H - 1))
+    for (let x = 0; x < W; x++) c.px[y * W + x] = row
   }
 
   if (weather === 'rainbow') {
@@ -143,70 +80,67 @@ export const pixels = (input: SceneInput): Uint32Array => {
     const r0 = H + 1
     for (let y = 0; y < H - 1; y++) {
       for (let x = 0; x < W; x++) {
-        const band = Math.floor(Math.hypot(x - cx, (y - cy) * 1.1) - r0)
-        const color = RAINBOW[band]
-        if (color !== undefined) blend(x, y, color, 0.6)
+        const color = RAINBOW[Math.floor(Math.hypot(x - cx, (y - cy) * 1.1) - r0)]
+        if (color !== undefined) c.blend(x, y, color, 0.6)
       }
     }
   }
 
-  if (night > 0.2 && !isStorm) {
+  if (l.night > 0.2 && !l.isStorm) {
     for (let y = 0; y < H - 3; y++) {
       for (let x = 0; x < W; x++) {
         if (hash(x, y, 7) >= 0.035) continue
         const twinkle = hash(x, y, Math.floor(frame / 3)) < 0.18 ? 0.45 : 1
-        blend(x, y, 0xffffff, (night - 0.2) * 1.25 * twinkle)
+        c.blend(x, y, 0xffffff, (l.night - 0.2) * 1.25 * twinkle)
       }
     }
   }
 
-  if (!isStorm) {
-    if (hour >= 6 && hour < 19.5) {
-      const t = (hour - 6) / 13.5
-      const arc = Math.sin(Math.PI * t)
-      const sx = Math.round(t * (W - 2))
-      const sy = Math.round(H - 3 - arc * (H - 4))
-      const sun = mix(0xff8c42, 0xfff1a8, arc)
-      for (const [dx, dy] of [[-1, 0], [2, 0], [0, -1], [1, -1], [0, 2], [1, 2]] as const) blend(sx + dx, sy + dy, sun, 0.35)
-      for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) set(sx + dx, sy + dy, sun)
+  if (!l.isStorm) {
+    const body = celestial(l.hour, W, H, input.view === 'sunset')
+    if (body.isSun) {
+      for (const [dx, dy] of [[-1, 0], [2, 0], [0, -1], [1, -1], [0, 2], [1, 2]] as const) c.blend(body.x + dx, body.y + dy, body.color, 0.35)
+      for (const [dx, dy] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) c.set(body.x + dx, body.y + dy, body.color)
     } else {
-      const t = (((hour - 19.5) % 24) + 24) % 24 / 10.5
-      const arc = Math.sin(Math.PI * clamp01(t))
-      const mx = Math.round(clamp01(t) * (W - 2))
-      const my = Math.round(H - 3 - arc * (H - 4))
-      for (const [dx, dy] of [[0, 0], [0, 1], [1, 1]] as const) set(mx + dx, my + dy, 0xf2efd8)
-      blend(mx + 1, my, 0xf2efd8, 0.25)
+      for (const [dx, dy] of [[0, 0], [0, 1], [1, 1]] as const) c.set(body.x + dx, body.y + dy, body.color)
+      c.blend(body.x + 1, body.y, body.color, 0.25)
     }
   }
 
   if (cometAge >= 0) {
     const hx = Math.floor(W * 0.12 + cometAge * 1.6)
     const hy = 1 + Math.floor(cometAge * 0.1)
-    const head = daylight > 0.5 ? 0xfff6d5 : 0xffffff
-    set(hx, hy, head)
-    for (let i = 1; i <= 6; i++) blend(hx - i, hy - Math.floor(i / 5), head, 0.75 - i * 0.11)
+    const head = l.daylight > 0.5 ? 0xfff6d5 : 0xffffff
+    c.set(hx, hy, head)
+    for (let i = 1; i <= 6; i++) c.blend(hx - i, hy - Math.floor(i / 5), head, 0.75 - i * 0.11)
   }
 
-  const cloudCount = Math.max(2, Math.floor(W / 24)) * (isStorm ? 2 : 1)
-  const cloudColor = isStorm ? 0x4a4f5e : mix(mix(0x3a3f5c, 0xf5f7ff, daylight), bottom, 0.25)
+  const cloudCount = Math.max(2, Math.floor(W / 24)) * (l.isStorm ? 2 : 1)
+  const cloudColor = l.isStorm ? 0x4a4f5e : mix(mix(0x3a3f5c, 0xf5f7ff, l.daylight), l.bottom, 0.25)
   const lane = W + 10
   for (let i = 0; i < cloudCount; i++) {
     const speed = 0.04 + hash(i, 8) * 0.07
     const cx = Math.floor(((hash(i, 9) * lane + frame * speed) % lane) - 5)
-    const cy = Math.floor(hash(i, 10) * (isStorm ? 2 : 3))
-    const alpha = isStorm ? 0.9 : 0.35 + daylight * 0.5
-    for (let dx = 1; dx <= 3; dx++) blend(cx + dx, cy, cloudColor, alpha)
-    for (let dx = 0; dx <= 4; dx++) blend(cx + dx, cy + 1, cloudColor, alpha)
+    const cy = Math.floor(hash(i, 10) * (l.isStorm ? 2 : 3))
+    const alpha = l.isStorm ? 0.9 : 0.35 + l.daylight * 0.5
+    for (let dx = 1; dx <= 3; dx++) c.blend(cx + dx, cy, cloudColor, alpha)
+    for (let dx = 0; dx <= 4; dx++) c.blend(cx + dx, cy + 1, cloudColor, alpha)
   }
+}
 
-  const haze = mix(bottom, 0x000000, 0.35 + night * 0.25)
+const city = (c: Canvas, l: Light) => {
+  const { W, H } = c
+  const { frame, daylight, night, isStorm } = l
+  const lane = W + 10
+
+  const haze = mix(l.bottom, 0x000000, 0.35 + night * 0.25)
   for (const b of skyline(W, H, 1)) {
     for (let x = b.x; x < b.x + b.w; x++) {
-      for (let y = H - 1 - b.h; y < H - 1; y++) set(x, y, haze)
+      for (let y = H - 1 - b.h; y < H - 1; y++) c.set(x, y, haze)
     }
   }
 
-  const litChance = 0.04 + night * 0.36 + energy * 0.5 + (isStorm ? 0.08 : 0)
+  const litChance = 0.04 + night * 0.36 + l.energy * 0.5 + (isStorm ? 0.08 : 0)
   const glass = mix(0x262b45, 0x8fa3c4, daylight)
   for (const b of skyline(W, H, 0)) {
     const roof = H - 1 - b.h
@@ -216,26 +150,26 @@ export const pixels = (input: SceneInput): Uint32Array => {
       for (let y = roof; y < H - 1; y++) {
         const isWindow = b.w > 3 && x > b.x && x < b.x + b.w - 1 && (x - b.x) % 2 === 1 && y > roof && (y - roof) % 2 === 1
         if (!isWindow) {
-          set(x, y, wall)
+          c.set(x, y, wall)
           continue
         }
         const flicker = hash(x, y, Math.floor(frame / 45 + hash(x, y, 3) * 9)) < 0.04
         const isLit = (hash(x, y, b.seed) < litChance) !== flicker
         const hue = hash(x, y, 11)
         const lit = hue < 0.15 ? LIT[1]! : hue < 0.22 ? LIT[2]! : LIT[0]!
-        set(x, y, isLit ? mix(lit, glass, daylight * 0.6) : glass)
+        c.set(x, y, isLit ? mix(lit, glass, daylight * 0.6) : glass)
       }
     }
     if (b.hasAntenna) {
       const ax = b.x + Math.floor(b.w / 2)
-      set(ax, roof - 1, 0x8a8fa3)
-      const isOn = isWorking ? frame % 4 < 2 : frame % 20 < 2
-      set(ax, roof - 2, isOn ? 0xff3b3b : 0x5a1a1a)
+      c.set(ax, roof - 1, 0x8a8fa3)
+      const isOn = l.isWorking ? frame % 4 < 2 : frame % 20 < 2
+      c.set(ax, roof - 2, isOn ? 0xff3b3b : 0x5a1a1a)
     }
   }
 
   const street = mix(0x101118, 0x2b2d36, daylight)
-  for (let x = 0; x < W; x++) set(x, H - 1, street)
+  for (let x = 0; x < W; x++) c.set(x, H - 1, street)
   const cars = Math.max(2, Math.floor(W / 28))
   for (let i = 0; i < cars; i++) {
     const dir = i % 2 === 0 ? 1 : -1
@@ -243,32 +177,87 @@ export const pixels = (input: SceneInput): Uint32Array => {
     const pos = (hash(i, 22) * lane + frame * speed) % lane
     const x = Math.floor(dir === 1 ? pos - 5 : W + 5 - pos)
     if (night > 0.5) {
-      set(x, H - 1, 0xfff3b0)
-      set(x - dir, H - 1, 0xff4040)
+      c.set(x, H - 1, 0xfff3b0)
+      c.set(x - dir, H - 1, 0xff4040)
     } else {
       const body = CAR_BODIES[i % CAR_BODIES.length]!
-      set(x, H - 1, body)
-      set(x - dir, H - 1, body)
+      c.set(x, H - 1, body)
+      c.set(x - dir, H - 1, body)
     }
   }
+}
 
-  if (isStorm) {
+const meteors = (c: Canvas, frame: number) => {
+  for (let k = 0; k < 3; k++) {
+    const age = (frame + k * 11) % 24
+    const x0 = Math.floor(hash(Math.floor((frame + k * 11) / 24), k, 55) * c.W)
+    const hx = x0 + Math.floor(age * 1.4)
+    const hy = Math.floor(age * 0.45)
+    if (hy > c.H - 3) continue
+    c.set(hx, hy, 0xfff1c1)
+    for (let i = 1; i <= 4; i++) c.blend(hx - i, hy - Math.round(i * 0.35), i < 2 ? 0xffa23a : 0xd9481f, 0.8 - i * 0.16)
+  }
+}
+
+const storm = (c: Canvas, l: Light, flash: boolean, beat: number, hasMeteors: boolean) => {
+  const { W, H } = c
+  if (hasMeteors) {
+    meteors(c, l.frame)
+  } else {
     for (let x = 0; x < W; x++) {
       if (hash(x, 12) >= 0.3) continue
-      const y = Math.floor(frame * 1.5 + hash(x, 13) * H * 3) % (H + 3)
-      blend(x, y, 0x9db8ff, 0.7)
-      blend(x, y - 1, 0x9db8ff, 0.35)
-    }
-    if (flash) {
-      let bx = Math.floor(hash(stormBeat, 78) * W)
-      for (let y = 0; y < H - 3; y++) {
-        set(bx, y, 0xffffff)
-        bx += hash(stormBeat, y, 79) < 0.5 ? -1 : 1
-      }
+      const y = Math.floor(l.frame * 1.5 + hash(x, 13) * H * 3) % (H + 3)
+      c.blend(x, y, 0x9db8ff, 0.7)
+      c.blend(x, y - 1, 0x9db8ff, 0.35)
     }
   }
+  if (flash) {
+    let bx = Math.floor(hash(beat, 78) * W)
+    for (let y = 0; y < H - 3; y++) {
+      c.set(bx, y, 0xffffff)
+      bx += hash(beat, y, 79) < 0.5 ? -1 : 1
+    }
+  }
+}
 
-  return px
+const FOREGROUND = { city, beach, dino, sunset } as const
+
+export const pixels = (input: SceneInput): Uint32Array => {
+  const c = canvas(input.columns, input.rows * 2)
+  const view = input.view ?? 'city'
+  const isStorm = input.weather === 'storm'
+  const beat = Math.floor(input.frame / 2)
+  const flash = input.flash || (isStorm && hash(beat, 77) < 0.03)
+  const daylight = daylightAt(input.hour)
+
+  let [top, bottom] = skyAt(input.hour)
+  if (isStorm) {
+    top = mix(top, 0x1f232d, 0.7)
+    bottom = mix(bottom, 0x3a3f4b, 0.7)
+  }
+  if (flash) {
+    top = mix(top, 0xe8ecff, 0.65)
+    bottom = mix(bottom, 0xe8ecff, 0.45)
+  }
+
+  const light: Light = {
+    hour: input.hour,
+    daylight,
+    night: 1 - daylight,
+    top,
+    bottom,
+    isStorm,
+    frame: input.frame,
+    energy: input.energy,
+    isWorking: input.isWorking,
+    travel: input.travel ?? input.frame * 0.8,
+  }
+
+  backdrop(c, input, light)
+  FOREGROUND[view](c, light)
+  // The dinosaurs get meteors where the other scenes get rain.
+  if (isStorm) storm(c, light, flash, beat, view === 'dino')
+  return c.px
 }
 
 export const encodeCells = (px: Uint32Array, columns: number, rows: number): string => {

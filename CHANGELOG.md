@@ -5,6 +5,26 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [3.7.0] - 2026-10-08
+
+### Added
+
+- **Pixel band scenes.** The pixel band now has four scenes over the same sky, weather and comet:
+  `city`, `beach` (sea with a glitter path under the sun or moon, swash, palm, umbrella, sailboat
+  and crab), `dino` (a T-rex running through a desert that jumps the cacti, runs faster with tool
+  activity, under a smoking volcano and a pterodactyl, with meteors instead of rain in a storm) and
+  `sunset` (a time-lapse day, about 200 seconds from dawn round to dawn, with the sun rising and
+  setting in a mountain valley over a mirrored lake). `/city <scene>` or `/city next` switches it
+  for the session (`sunrise`, `dinosaur` are aliases); the new `pixel_city_scene` option sets the
+  starting scene. The painter is split into `pixel-canvas.ts` (shared canvas, noise, sprites and sun
+  path), `city-scene.ts` (backdrop, city, weather, cell encoding) and one `scene-*.ts` per new scene.
+
+### Changed
+
+- **`/city` answers with the option off.** It used to be an unknown command until `pixel_city` was
+  enabled; it now registers either way and, while off, replies with how to turn the band on in
+  `/config`. Nothing is drawn and no timer runs while the option is off.
+
 ## [3.6.0] - 2026-10-08
 
 ### Added

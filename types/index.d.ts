@@ -19,11 +19,15 @@ export type PixelCityWeather = 'clear' | 'storm' | 'rainbow'
 
 export type PixelCitySky = 'auto' | 'dawn' | 'day' | 'dusk' | 'night'
 
+export type PixelCityView = 'city' | 'beach' | 'dino' | 'sunset'
+
 export type PixelCityScene = {
   weather: PixelCityWeather
   sky: PixelCitySky
   isHidden: boolean
   rainbowUntil: number
+  // Unset until /city picks a scene; the pixel_city_scene option applies until then.
+  view?: PixelCityView
 }
 
 declare module 'claude-code' {

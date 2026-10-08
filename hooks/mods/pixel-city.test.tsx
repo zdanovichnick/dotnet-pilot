@@ -3,6 +3,8 @@ import type { Engine } from 'claude-code/testing'
 
 import { LIT, luminance, paint, pixels } from './city-scene'
 import type { SceneInput } from './city-scene'
+import { dinoLift } from './scene-dino'
+import { timelapseHour } from './scene-sunset'
 
 const BASE: SceneInput = {
   columns: 60,
@@ -67,6 +69,46 @@ describe('scene', () => {
   test('pixels_LaterFrame_AnimatesTheScene', () => {
     expect(paint({ ...BASE, frame: 40 })).not.toBe(paint(BASE))
   })
+
+  test('pixels_EachView_PaintsItsOwnForeground', () => {
+    const bottoms = (['city', 'beach', 'dino', 'sunset'] as const).map(view => {
+      const px = pixels({ ...BASE, view })
+      return Array.from(px.subarray(px.length - BASE.columns * 3)).join(',')
+    })
+    expect(new Set(bottoms).size).toBe(4)
+  })
+
+  test('pixels_BeachAtNoon_SeaIsBlue', () => {
+    const px = pixels({ ...BASE, view: 'beach' })
+    const sea = px[6 * BASE.columns + 30] ?? 0
+    expect(sea & 0xff).toBeGreaterThan((sea >> 16) & 0xff)
+  })
+
+  test('pixels_FrameAdvances_LaterFrameDiffers', () => {
+    for (const view of ['beach', 'dino', 'sunset'] as const) {
+      expect(paint({ ...BASE, view, frame: 40, travel: 32 })).not.toBe(paint({ ...BASE, view }))
+    }
+  })
+})
+
+describe('dino', () => {
+  test('dinoLift_RunOfGround_JumpsSomewhereAndLandsSomewhere', () => {
+    const lifts = Array.from({ length: 400 }, (_, i) => dinoLift(i * 0.5))
+    expect(lifts.some(l => l > 0)).toBe(true)
+    expect(lifts.some(l => l === 0)).toBe(true)
+    expect(Math.max(...lifts)).toBeLessThanOrEqual(3)
+  })
+})
+
+describe('sunset', () => {
+  test('timelapseHour_FirstFrame_StartsBeforeDawn', () => {
+    expect(timelapseHour(0)).toBe(5)
+  })
+
+  test('timelapseHour_ThousandFrames_WrapsOneDay', () => {
+    expect(Math.abs(timelapseHour(1000) - 5)).toBeLessThan(1e-9)
+    expect(Math.abs(timelapseHour(500) - 17)).toBeLessThan(1e-9)
+  })
 })
 
 describe('band', () => {
@@ -90,6 +132,16 @@ describe('band', () => {
 })
 
 describe('option', () => {
+  test('city_PixelCityOff_RepliesHowToEnable', async ($, on) => {
+    mock.clock(on)
+    expect(await city($, 'show')).toContain('/config')
+  })
+
+  test('city_SceneOptionDino_StartsInDino', { options: { pixel_city: true, pixel_city_scene: 'dino' } }, async ($, on) => {
+    mock.clock(on)
+    expect(await city($, 'status')).toContain('scene: dino')
+  })
+
   test('render_PixelCityOff_DrawsNothing', async ($, on) => {
     mock.clock(on)
     on('ui.render', { component: 'AbovePrompt' }, ($, e) => {
@@ -133,6 +185,22 @@ describe('command', () => {
     mock.clock(on)
     expect(await city($, 'night')).toBe('Sky pinned to night.')
     expect(await city($, 'status')).toContain('sky: night')
+  })
+
+  for (const [arg, view] of [['beach', 'beach'], ['dino', 'dino'], ['dinosaur', 'dino'], ['sunset', 'sunset'], ['sunrise', 'sunset']] as const) {
+    test(`city_${arg}_SwitchesScene`, ON, async ($, on) => {
+      mock.clock(on)
+      expect(await city($, arg)).toBe(`Scene: ${view}.`)
+      expect(await city($, 'status')).toContain(`scene: ${view}`)
+    })
+  }
+
+  test('city_Next_CyclesScenesInOrder', ON, async ($, on) => {
+    mock.clock(on)
+    expect(await city($, 'next')).toBe('Scene: beach.')
+    expect(await city($, 'next')).toBe('Scene: dino.')
+    expect(await city($, 'next')).toBe('Scene: sunset.')
+    expect(await city($, 'next')).toBe('Scene: city.')
   })
 
   test('city_NoArgs_TogglesHidden', ON, async ($, on) => {
