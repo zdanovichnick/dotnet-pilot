@@ -1082,6 +1082,16 @@ const CASES = [
     expectStdoutAbsent: ['(set:'],
   },
   {
+    name: 'statusline: user top-level effortLevel is ignored on Haiku 5.5',
+    hook: '../statusline/dnp-statusline.js',
+    runtime: 'node',
+    input: { cwd: nonDotnetDir, model: { id: 'claude-haiku-5-5', display_name: 'Haiku 5.5' }, effort: { level: 'medium' } },
+    env: { NO_COLOR: '1', CLAUDE_CODE_EFFORT_LEVEL: '', HOME: slEffortHome, USERPROFILE: slEffortHome },
+    expectExit: 0,
+    expectStdout: ['EFF medium'],
+    expectStdoutAbsent: ['(set:'],
+  },
+  {
     name: 'statusline: user top-level effortLevel still applies to Opus 5',
     hook: '../statusline/dnp-statusline.js',
     runtime: 'node',

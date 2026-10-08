@@ -29,7 +29,7 @@ const { spawnSync } = require('child_process');
 
 // Installed-version stamp — read by dnp-statusline-sync.js to decide whether to
 // refresh the copy in ~/.claude. Keep in sync with plugin.json on release.
-const STATUSLINE_VERSION = '3.5.0';
+const STATUSLINE_VERSION = '3.5.1';
 
 const DOTNET_MARKERS = ['.sln', '.slnx', '.csproj'];
 
@@ -116,7 +116,7 @@ function c(code, s) {
 // top-level `effortLevel` — and a top-level `effortLevel` in the USER file no
 // longer applies from Opus 5.5 on (only to the older models matched below).
 const EFFORT_LEVELS = ['low', 'medium', 'high', 'xhigh', 'max'];
-const LEGACY_USER_EFFORT = /^claude-(opus-4|opus-5$|sonnet-4|sonnet-5$|fable-5|mythos|haiku)/;
+const LEGACY_USER_EFFORT = /^claude-(opus-4|opus-5$|sonnet-4|sonnet-5$|fable-5|mythos|haiku-4)/;
 
 function normalizeEffort(v) {
   return typeof v === 'string' && EFFORT_LEVELS.includes(v.toLowerCase()) ? v.toLowerCase() : '';

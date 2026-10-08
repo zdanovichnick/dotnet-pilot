@@ -258,7 +258,7 @@ Commands are thin orchestrators — all heavy work happens in one of these 9 age
 
 > Agents never prompt the user. A decision an agent cannot make comes back as `[HALT: <question>]`, and the command that spawned it asks you, then re-briefs the agent with the answer. For an architectural question, `dotnet:tdd` first asks `dnp-architect` and lists its pick as the recommended option.
 >
-> Effort is model-gated and **unsupported on Haiku 4.5**, so every agent runs on Sonnet or Opus with an explicit `effort:`; the mechanical ones sit at `effort: low`, which is where the cost/capability trade-off Haiku was reaching for actually lives.
+> Every agent runs on Sonnet or Opus with an explicit `effort:`; the mechanical ones sit at `effort: low`. The `haiku` alias resolves to Haiku 5.5 (full effort support) on the Anthropic API but to Haiku 4.5 (no effort, the field is dropped) on Bedrock, Google Cloud, Foundry and Claude Platform on AWS, so moving an agent to Haiku waits on a measured comparison.
 >
 > Models are tier aliases (`opus`/`sonnet`), not dated IDs, so frontmatter tracks each tier's current default and needs no bump on a model release; the consistency check rejects anything else, because Claude Code's allowlist substitution covers aliases only.
 
@@ -299,7 +299,7 @@ A compact, .NET-aware statusline. Install it with `/dotnet-pilot:utility:statusl
 
 Every segment carries an emoji icon and a saturated color on its **value** (labels stay dim), so the data reads before the scaffolding. Three segments are threshold-colored rather than fixed: the 🧠 context bar and percentage (green → yellow → red past 50 / 75 / 90%), the ⚡ effort level (dim `low` up to bold red `max`), and the 💰 cost (green → yellow → red past \$2 / \$10). Set `NO_COLOR` for plain text.
 
-`⚡ EFF <effort>` shows the **live per-turn** reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`) when Claude Code pipes it — it reflects mid-session `/effort` changes and the resolved level under `auto` (not a static config value), and is color-coded by level (brightest at the top of the scale) so a change is obvious at a glance; omitted when the model doesn't support effort. When the level you configured is not the one in force, a yellow `(set: <configured>)` suffix names it — e.g. `EFF high (set: xhigh)`.
+`⚡ EFF <effort>` shows the **live per-turn** reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`) when Claude Code pipes it — it reflects mid-session `/effort` changes and the resolved level under `auto` (not a static config value), and is color-coded by level (brightest at the top of the scale) so a change is obvious at a glance; omitted when the model doesn't support effort. When the level you configured is not the one in force, a yellow `(set: <configured>)` suffix names it — e.g. `EFF high (set: xhigh)`. A top-level `effortLevel` in `~/.claude/settings.json` counts as configured only on models released before Opus 5.5 (Claude Code ignores it from Opus 5.5 and Haiku 5.5 on); for newer models only `modelSettings[<model>].effortLevel` does.
 
 `BUILD ✗ Nx` reflects the same failure state the **Build Verify** hook records (so it also surfaces `dotnet test` failures); absence means "no recent failure recorded", not a guaranteed green build.
 
@@ -309,7 +309,7 @@ Claude Code plugins cannot register a `statusLine` directly, and `${CLAUDE_PLUGI
 
 ## 📚 Skill Packs
 
-Skills are on-demand knowledge packs loaded by agents when needed — they encode .NET conventions that would otherwise require repeated prompting. Every `SKILL.md` carries a `when_to_use:` line so the right one loads on trigger, and the three largest (`authentication`, `caching`, `resilience`) keep their detail in `references/*.md` files loaded one at a time.
+Skills are on-demand knowledge packs loaded by agents when needed — they encode .NET conventions that would otherwise require repeated prompting. Every `SKILL.md` carries a `when_to_use:` line so the right one loads on trigger, and the five largest (`authentication`, `caching`, `ddd`, `error-handling`, `resilience`) keep their detail in `references/*.md` files loaded one at a time.
 
 | Skill | What it teaches |
 | --- | --- |
@@ -632,6 +632,7 @@ Context7 must be enabled at the account level in Claude Code settings.
 | v3.3.0 | ✅ shipped | **First mod.** A Claude Code mod (`hooks/mods/`) adds build-failure toasts at the 3rd/5th consecutive `dotnet build`/`dotnet test` failure and appends the .NET routing guidance to the system prompt once per session. Additive: the Node hooks remain for builds without mod support. Toggle with the `build_status` and `routing` plugin options. |
 | v3.4.0 | ✅ shipped | **Pressure meter.** A mod scores the session's pressure (red runs, re-edits, corrections) 0–100 in the status line, warns — or, opt-in, blocks — test edits that loosen a test after a red run, and adds a system-prompt section while the score is high asking for a stated blocker or `[HALT]` over another retry. Motivated by Anthropic's finding that a "desperation" representation under mounting failure drives reward hacking; the mod measures the observable proxy, not the model. `/dnp-pressure` lists the events. |
 | v3.5.0 | ✅ shipped | **Guard and format fixes.** The pressure mod's test-integrity guard now covers `Write` (compared with the file on disk) as well as `Edit`; the status line shows `pressure 0 steady` from session start instead of staying blank; correction detection no longer fires on "again"/"wrong" alone. `dnp-post-edit-format` queues saved `.cs` files and formats once per project at Stop instead of blocking every edit. |
+| v3.5.1 | ✅ shipped | **Haiku 5.5.** The statusline no longer reports a user-file top-level `effortLevel` as configured on Haiku 5.5; the consistency check now allows `haiku` with `effort:`, and the docs state that the alias resolves to Haiku 5.5 only on the Anthropic API (Haiku 4.5, without effort, on Bedrock, Google Cloud, Foundry and Claude Platform on AWS). |
 | v3.6 | 🔜 backlog | MAUI / mobile support |
 
 ---

@@ -14,8 +14,8 @@
 //   - harness fixtures use the real PostToolUse field (`tool_response`)
 //   - the mod module's build markers equal dnp-build-verify.js's, and both the
 //     Node routing hook and the routing mod read hooks/_lib/routing.md
-//   - every agent and command declares `effort:`; none pairs it with haiku;
-//     every `model:` (frontmatter or workflow literal) is a family alias
+//   - every agent and command declares `effort:`; every `model:` (frontmatter
+//     or workflow literal) is a family alias
 //   - agent `tools:` use documented forms only (no `Bash(...)`, no
 //     AskUserQuestion, no `permissionMode` — plugin subagents ignore them)
 //   - every /dotnet-pilot:<cat>:<name> reference resolves to a command file,
@@ -123,7 +123,6 @@ for (const file of agentFiles) {
   if (!fm) { problems.push(`${rel(file)}: no frontmatter`); continue; }
   if (fm.name !== name) problems.push(`${rel(file)}: frontmatter name "${fm.name}" != file name`);
   if (!fm.effort) problems.push(`${rel(file)}: missing effort:`);
-  if (fm.effort && /^haiku/.test(fm.model || '')) problems.push(`${rel(file)}: effort: is dropped on haiku`);
   if (fm.model && !MODEL_ALIAS.test(modelValue(fm))) problems.push(`${rel(file)}: model: "${fm.model}" is not a family alias (${MODEL_ALIASES.join('|')})`);
   if (fm.permissionMode) problems.push(`${rel(file)}: permissionMode is ignored for plugin subagents`);
   const tools = (fm.tools || '').split(',').map(t => t.trim()).filter(Boolean);
@@ -143,7 +142,6 @@ for (const file of commandFiles) {
   if (!fm) { problems.push(`${rel(file)}: no frontmatter`); continue; }
   if (!fm.description) problems.push(`${rel(file)}: missing description:`);
   if (!fm.effort) problems.push(`${rel(file)}: missing effort:`);
-  if (fm.effort && /^haiku/.test(fm.model || '')) problems.push(`${rel(file)}: effort: is dropped on haiku`);
   if (fm.model && !MODEL_ALIAS.test(modelValue(fm))) problems.push(`${rel(file)}: model: "${fm.model}" is not a family alias (${MODEL_ALIASES.join('|')})`);
 }
 

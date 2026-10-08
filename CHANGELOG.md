@@ -5,6 +5,21 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [3.5.1] - 2026-10-08
+
+### Fixed
+
+- **Statusline effort on Haiku 5.5.** `LEGACY_USER_EFFORT` matched any `claude-haiku*` id, so on
+  Haiku 5.5 the line reported a top-level user-file `effortLevel` as configured (`(set: …)`), which
+  Claude Code ignores for models released from Opus 5.5 on. The pattern now matches `haiku-4` only.
+
+### Changed
+
+- **Consistency check allows `haiku` with `effort:`.** The `haiku` alias resolves to Haiku 5.5,
+  which supports every effort level, on the Anthropic API; it still resolves to Haiku 4.5 (effort
+  dropped) on Bedrock, Google Cloud, Foundry and Claude Platform on AWS. `CLAUDE.md` and `README.md`
+  state the provider split. Agent models are unchanged.
+
 ## [3.5.0] - 2026-10-03
 
 ### Fixed
