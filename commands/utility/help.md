@@ -8,7 +8,7 @@ effort: low
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v3.5.1 — .NET development plugin for Claude Code
+DotnetPilot v3.6.0 — .NET development plugin for Claude Code
 Usage: /dotnet-pilot:<category>:<command> [args]      e.g. /dotnet-pilot:dotnet:create-entity Product
 
 COMMANDS (16)

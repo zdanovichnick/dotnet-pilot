@@ -8,6 +8,7 @@ const stubEngine = (on: any, result: { text: string; isError?: boolean }) => {
   on('tool.call', { tool: 'Bash' }, async () => ({ result: { stdout: result.text }, text: result.text, isError: result.isError === true }))
   on('ui.toast', async (_$: unknown, e: { text: string }) => {
     toasts.push(e.text)
+    return { value: undefined }
   })
   return toasts
 }
@@ -28,6 +29,7 @@ test('a green run resets the streak', async ($, on) => {
   on('tool.call', { tool: 'Bash' }, async () => ({ result: { stdout: text }, text, isError: text === FAILED }))
   on('ui.toast', async (_$: unknown, e: { text: string }) => {
     toasts.push(e.text)
+    return { value: undefined }
   })
   const run = () => $.tool.call({ tool: 'Bash', command: 'dotnet test App.slnx' })
   await run()

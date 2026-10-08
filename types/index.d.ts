@@ -15,8 +15,19 @@ export type Pressure = {
   editedAfterFail: string[]
 }
 
+export type PixelCityWeather = 'clear' | 'storm' | 'rainbow'
+
+export type PixelCitySky = 'auto' | 'dawn' | 'day' | 'dusk' | 'night'
+
+export type PixelCityScene = {
+  weather: PixelCityWeather
+  sky: PixelCitySky
+  isHidden: boolean
+  rainbowUntil: number
+}
+
 declare module 'claude-code' {
   interface PluginState {
-    'dotnet-pilot': { buildStreak: BuildStreak; pressure: Pressure }
+    'dotnet-pilot': { buildStreak: BuildStreak; pressure: Pressure; cityScene: PixelCityScene }
   }
 }

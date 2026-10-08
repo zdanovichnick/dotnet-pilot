@@ -5,6 +5,23 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [3.6.0] - 2026-10-08
+
+### Added
+
+- **Pixel city band** *(mod, opt-in)*. `hooks/mods/pixel-city.tsx` draws an animated pixel-art city
+  above the prompt in the terminal: a sky that follows the local clock, windows that light with
+  tool activity, a storm when a `dotnet build`/`dotnet test` fails and a 30-second rainbow on the
+  next green run (classified by `build-classify.ts`, the same as the build toasts), and a comet at
+  the end of each turn. `/city` shows, hides, pins the sky or sets the weather. Off by default;
+  enable the `pixel_city` plugin option. Not drawn in the VS Code, desktop or mobile surfaces.
+
+### Fixed
+
+- **`build-status.test.ts` toast stub.** The test's `ui.toast` hook returned nothing, which the
+  current engine refuses ("returned no result"); it now returns `{ value: undefined }` like the
+  pressure tests' stub.
+
 ## [3.5.1] - 2026-10-08
 
 ### Fixed

@@ -1,7 +1,7 @@
 {
   "name": "dotnet-pilot",
   "displayName": "DotnetPilot",
-  "version": "3.5.1",
+  "version": "3.6.0",
   "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, convention-aware scaffolding, TDD agents, security and performance review, and project lifecycle commands.",
   "author": {
     "name": "Nick Zdanovych",
@@ -46,6 +46,12 @@
       "type": "boolean",
       "title": "Block loosening test edits under high pressure",
       "description": "Deny an Edit that skips, removes or comments out a test assertion while the pressure score is 60 or higher. Off by default; the warning toast shows regardless.",
+      "default": false
+    },
+    "pixel_city": {
+      "type": "boolean",
+      "title": "Pixel city band",
+      "description": "Draw an animated pixel-art city above the prompt in the terminal: day/night sky, windows that light with tool activity, a storm on a failed dotnet build/test and a rainbow when it goes green. /city controls it (requires a Claude Code build with mods).",
       "default": false
     }
   }
