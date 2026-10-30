@@ -1,195 +1,252 @@
-# 🚀 DotnetPilot
+# DotnetPilot
 
-**A .NET development assistant plugin for [Claude Code](https://claude.ai/code), with generated Codex and Cursor packages**
+**.NET workflows for Claude Code, Codex, and Cursor.**
 
-Roslyn-backed DI verification · EF Core migration safety · Clean-architecture enforcement · Convention-aware scaffolders
+Build features that follow your solution's conventions. Check dependency injection,
+review architecture boundaries, and generate EF Core migrations with Roslyn-backed analysis.
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](./LICENSE) [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/) [![Claude Code](https://img.shields.io/badge/Claude_Code-Plugin-orange?logo=anthropic)](https://claude.ai/code) [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](.)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/download)
+[![Plugin packages](https://github.com/zdanovichnick/dotnet-pilot/actions/workflows/host-plugins.yml/badge.svg)](https://github.com/zdanovichnick/dotnet-pilot/actions/workflows/host-plugins.yml)
 
-*16 commands · 9 specialized agents · 15 skill packs · 16 Roslyn MCP tools*
+[Install](#install) · [First steps](#first-steps) · [Compatibility](#compatibility) · [Workflows](#workflows) · [Troubleshooting](#troubleshooting)
 
----
+## Install
 
-## Quick Install
+Choose your app below. All three use the same Roslyn companion.
 
-**Codex / Cursor:** See the [installation and compatibility guide](docs/HOST-PLUGINS.md).
-Build their packages with `node scripts/build-host-plugins.js`. These include skills,
-core workflows, and Roslyn MCP configuration; interactive host verification is pending.
-The commands below install the full Claude Code plugin.
+**Jump to:** [Claude Code](#claude-code) · [Codex](#codex) · [Cursor](#cursor)
 
+### 1. Install the Roslyn companion
+
+With the **.NET 10 SDK** installed, run this in your terminal:
+
+```sh
+dotnet tool install -g DotnetPilot.Mcp.Roslyn
 ```
+
+Already installed? Use `dotnet tool update -g DotnetPilot.Mcp.Roslyn` instead.
+Restart your coding app if you just installed the SDK or changed PATH.
+
+### 2. Install for your app
+
+#### Claude Code
+
+Run these commands **in Claude Code chat**:
+
+```text
 /plugin marketplace add zdanovichnick/dotnet-pilot
 /plugin install dotnet-pilot@dotnet-pilot-marketplace
 /reload-plugins
 ```
 
-```
-dotnet tool install -g DotnetPilot.Mcp.Roslyn   # first install
-dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # update to latest
-```
+Open your .NET solution directory and run:
 
-**Strongly recommended — enable auto-update** (one-time setup). GitHub-sourced marketplaces have auto-update disabled by default; without this step you'll have to update manually each release. Add to `~/.claude/settings.json`:
-
-```json
-{
-  "extraKnownMarketplaces": {
-    "dotnet-pilot-marketplace": { "autoUpdate": true }
-  }
-}
+```text
+/dotnet-pilot:project:init
+/dotnet-pilot:dotnet:health-check
 ```
 
-That's it. Open Claude Code in your `.sln` / `.slnx` directory and run `/dotnet-pilot:utility:help`.
+Use `/dotnet-pilot:utility:help` to see all commands. Node.js 18+ is required for hooks.
 
----
+<details>
+<summary>Updates and local development</summary>
 
-## Why DotnetPilot?
+In `/plugin`, open the installed DotnetPilot plugin and choose **Update now**, then run
+`/reload-plugins`. Enable auto-update for `dotnet-pilot-marketplace` in the marketplace
+settings if you want automatic updates.
 
-AI coding tools make these .NET mistakes constantly — DotnetPilot fixes them at the source:
+To refresh the marketplace manually:
 
-| Without DotnetPilot | With DotnetPilot |
-| --- | --- |
-| Creates services, forgets DI registration | `dnp-di-wiring-checker` catches it immediately |
-| Manually edits EF migration files (breaks the chain) | `add-migration` always uses `dotnet ef migrations add` |
-| Puts domain models in the wrong project layer | `dnp-architect` enforces clean architecture in real time |
-| Skips `dotnet build` verification | Build hook verifies after every scaffold |
-| Ignores existing patterns in your codebase | Every scaffolder reads your conventions before writing code |
-
-![health-check demo](./assets/demo-health-check.svg)
-
----
-
-## 📦 Installation
-
-### Step 1 — Install the plugin
-
-```
-/plugin marketplace add zdanovichnick/dotnet-pilot
-/plugin install dotnet-pilot@dotnet-pilot-marketplace
-/reload-plugins
-```
-
-![installation steps](./assets/demo-install.svg)
-
-**Verify it worked:**
-
-```
-/dotnet-pilot:utility:help            → should list 16 commands
-/dotnet-pilot:dotnet:health-check     → validates build, tests, DI, architecture
-```
-
-**Keeping it up to date.**
-
-**Easiest:** Open the plugin manager (`/plugin` → Installed tab → `dotnet-pilot`) and click **"Update now"**. Then `/reload-plugins` to activate.
-
-**CLI alternative:**
-
-```
+```text
 /plugin marketplace update dotnet-pilot-marketplace
 /reload-plugins
 ```
 
-**Auto-update** (GitHub-sourced marketplaces disable it by default). Enable once via the `/plugin` UI (Marketplaces tab → `dotnet-pilot-marketplace` → Enable auto-update), or persist it in `.claude/settings.json`:
+For a session using a local clone, run in your terminal:
 
-```json
-{
-  "extraKnownMarketplaces": {
-    "dotnet-pilot-marketplace": { "autoUpdate": true }
-  }
-}
+```sh
+claude --plugin-dir "/absolute/path/to/dotnet-pilot"
 ```
 
-> Once the plugin lands in `claude-plugins-official`, the install collapses to `/plugin install dotnet-pilot` — auto-update on by default.
+</details>
 
-**Alternative: install from a local clone**
+#### Codex
 
-Use this when you cloned the repo and want to run your own build, or contribute changes.
+Use a recent **Codex CLI**, Git, and Node.js 18+. Run in your terminal:
 
-```
-# Windows  (type in Claude Code chat)
-/plugin marketplace add C:\path\to\dotnet-pilot
-
-# macOS / Linux
-/plugin marketplace add /path/to/dotnet-pilot
-```
-
-Then activate:
-
-```
-/plugin install dotnet-pilot@dotnet-pilot-marketplace
-/reload-plugins
+```sh
+git clone https://github.com/zdanovichnick/dotnet-pilot.git
+cd dotnet-pilot
+node scripts/build-host-plugins.js
+codex plugin marketplace add ./dist/plugins/codex
+codex plugin add dotnet-pilot@dotnet-pilot-marketplace
 ```
 
-Session-only (plugin active only while this Claude Code process is running):
+Already cloned this repository? Run the last three commands from its root.
 
-```
-# Windows
-claude --plugin-dir "C:\path\to\dotnet-pilot"
+Start a **new local chat in your .NET solution directory**, then invoke:
 
-# macOS / Linux
-claude --plugin-dir "/path/to/dotnet-pilot"
-```
-
-> After editing plugin source (commands, agents, hooks), run `/reload-plugins` to pick up changes without restarting.
-
-### Step 2 — Install the Roslyn MCP server
-
-```
-dotnet tool install -g DotnetPilot.Mcp.Roslyn   # first install
-dotnet tool update  -g DotnetPilot.Mcp.Roslyn   # update to the latest release
+```text
+$dnp-project-init
+$dnp-dotnet-health-check
 ```
 
-The plugin's `.mcp.json` auto-starts `dnp-roslyn` when Claude Code loads. It requires a `.sln` or `.slnx` file in your working directory.
+Use `$dotnet-pilot` to browse workflows. If skill names are namespaced, select the
+corresponding DotnetPilot skill in the picker. Keep the clone and generated marketplace
+folder available for updates.
 
-### Step 3 — Enable Context7 (recommended)
+**Verified:** local marketplace registration and installation through Codex CLI on Windows.
+Desktop workflow checks are pending. See the [Codex setup guide](docs/HOST-PLUGINS.md#install-in-codex).
+Use the CLI or desktop app for plugins; the Codex IDE extension does not support them.
 
-In Claude Code, enable the **Context7** MCP server at the account level — agents use it for live NuGet / ASP.NET Core / EF Core documentation.
+#### Cursor
 
-### Step 4 — Verify
+Use Git and Node.js 18+. Build the package in your terminal:
 
-```
-/dotnet-pilot:utility:help            → should list 16 commands
-/dotnet-pilot:dotnet:health-check     → validates build, tests, DI, architecture
-```
-
----
-
-## ⚡ Quick Start
-
-### Initialize your project (once per solution)
-
-```
-/dotnet-pilot:project:init
+```sh
+git clone https://github.com/zdanovichnick/dotnet-pilot.git
+cd dotnet-pilot
+node scripts/build-host-plugins.js
 ```
 
-Scans your solution, detects architecture style / test framework / EF contexts, and writes `config.json` plus `solution-map.json` into a user-scoped `.planning/` directory — nothing lands in the repo.
+Already cloned? Run only the build command from its root. Then install the generated
+folder using the instructions for your operating system.
 
-### Create a full entity in one command
+<details open>
+<summary>Windows — PowerShell</summary>
 
-![create-entity demo](./assets/demo-create-entity.svg)
-
-### Or go even faster with the shorthand
-
-```
-/dotnet-pilot:dotnet:create-entity Category --properties 'Name:string, SortOrder:int'
-/dotnet-pilot:dotnet:scaffold api Category
-/dotnet-pilot:dotnet:add-migration AddCategoryTable
+```powershell
+$cursorPlugins = Join-Path $env:USERPROFILE ".cursor/plugins/local"
+New-Item -ItemType Directory -Path $cursorPlugins -Force | Out-Null
+Copy-Item -LiteralPath "./dist/plugins/cursor/dotnet-pilot" -Destination $cursorPlugins -Recurse
 ```
 
----
+</details>
 
-## 🗺️ Architecture
+<details>
+<summary>macOS / Linux</summary>
 
-![DotnetPilot architecture diagram](./assets/architecture.svg)
+```sh
+mkdir -p "$HOME/.cursor/plugins/local"
+cp -R ./dist/plugins/cursor/dotnet-pilot "$HOME/.cursor/plugins/local/"
+```
 
-**Flow:** Developer invokes a `/dotnet-pilot:*` command → the command spawns the right agent → the agent calls the Roslyn MCP server for semantic C# analysis (DI completeness, architecture violations, EF Core models, symbol references). Hooks run automatically on file writes and git events, feeding advisory feedback back to the command layer — they never block by default.
+</details>
 
-> **v2.0.0 breaking change:** Commands were renamed for clarity. `pipeline:*` → `project:*`, `scaffold-*` → `create-*`, `audit-*` → `check-*`, and several others. See the tables below for full mapping.
->
-> **v3.0.0 breaking change:** 13 commands and 6 agents were removed or folded into survivors. `/dotnet-pilot:utility:help` prints a "Did you mean" table mapping every old command name to its replacement; `CHANGELOG.md` has the full list.
+Restart Cursor, open your .NET solution directory, and check **Customize** for DotnetPilot
+and its Roslyn MCP server. Choose these commands from the command picker:
 
----
+```text
+/dnp-project-init
+/dnp-dotnet-health-check
+```
 
-## 📋 Commands
+**Status:** the package is generated and validated; interactive Cursor verification is pending.
+See the [Cursor setup guide](docs/HOST-PLUGINS.md#install-in-cursor) for updates.
+
+<details>
+<summary>Codex / Cursor: download a package instead of building</summary>
+
+Open the [plugin package builds](https://github.com/zdanovichnick/dotnet-pilot/actions/workflows/host-plugins.yml),
+choose a successful run, and download `dotnet-pilot-codex` or `dotnet-pilot-cursor`
+from **Artifacts**. Extract the archive, including its dot-prefixed folders.
+
+For **Codex**, register the extracted marketplace directory, then install:
+
+```sh
+codex plugin marketplace add "/absolute/path/to/extracted/dotnet-pilot-codex"
+codex plugin add dotnet-pilot@dotnet-pilot-marketplace
+```
+
+That directory must contain `.agents/plugins/marketplace.json` and `dotnet-pilot/`.
+
+For **Cursor**, copy the extracted `dotnet-pilot/` folder to
+`~/.cursor/plugins/local/dotnet-pilot`, then restart Cursor.
+
+This route skips Git and Node.js for package building. The .NET SDK and Roslyn companion
+are still required. These are local packages; public marketplace submissions are pending.
+
+</details>
+
+### 3. Check your solution
+
+The app should open in a directory containing your `.sln` or `.slnx` file. The plugin
+starts the Roslyn server automatically; you do not need to launch it separately.
+
+Run the health-check workflow for your app. Confirm the report shows which build, test,
+DI, and architecture checks ran. If semantic tools are unavailable, the workflows can use
+file inspection and .NET CLI fallbacks and should report skipped semantic checks.
+
+## First steps
+
+Initialize once per solution, then use the workflow that matches your task:
+
+| Task | Claude Code | Codex | Cursor |
+| --- | --- | --- | --- |
+| Discover the solution | `/dotnet-pilot:project:init` | `$dnp-project-init` | `/dnp-project-init` |
+| Check solution health | `/dotnet-pilot:dotnet:health-check` | `$dnp-dotnet-health-check` | `/dnp-dotnet-health-check` |
+| Create an entity | `/dotnet-pilot:dotnet:create-entity` | `$dnp-dotnet-create-entity` | `/dnp-dotnet-create-entity` |
+| Generate a migration | `/dotnet-pilot:dotnet:add-migration` | `$dnp-dotnet-add-migration` | `/dnp-dotnet-add-migration` |
+| Implement with TDD | `/dotnet-pilot:dotnet:tdd` | `$dnp-dotnet-tdd` | `/dnp-dotnet-tdd` |
+| Verify before shipping | `/dotnet-pilot:project:verify` | `$dnp-project-verify` | `/dnp-project-verify` |
+
+Pass your request after the workflow name. For example, in Codex:
+
+```text
+$dnp-dotnet-create-entity Category --properties 'Name:string, SortOrder:int'
+$dnp-dotnet-scaffold api Category
+$dnp-dotnet-add-migration AddCategoryTable --context ApplicationDbContext
+```
+
+Entity scaffolding and migration generation are separate steps. Review the generated
+migration and SQL before applying a database change.
+
+![Entity scaffolding example in Claude Code](assets/demo-create-entity.svg)
+
+## Compatibility
+
+| Capability | Claude Code | Codex | Cursor |
+| --- | --- | --- | --- |
+| 15 .NET pattern skills | Included | Included | Included |
+| Core workflows | 13 commands | 13 workflow skills | 13 commands + workflow skills |
+| Nine specialist roles | Native agents | Reference checklists | Checklists + native agents |
+| Roslyn MCP configuration | Included | Included | Included |
+| Build, test, DI, migration checks | Workflow steps + hooks | Explicit workflow steps | Explicit workflow steps |
+| Sharded review, help, statusline commands | Included | — | — |
+| Automatic hooks and UI mods | Included | — | — |
+| Validation status | Existing plugin and hook suite | Package + local CLI install tested | Package validated; app testing pending |
+
+The Codex and Cursor packages use the host's tools and model. They execute specialist
+checklists directly by default. Claude-specific tool permissions, model routing, hooks,
+and UI features are not installed in those packages.
+
+[Installation details, state configuration, and publication requirements →](docs/HOST-PLUGINS.md)
+
+## Why DotnetPilot?
+
+| When you need to… | DotnetPilot helps you… |
+| --- | --- |
+| Add an entity, endpoint, or service | Match existing naming, layers, tests, and DI registration |
+| Change an EF Core model | Select the right DbContext, generate a migration, and review data-loss risks |
+| Diagnose a service that fails at runtime | Compare constructor dependencies with DI registrations |
+| Keep project boundaries clean | Find forbidden references and circular dependencies |
+| Prepare changes for review | Run build, test, security, and architecture checks |
+
+**15 pattern skills · 9 specialist roles · Roslyn semantic tools**
+
+Claude Code includes 16 commands and automatic hooks. Codex and Cursor packages include
+13 core workflows; see [compatibility](#compatibility) for the differences.
+
+![Example solution health check](assets/demo-health-check.svg)
+
+## Workflows
+
+The reference below uses **Claude Code command names**. For the 13 shared workflows,
+replace `category:name` with `$dnp-category-name` in Codex or `/dnp-category-name` in Cursor.
+For example, `quality:security-scan` becomes `$dnp-quality-security-scan` in Codex.
+
+`quality:review`, `utility:help`, and `utility:statusline` are Claude Code only.
 
 ### Project — project lifecycle
 
@@ -206,7 +263,7 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | `dotnet:scaffold` | `scaffold [feature\|api\|service\|project] <Name> [--arch vsa\|clean\|ddd]` | Detect the solution's architecture via Roslyn, then scaffold a feature (default), an API surface over an entity (`--minimal` for minimal APIs), a service with interface + DI registration (`--lifetime`), or a new project (`--type`) |
 | `dotnet:create-entity` | `create-entity <name> [--properties '...']` | Create a full entity stack: entity class, EF configuration, repository, service, and DI registration, then hand off to `dotnet:add-migration` for the migration |
 | `dotnet:add-endpoint` | `add-endpoint <controller> <method> <route> [--with-dto]` | Add an endpoint to an existing controller or endpoint group |
-| `dotnet:add-migration` | `add-migration <name> [--context <Name>]` | Generate an EF Core migration safely — checks for pending migrations, runs `migrations add` with `--context`, has `dnp-ef-migration-planner` inspect the generated `Up()` and removes the migration if it is destructive, then builds and emits an idempotent `migrations script` for review |
+| `dotnet:add-migration` | `add-migration <name> [--context <Name>]` | Generate an EF Core migration safely — checks for pending migrations, runs `migrations add` with `--context`, has `dnp-ef-migration-planner` inspect `Up()` and asks whether to keep or remove a destructive migration, then builds and emits an idempotent `migrations script` for review |
 | `dotnet:tdd` | `tdd <task> [--complexity easy\|hard] [--existing <target>]` | Implement a feature using TDD — failing tests first, then production code. `--existing` adds tests to a class, file, or project that already exists without touching production code |
 | `dotnet:run-tests` | `run-tests [project] [--coverage] [--filter ...]` | Run tests with coverage reporting and failure diagnosis |
 | `dotnet:health-check` | `health-check [--fix]` | Validate full solution health — build, tests, NuGet, project references, DI completeness |
@@ -229,49 +286,53 @@ Scans your solution, detects architecture style / test framework / EF contexts, 
 | `utility:help` | `/dotnet-pilot:utility:help` | Print the version banner, every command with its arguments, the agent / skill / hook rosters (each hook with its `hooks.*` toggle key), and a "Did you mean" table for command names removed in v3.0.0 |
 | `utility:statusline` | `statusline [--manual]` | Install the .NET-aware statusline and wire it into `~/.claude/settings.json` (backs up any existing statusLine) |
 
----
+## Specialist roles
 
-## 🤖 Agents
+Each role supplies a focused .NET checklist. Claude Code routes work to native agents;
+Codex reads checklists in the current agent, and Cursor also includes native definitions.
 
-Commands are thin orchestrators — all heavy work happens in one of these 9 agents, each with scoped tool access, a model tier, and a reasoning-effort level.
+| Specialist | Focus |
+| --- | --- |
+| `dnp-tdd-developer-easy` | Routine features and scaffolding with RED → GREEN → REFACTOR |
+| `dnp-tdd-developer-hard` | Complex features, cross-layer changes, architectural decisions |
+| `dnp-refactor-cleaner` | Behavior-preserving cleanup, naming, and duplication |
+| `dnp-architect` | Layer boundaries, project references, architecture decisions |
+| `dnp-ef-migration-planner` | Migration chains, DbContext selection, data-loss risks |
+| `dnp-di-wiring-checker` | Missing service registrations and captive dependencies |
+| `dnp-security-auditor` | Authentication, authorization, secrets, API security |
+| `dnp-performance-analyst` | Async code, EF queries, caching, allocations |
+| `dnp-nuget-auditor` | Vulnerable, outdated, and inconsistent NuGet packages |
 
-**Effort** is the second half of routing. Model tier sets *capability*; `effort:` sets how much reasoning is spent within that tier — so a mechanical check runs cheap on a capable model instead of being pushed onto a weaker one. Levels: `low` → `medium` → `high` → `xhigh` → `max`.
+## Pattern skills
 
-### Implementation
+All three packages include these 15 skills. Detailed references load only when relevant.
 
-| Agent | Model | Effort | Role |
-| --- | --- | --- | --- |
-| `dnp-tdd-developer-easy` | Sonnet | low | Fast TDD for routine .NET tasks — writes both tests and production code following RED-GREEN-REFACTOR; also the worker behind `dotnet:scaffold` and `dotnet:add-endpoint` |
-| `dnp-tdd-developer-hard` | Opus | medium | Deep TDD for complex .NET tasks — architectural decisions, ambiguous edge cases, cross-layer integration. Returns `[HALT: <question>]` instead of guessing when a design choice is underdetermined |
-| `dnp-refactor-cleaner` | Sonnet | high | Dead code removal, naming normalization, duplication elimination — behavior preserved, verified by tests after each step |
+| Skill | What it teaches |
+| --- | --- |
+| `aspnet-api-patterns` | Minimal APIs, controller patterns, `IExceptionHandler` + `AddProblemDetails`, built-in `AddOpenApi`, Asp.Versioning |
+| `ef-core-patterns` | DbContext design, migrations, query optimization, owned entities |
+| `testing-dotnet` | xUnit conventions, NSubstitute, `WebApplicationFactory` over Testcontainers, test tiers, mock fidelity |
+| `clean-architecture` | Layer rules, project layout, dependency direction, shared kernel |
+| `dotnet-project-init` | Discover projects, frameworks, packages, test runners, and EF contexts |
+| `modern-csharp` | C# 12–14 gotchas: `field` keyword, extension members, null-conditional assignment, span conversions, async and cancellation |
+| `error-handling` | The single `Result<TValue,TError>` definition, RFC 9457 `ProblemDetails`, `IProblemDetailsService`-backed global handler, exception boundaries |
+| `resilience` | Polly v8 `ResiliencePipelineBuilder`, retry, circuit breaker, timeout, hedging, `IHttpClientFactory` |
+| `caching` | `HybridCache` (.NET 9+), `IOutputCache`, cache-aside, `IMemoryCache`, typed cache keys |
+| `authentication` | JWT bearer, ASP.NET Identity, OIDC, policy-based auth, `IAuthorizationHandler` |
+| `vertical-slice` | Feature folders, `IEndpointGroup`, endpoint filters, no shared base classes |
+| `ddd` | `AggregateRoot<TId>`, value objects (`ComplexProperty` mapping), strongly-typed IDs, domain events via `TimeProvider`, repository-placement variants |
+| `convention-learner` | 6-step protocol: detect naming, folder structure, DI style, test framework, DTO style, error handling before writing any code |
+| `logging` | Serilog setup, message templates (not interpolation), `LogContext`, request logging, PII rules |
+| `opentelemetry` | `ActivitySource`, `IMeterFactory`, OTLP config, Aspire `AddServiceDefaults()`, Serilog correlation |
 
-### Architecture & data
+## Claude Code extras
 
-| Agent | Model | Effort | Role |
-| --- | --- | --- | --- |
-| `dnp-architect` | Opus | high | Solution architecture, clean-arch layer enforcement, project-reference and package-placement validation; advises on architectural `[HALT` questions from `dotnet:tdd` and confirms architecture findings in `quality:review` (loads the `clean-architecture` skill) |
-| `dnp-ef-migration-planner` | Sonnet | low | Plans safe EF Core migrations — detects breaking changes, validates chain integrity, targets correct DbContext (loads the `ef-core-patterns` skill) |
+Automatic hooks provide feedback during edits, shell commands, and session completion.
+Most checks are advisory. The stop-verification block is opt-in; Git Auto-Approve uses
+Claude's permission protocol. Configure toggles per solution.
 
-### Review confirmers (fast, focused)
-
-| Agent | Model | Effort | Role |
-| --- | --- | --- | --- |
-| `dnp-security-auditor` | Sonnet | high | OWASP Top 10 for .NET APIs — injection, secrets exposure, auth config, CORS, dependencies, input validation; judges a single routed finding when given a focused brief |
-| `dnp-performance-analyst` | Sonnet | high | Async hotspots, EF Core N+1 queries, missing `CancellationToken`, caching gaps, benchmark design; judges a single routed finding when given a focused brief |
-| `dnp-di-wiring-checker` | Sonnet | low | Cross-references constructor injection against DI registrations — finds missing services and captive dependencies; judges a single routed finding when given a focused brief |
-| `dnp-nuget-auditor` | Sonnet | low | Scans for vulnerable, outdated, and version-inconsistent NuGet packages across the solution |
-
-> Agents never prompt the user. A decision an agent cannot make comes back as `[HALT: <question>]`, and the command that spawned it asks you, then re-briefs the agent with the answer. For an architectural question, `dotnet:tdd` first asks `dnp-architect` and lists its pick as the recommended option.
->
-> Every agent runs on Sonnet or Opus with an explicit `effort:`; the mechanical ones sit at `effort: low`. The `haiku` alias resolves to Haiku 5.5 (full effort support) on the Anthropic API but to Haiku 4.5 (no effort, the field is dropped) on Bedrock, Google Cloud, Foundry and Claude Platform on AWS, so moving an agent to Haiku waits on a measured comparison.
->
-> Models are tier aliases (`opus`/`sonnet`), not dated IDs, so frontmatter tracks each tier's current default and needs no bump on a model release; the consistency check rejects anything else, because Claude Code's allowlist substitution covers aliases only.
-
----
-
-## 🪝 Hooks
-
-Hooks run automatically during Claude Code sessions. Advisory hooks warn but don't block, and they respect per-project toggle settings in `.planning/config.json`. The sync hook keeps the global `CLAUDE.md` up to date with the plugin's rule set. One hook (**Git Auto-Approve**) is non-advisory by design — it speaks the PreToolUse permission protocol to skip prompts on safe git/gh commands.
+<details>
+<summary>Automatic hooks</summary>
 
 | Hook | Trigger | What it does |
 | --- | --- | --- |
@@ -297,229 +358,29 @@ Hooks run automatically during Claude Code sessions. Advisory hooks warn but don
 
 *The pixel band's scenes, top to bottom: `city` at night, `beach`, `dino`, `dino` in a storm, `sunset` just after sunrise.*
 
----
+</details>
 
-## 📊 Statusline
+<details>
+<summary>Statusline and UI mods</summary>
 
-A compact, .NET-aware statusline. Install it with `/dotnet-pilot:utility:statusline`:
+Run `/dotnet-pilot:utility:statusline` to install the .NET-aware statusline. It shows
+model, reasoning effort, context usage, Git state, elapsed time, cost, solution, framework,
+and recent build failures. Use `--manual` to print configuration instead of wiring it.
 
-- **Line 1 (always):** `🤖 <model> │ ⚡ EFF <effort>[ (set: <configured>)] │ 🧠 <bar> <pct>% · <tokens> │ 🌿 <branch> ✚<dirty> ↑<ahead>↓<behind> │ ⏱ <elapsed> │ 💰 $<cost>`
-- **Line 2 (only inside a .NET solution):** `📦 SLN <name> │ 🎯 TFM <framework> │ ❌ BUILD <n>x`
-- **Line 3 (only inside a .NET solution):** `💡 TIP <rotating DotnetPilot command hint>` — a slowly-rotating pointer to the plugin's commands, for discovery
+UI mods add optional build-failure toasts, routing guidance, a pressure meter, and animated
+pixel-band scenes. They require a Claude Code build with mod support; enable them through
+the plugin's options. They are not part of the Codex or Cursor packages.
 
-Every segment carries an emoji icon and a saturated color on its **value** (labels stay dim), so the data reads before the scaffolding. Three segments are threshold-colored rather than fixed: the 🧠 context bar and percentage (green → yellow → red past 50 / 75 / 90%), the ⚡ effort level (dim `low` up to bold red `max`), and the 💰 cost (green → yellow → red past \$2 / \$10). Set `NO_COLOR` for plain text.
+</details>
 
-`⚡ EFF <effort>` shows the **live per-turn** reasoning-effort level (`low`/`medium`/`high`/`xhigh`/`max`) when Claude Code pipes it — it reflects mid-session `/effort` changes and the resolved level under `auto` (not a static config value), and is color-coded by level (brightest at the top of the scale) so a change is obvious at a glance; omitted when the model doesn't support effort. When the level you configured is not the one in force, a yellow `(set: <configured>)` suffix names it — e.g. `EFF high (set: xhigh)`. A top-level `effortLevel` in `~/.claude/settings.json` counts as configured only on models released before Opus 5.5 (Claude Code ignores it from Opus 5.5 and Haiku 5.5 on); for newer models only `modelSettings[<model>].effortLevel` does.
+## Roslyn semantic analysis
 
-`BUILD ✗ Nx` reflects the same failure state the **Build Verify** hook records (so it also surfaces `dotnet test` failures); absence means "no recent failure recorded", not a guaranteed green build.
+The local `dnp-roslyn` MCP companion analyzes C# through Roslyn and MSBuild.
+It exposes solution structure, symbol navigation, DI checks, architecture checks,
+and EF model inspection.
 
-Claude Code plugins cannot register a `statusLine` directly, and `${CLAUDE_PLUGIN_ROOT}` is not expanded in statusLine command strings — so the command installs the script to a stable path (`~/.claude/dnp-statusline.js`) and points `settings.json` at it. It detects and backs up any existing statusLine before replacing (or run with `--manual` to print the snippet instead). To activate automatically every session, set `statusline.auto_enable: true` in `.planning/config.json`; it coexists with — never silently replaces — another statusline unless you opt in. Honors `NO_COLOR`.
-
----
-
-## 📚 Skill Packs
-
-Skills are on-demand knowledge packs loaded by agents when needed — they encode .NET conventions that would otherwise require repeated prompting. Every `SKILL.md` carries a `when_to_use:` line so the right one loads on trigger, and the five largest (`authentication`, `caching`, `ddd`, `error-handling`, `resilience`) keep their detail in `references/*.md` files loaded one at a time.
-
-| Skill | What it teaches |
-| --- | --- |
-| `aspnet-api-patterns` | Minimal APIs, controller patterns, `IExceptionHandler` + `AddProblemDetails`, built-in `AddOpenApi`, Asp.Versioning |
-| `ef-core-patterns` | DbContext design, migrations, query optimization, owned entities |
-| `testing-dotnet` | xUnit conventions, NSubstitute, `WebApplicationFactory` over Testcontainers, test tiers, mock fidelity |
-| `clean-architecture` | Layer rules, project layout, dependency direction, shared kernel |
-| `dotnet-project-init` | Solution setup, NuGet config, CI scaffolding |
-| `modern-csharp` | C# 12–14 gotchas: `field` keyword, extension members, null-conditional assignment, span conversions, async and cancellation |
-| `error-handling` | The single `Result<TValue,TError>` definition, RFC 9457 `ProblemDetails`, `IProblemDetailsService`-backed global handler, exception boundaries |
-| `resilience` | Polly v8 `ResiliencePipelineBuilder`, retry, circuit breaker, timeout, hedging, `IHttpClientFactory` |
-| `caching` | `HybridCache` (.NET 9+), `IOutputCache`, cache-aside, `IMemoryCache`, typed cache keys |
-| `authentication` | JWT bearer, ASP.NET Identity, OIDC, policy-based auth, `IAuthorizationHandler` |
-| `vertical-slice` | Feature folders, `IEndpointGroup`, endpoint filters, no shared base classes |
-| `ddd` | `AggregateRoot<TId>`, value objects (`ComplexProperty` mapping), strongly-typed IDs, domain events via `TimeProvider`, repository-placement variants |
-| `convention-learner` | 6-step protocol: detect naming, folder structure, DI style, test framework, DTO style, error handling before writing any code |
-| `logging` | Serilog setup, message templates (not interpolation), `LogContext`, request logging, PII rules |
-| `opentelemetry` | `ActivitySource`, `IMeterFactory`, OTLP config, Aspire `AddServiceDefaults()`, Serilog correlation |
-
----
-
-## 📖 Use Cases
-
-**1. Scaffold a CRUD entity end-to-end in 30 seconds**
-
-```
-> /dotnet-pilot:dotnet:create-entity Category --properties 'Name:string, Description:string?, SortOrder:int'
-
-Created 9 files:
-  src/ECommerce.Domain/Entities/Category.cs
-  src/ECommerce.Infrastructure/Configurations/CategoryConfiguration.cs
-  src/ECommerce.Infrastructure/Data/ApplicationDbContext.cs        (added DbSet<Category>)
-  src/ECommerce.Application/Interfaces/ICategoryRepository.cs
-  src/ECommerce.Infrastructure/Repositories/CategoryRepository.cs
-  src/ECommerce.Application/Interfaces/ICategoryService.cs
-  src/ECommerce.Application/Services/CategoryService.cs
-  src/ECommerce.Api/Extensions/ServiceCollectionExtensions.cs      (2 DI registrations added)
-  Migration: 20260420_AddCategoryTable
-
-Build: PASS · Tests: PASS · DI: PASS
-
-> /dotnet-pilot:dotnet:scaffold api Category
-
-Created 4 files:
-  src/ECommerce.Api/DTOs/CreateCategoryRequest.cs
-  src/ECommerce.Api/DTOs/CategoryResponse.cs
-  src/ECommerce.Api/Controllers/CategoriesController.cs
-  src/ECommerce.Api/Validators/CreateCategoryRequestValidator.cs
-
-Build: PASS
-```
-
-**2. Safely migrate a project with multiple DbContexts**
-
-```
-> /dotnet-pilot:dotnet:add-migration AddCompanyNameToTenant
-
-
-Multiple DbContexts detected. Which one?
-  1. ApplicationDbContext (Infrastructure, 12 entities)
-  2. TenantDbContext (Infrastructure, 4 entities)
-→ 2
-
-Checking for breaking changes...
-  Analysis: Adding nullable column CompanyName — safe, no data loss.
-  Chain: 7 existing migrations, chain valid.
-
-Running: dotnet ef migrations add AddCompanyNameToTenant
-  --project src/ECommerce.Infrastructure
-  --startup-project src/ECommerce.Api
-  --context TenantDbContext
-
-Build: PASS · Dry run: PASS
-Committed: feat(Infrastructure): add migration AddCompanyNameToTenant
-```
-
-**3. Catch architecture violations before they ship**
-
-```
-> /dotnet-pilot:quality:check-architecture
-
-Architecture Audit: ECommerce.slnx
-  Style: clean
-
-  Violations (1):
-    [ERROR] ECommerce.Domain → ECommerce.Infrastructure
-            Domain should not reference Infrastructure.
-            Fix: Move the shared helper to Domain, or create an interface
-            in Application that Infrastructure implements.
-```
-
-**4. Find and fix missing DI registrations**
-
-```
-> /dotnet-pilot:dotnet:health-check
-
-  DI Wiring:    FAIL (15 services, 2 missing)
-
-  Missing:
-    IPaymentGateway      → consumed by OrderService (Application/Services/OrderService.cs:14)
-    INotificationService → consumed by OrderCompletedHandler (Application/Handlers/...:9)
-
-> /dotnet-pilot:dotnet:health-check --fix
-
-  Fixed ServiceCollectionExtensions.cs:
-    + services.AddScoped<IPaymentGateway, StripePaymentGateway>();
-    + services.AddScoped<INotificationService, EmailNotificationService>();
-
-  DI Wiring:    PASS (17 services, 0 missing)
-```
-
-**5. Pre-commit quality gate**
-
-```
-> /dotnet-pilot:project:verify --quick
-
-  [PASS] Build:        0 errors
-  [PASS] Tests:        72 passed
-  [WARN] Format:       2 files need formatting
-  [PASS] DI Wiring:    all services registered
-  [PASS] Architecture: no violations
-
-  Ready to commit. Run `dotnet format` to fix formatting issues.
-  git status: 3 files modified, 1 untracked
-```
-
-**6. Deep code review before a PR merge**
-
-```
-> /dotnet-pilot:quality:review --depth deep
-
-
-  [HIGH]   UserService.cs:45
-           Async method calls .Result on a Task — deadlocks under ASP.NET Core.
-           Fix: await the call instead.
-
-  [HIGH]   UsersController.cs:28
-           SQL injection: string interpolation in LINQ query with user input.
-           Fix: use parameterized queries or LINQ expressions.
-
-  [MEDIUM] OrderRepository.cs:62
-           N+1 query: .Include() inside a loop. Use eager loading outside.
-
-  [LOW]    OrderService.cs:15
-           ILogger injected but never used. Remove or add error-path logging.
-
-  4 issues found: 2 high · 1 medium · 1 low
-```
-
----
-
-## ⚙️ Configuration
-
-After `/dotnet-pilot:project:init`, configuration lives at `~/.claude/projects/<flat-repo-path>/.planning/config.json`.
-
-```json
-{
-  "dotnet": {
-    "solution_path": "MyApp.slnx",
-    "target_framework": "net10.0",
-    "test_framework": "xunit",
-    "ef_contexts": ["ApplicationDbContext"],
-    "architecture_style": "clean",
-    "use_minimal_api": false,
-    "central_package_management": false
-  },
-  "hooks": {
-    "di_check": true,
-    "migration_guard": true,
-    "project_scope_guard": true,
-    "build_verify": true,
-    "post_edit_format": true,
-    "commit_format": true
-  },
-  "statusline": {
-    "auto_enable": false
-  },
-  "workflow": {
-    "build_after_task": true,
-    "test_after_task": true,
-    "di_check_on_write": true
-  }
-}
-```
-
-Edit the file directly; `hooks/_lib/config.js` in the plugin is the authoritative list of keys it reads.
-
-| Setting | Change to | Reason |
-| --- | --- | --- |
-| `hooks.di_check` | `false` | DI advisory is too noisy for your workflow |
-| `hooks.project_scope_guard` | `false` | You routinely edit across multiple projects at once |
-| `hooks.commit_format` | `false` | Skip conventional-commit enforcement |
-| `statusline.auto_enable` | `true` | Auto-install + wire the .NET statusline every session (backs up any existing statusLine once) |
-| `workflow.build_after_task` | `false` | Skip automatic build after every scaffold |
-
----
-
-## 🔬 What the Roslyn MCP Server provides
-
-`dnp-roslyn` gives DotnetPilot semantic understanding of your C# code — not regex guessing.
+<details>
+<summary>Tool reference</summary>
 
 | Tool | What it does |
 | --- | --- |
@@ -539,165 +400,78 @@ Edit the file directly; `hooks/_lib/config.js` in the plugin is the authoritativ
 | `detect_antipatterns` | Syntax-level scan: `async void`, `.Result`/`.Wait()`, `new HttpClient()`, log interpolation, `Thread.Sleep`, missing `CancellationToken`, broad `catch (Exception)`, `DateTime.Now` |
 | `detect_circular_dependencies` | DFS cycle detection across project reference graph |
 
-> Without dnp-roslyn, DI checking falls back to regex-based hooks (less accurate). Roslyn tools only activate when Claude Code is opened inside a `.sln` / `.slnx` directory.
+</details>
 
----
+See the [Roslyn companion documentation](mcp/dotnet-pilot-mcp-roslyn/README.md) for setup
+and the full tool reference. Hosts may add prefixes to the exposed tool names.
 
-## 🚫 What DotnetPilot does NOT do
+## Configuration
 
-DotnetPilot deliberately avoids wrapping stock Claude Code capabilities — use them directly:
+Initialization caches the project graph in `solution-map.json` and solution settings in
+`config.json`. Workflows can discover the solution again if the cache is absent.
 
-| Task | Native Claude Code alternative |
+| App | Default state location |
 | --- | --- |
-| Multi-step planning | **Plan Mode** (`EnterPlanMode`) + `TaskCreate` |
-| General code review | Stock `code-reviewer` agent |
-| Security audit | Stock `/security-review` command |
-| Library research | Context7 MCP or `WebSearch` |
-| Tracking work within a conversation | `TaskCreate` / `TaskUpdate` |
-| Gathering user intent | Claude Code's built-in question prompt — from the command layer only; agents return `[HALT: <question>]` |
-| Initial CLAUDE.md | Stock `/init` |
+| Claude Code | `~/.claude/projects/<flattened-solution-path>/.planning/` |
+| Codex / Cursor | `<solution-root>/.planning/` |
 
-DotnetPilot wins only for **.NET-specific behavior**: Roslyn semantics, EF migration chains, DI wiring across project boundaries, clean-architecture layer rules, and scaffolders that match your existing project conventions.
+For Codex and Cursor, set `DNP_PLANNING_DIR` to choose another state directory.
+Relative paths resolve from the solution root. Keep generated state out of version control.
 
----
-
-## 🔍 Troubleshooting
-
-**"Failed to reconnect to plugin:dotnet-pilot:roslyn"**
-
-`dnp-roslyn` couldn't find a `.sln` or `.slnx` file in the current directory. Navigate to your solution directory and restart Claude Code there.
-
-```
-dnp-roslyn doctor    # shows solution detection status
-```
-
-**"DotnetPilot not initialized"**
-
-Every command works without init. Run `/dotnet-pilot:project:init` once if you want the cached `solution-map.json` and per-project hook toggles.
-
-**Hooks are too noisy**
+For Claude Code, hook toggles belong in `config.json`. For example:
 
 ```json
-{ "hooks": { "di_check": false, "project_scope_guard": false } }
+{
+  "hooks": {
+    "di_check": true,
+    "project_scope_guard": false,
+    "stop_verify_block": false
+  },
+  "statusline": {
+    "auto_enable": false
+  }
+}
 ```
 
-**Build keeps failing after scaffolding**
+The [hook configuration resolver](hooks/_lib/config.js) documents the supported keys.
+Claude hooks also support legacy repository-local `.planning/` state.
 
-DotnetPilot aborts after 5 consecutive build failures. Check that `dotnet build` works manually, then run `/dotnet-pilot:dotnet:health-check --fix` for auto-repair.
+## Troubleshooting
 
-**Commands missing after update (e.g. `dotnet:tdd` not found)**
+| Problem | What to check |
+| --- | --- |
+| Roslyn fails to connect | Confirm `dnp-roslyn` is on PATH, open the solution directory, and run `dnp-roslyn doctor` there |
+| App cannot find a solution | Open the folder containing `.sln` / `.slnx`; if necessary configure Roslyn with `--solution` and an absolute path |
+| New Codex skills are missing | Start a new local chat; check the installed plugin and any namespaced skills in the picker |
+| Cursor plugin is missing | Verify `~/.cursor/plugins/local/dotnet-pilot/.cursor-plugin/plugin.json` exists, then restart Cursor |
+| Duplicate Roslyn tools | Keep one plugin installation and remove any duplicate manual registration |
+| Updating a local package | Update the source, rebuild, then refresh/reinstall Codex or replace the Cursor plugin folder; restart the session |
+| Claude hooks are too noisy | Disable the relevant `hooks.*` toggle in the solution's `config.json` |
+| Need all Claude commands | Run `/dotnet-pilot:utility:help` |
 
-Claude Code caches the plugin at install time. After a major version update, new command files may not appear until the cache is refreshed.
+For Codex/Cursor installation details and an interactive smoke-test checklist, read the
+[host setup guide](docs/HOST-PLUGINS.md).
 
-**Option 1 — UI (easiest):** `/plugin` → Installed → `dotnet-pilot` → **"Update now"** → `/reload-plugins`
+## Development
 
-**Option 2 — short CLI reset:**
+The .NET guidance is maintained once in `skills/`, `agents/`, and `commands/`.
+The host package builder adapts it for Codex and Cursor using templates in `packaging/hosts/`.
 
+```sh
+node scripts/build-host-plugins.js
+node scripts/build-host-plugins.js --check
+node --test scripts/build-host-plugins.test.js
+node hooks/__tests__/check-consistency.js
+node hooks/__tests__/run.js
 ```
-/plugin uninstall dotnet-pilot
-/plugin install dotnet-pilot@dotnet-pilot-marketplace
-/reload-plugins
-```
 
-**Option 3 — full reset** (if Options 1 & 2 don't work):
+With Codex CLI installed, `node scripts/smoke-codex-plugin.js` checks local installation
+in a disposable profile. Package CI runs on Windows and Linux and uploads separate
+Codex and Cursor artifacts.
 
-```
-/plugin uninstall dotnet-pilot
-/plugin marketplace remove dotnet-pilot-marketplace
-/plugin marketplace add zdanovichnick/dotnet-pilot
-/plugin install dotnet-pilot@dotnet-pilot-marketplace
-/reload-plugins
-```
-
-Verify: `/dotnet-pilot:utility:help` — should list 16 commands including `dotnet:tdd`, `dotnet:scaffold`, and `quality:security-scan`.
-
-**"Context7 tools not available"**
-
-Context7 must be enabled at the account level in Claude Code settings.
+Read [CLAUDE.md](CLAUDE.md) for repository conventions and [CHANGELOG.md](CHANGELOG.md)
+for release history and command migrations.
 
 ---
 
-## 📅 Roadmap
-
-| Version | Status | Changes |
-| --- | --- | --- |
-| v0.1 | ✅ shipped | Core pipeline + agents + hooks |
-| v0.2 | ✅ shipped | Roslyn MCP server: DI analysis, solution structure, file-level queries, architecture checker |
-| v0.3 | ✅ shipped | Roslyn: EF Core model introspection, verbose stderr logging |
-| v1.0.0 | ✅ shipped | Scope narrowed; retired spec-driven pipeline; pinned model IDs; hardened hooks; hook test harness |
-| v1.1.0 | ✅ shipped | `pipeline:init/next/status` merged to core; `pipeline:verify` added; user-scoped `.planning/` path; planner & architect upgraded to Opus 4.7; plugin published to Claude Platform as `dotnet-pilot` |
-| v2.0.0 | ✅ shipped | **Breaking:** 12 commands renamed for clarity (`pipeline:*` → `project:*`, `scaffold-*` → `create-*`, `audit-*` → `check-*`, and others). New: a test-generation command and `dotnet:tdd` (21 → 23). New: global `CLAUDE.md` sync hook auto-injects .NET code-style rules on plugin install/update (5 → 6 hooks). Marketplace version synced. |
-| v2.1.1 | ✅ shipped | New: `.NET priority routing` hook — auto-detects .NET projects and injects DotnetPilot agent routing priority before generic agents are spawned (6 → 7 hooks). |
-| v2.2.0 | ✅ shipped | **Major content expansion.** +10 skills (modern C#, error handling, resilience, caching, auth, VSA, DDD, convention learner, logging, OpenTelemetry). +9 knowledge docs (anti-patterns, package recommendations, common infrastructure snippets, breaking changes, 5 ADRs). +4 agents (build-error-resolver, security-auditor, performance-analyst, refactor-cleaner). +5 commands (scaffold, security-scan, de-sloppify, a build-repair loop, a pre-commit gate). +5 templates (web-api, modular-monolith, blazor-app, worker-service, class-library). Post-edit auto-format hook. |
-| v2.2.1 | ✅ shipped | **Fix:** ship the 5 Roslyn MCP tools that were referenced by agents but never implemented — `find_symbol`, `find_callers`, `find_dead_code`, `detect_antipatterns`, `detect_circular_dependencies`. Roslyn server bumped to `0.5.0`. Tool count 10 → 15. |
-| v2.2.2 | ✅ shipped | **Model routing:** every agent switched from pinned/dated model IDs to tier aliases (`opus`/`sonnet`/`haiku`) so frontmatter auto-tracks each tier's current default and needs no bump on future model releases (e.g. Opus 4.8). Synced the model columns in `README.md` and `CLAUDE.md`, the command delegate-notes, and the architecture diagram. Also adds a Git rule to the injected global `CLAUDE.md` — fetch `CODEOWNERS` reviewers when opening PRs. |
-| v2.3.0 | ✅ shipped | New: `Git Auto-Approve` hook — returns `permissionDecision: allow` for safe single `git`/`gh` commands (status/diff/log/add/commit/branch/push, `gh pr create`, heredoc commit) so commit + PR skip the permission prompt (7 → 8 hooks). Plus doc-drift fixes and hook robustness hardening. |
-| v2.4.0 | ✅ shipped | **.NET-first tooling priority.** New `Code-Analyzer Redirect` advisory hook + extended `Priority Router` steer C# code inspection to `mcp__roslyn__` over kouhesion's Python `code-analyzer` (which has no C# support); adds a `.NET-First Tooling Priority` rule to the injected global `CLAUDE.md`; shared `_lib/dotnet.js` detection (with parent walk-up); both priority hooks are now config-toggleable (8 → 9 hooks). |
-| v2.5.0–2.5.3 | ✅ shipped | **.NET-aware statusline.** New `statusline/dnp-statusline.js` (model, context, git, elapsed, cost + a .NET line with solution / TFM / build-fail count) plus the `dnp-statusline-sync` SessionStart hook and `/dotnet-pilot:utility:statusline` installer (9 → 11 hooks). Added the reasoning-effort segment, colour-coded it by level, and fixed a `sha1(cwd)` build-fail state collision shared with `dnp-build-verify`. |
-| v2.6.0 | ✅ shipped | **Effort-aware routing + Fable advisor.** Every agent and command now carries an explicit `effort:` level, so reasoning spend is routed independently of model tier. The 6 Haiku agents moved to **Sonnet + `effort: low`** — effort is unsupported on Haiku 4.5, so the old pairing would have been a silent no-op. New Fable-5 read-only advisor agent (ADVISE / UNBLOCK / ADJUDICATE) for decision-point consults (14 → 15 agents; removed in v3.0.0). Statusline now renders `⚙ <active>≠<configured>` when the configured effort level is not actually in force — the failure mode that made a stale `CLAUDE_CODE_EFFORT_LEVEL` pin look like a statusline bug. |
-| v2.7.0 | ✅ shipped | **Statusline restyle.** The effort segment drops the double-width `⚙` glyph for an `EFF` label, and its configured-level mismatch now reads as a spelled-out `(set: <configured>)` instead of a cramped `≠<configured>`. Every segment gained an emoji icon and a saturated **value** color (labels stay dim), context usage renders as a threshold-colored 10-cell bar, and cost/context/effort now ramp green → yellow → red with pressure — following the icon + progress-bar style of the [official statusline docs](https://code.claude.com/docs/en/statusline). **Context-engineering pass for Claude 5.** The two TDD agents shed 680 lines of guardrail scaffolding — anti-rationalization tables, epistemic-gate and predict-first protocols, `LLM-1..6` self-verification checklists, and six pages of few-shot ideal-output transcripts — keeping the .NET gotchas that the model can't infer. Test-tier selection, mock-fidelity rules, and boundary-coverage tables moved into the `testing-dotnet` skill, loaded on demand instead of inlined. The global `CLAUDE.md` rules block lost a live contradiction ("prefer explicit types" vs "always use `var`") and its duplicated .NET style sections. `dnp-dotnet-priority` stopped re-injecting the 16-line agent roster on every `Agent` call — Claude Code already surfaces agent descriptions. Command references corrected from the never-valid `/DotnetPilot:` prefix to `/dotnet-pilot:` (109 occurrences). New **Comments** rule in the injected global block — default to none, and a comment earns its place only where the code cannot say the thing itself; the test-writer agent's example test dropped its `// Arrange` / `// Act` / `// Assert` labels, which had been demonstrating the opposite of the stated convention. |
-| v3.0.0 | ✅ shipped | **Breaking: pruned to what gets used, then modernized.** 29 → 16 commands — the project/service/API scaffolders folded into `dotnet:scaffold` modes, test generation into `dotnet:tdd --existing`, the pre-commit gate into `project:verify --quick`; the rest removed, with `utility:help` printing a "Did you mean" table for every old name. 15 → 9 agents (planner, verifier, Fable advisor, API scaffolder, build-error resolver, test writer removed; scaffolding now routes to `dnp-tdd-developer-easy`). Agents no longer prompt — they return `[HALT: <question>]` and the command asks; frontmatter dropped the scoped `Bash` form and permission-mode keys plugin subagents never honored. Side-effect commands (`init`, `ship`, `statusline`, `add-migration`) carry `disable-model-invocation`. Skills: Blazor placeholder removed, `when_to_use:` on all 15, `authentication`/`caching`/`resilience` split into `SKILL.md` + `references/`, `testing-dotnet` moved to NSubstitute + Testcontainers. The injected global rules block was cut to what hooks don't already enforce. Hooks: a shared build-state library, a Stop-time verification hook, a subagent-result hook, hardened git auto-approve, array-shaped `solution-map.json` in the scope guard, and a consistency checker + GitHub Actions CI over the hook harness. `quality:review` became Workflow-backed (triage → scout → confirm → report). `CHANGELOG.md` added; `plugin.json` gained `displayName`. |
-| v3.1.0 | ✅ shipped | **Fable for architecture judgment.** `dnp-architect` runs on `fable` at `effort: xhigh`; `quality:review` routes architecture findings to it at `standard`+ depth, and `dotnet:tdd` consults it before surfacing an architectural `[HALT]`, listing its pick as the recommended option. `utility:help` prints the version banner, every command's arguments and the agent / skill / hook rosters. The consistency check rejects any `model:` that is not a family alias. The injected `## Comments` rule leads with minimum, critical-only comments; the hook harness README diagrams its run loop and the hook event contract. |
-| v3.2.0 | ✅ shipped | **Opus 5.5 for judgment.** `dnp-architect` moves from `fable`/`xhigh` to `opus`/`high` and `dnp-tdd-developer-hard` from `sonnet`/`high` to `opus`/`medium`; every `quality:review` confirmer runs on `opus`. Opus 5.5 matches Fable 5.1 on most work at 40% of the price, its default `medium` effort beats Opus 5 at `high`, and it reports fewer false positives in code review — so Fable is no longer a requirement. Thin orchestrator commands drop to `effort: medium`. The statusline reads `modelSettings[<model>].effortLevel` and no longer reports a user-level top-level `effortLevel` as configured on Opus 5.5 and later, where Claude Code ignores it. Also hardens `dnp-git-autoapprove` (per-subcommand allowlist; closes heredoc, `--output`, force-push and `gh` bypasses), stops the sync hooks from rewriting an unparseable `settings.json`, drops the review workflow's triage agent, makes `add-migration` inspect before it keeps a migration, and corrects stale samples across the skills. |
-| v3.3.0 | ✅ shipped | **First mod.** A Claude Code mod (`hooks/mods/`) adds build-failure toasts at the 3rd/5th consecutive `dotnet build`/`dotnet test` failure and appends the .NET routing guidance to the system prompt once per session. Additive: the Node hooks remain for builds without mod support. Toggle with the `build_status` and `routing` plugin options. |
-| v3.4.0 | ✅ shipped | **Pressure meter.** A mod scores the session's pressure (red runs, re-edits, corrections) 0–100 in the status line, warns — or, opt-in, blocks — test edits that loosen a test after a red run, and adds a system-prompt section while the score is high asking for a stated blocker or `[HALT]` over another retry. Motivated by Anthropic's finding that a "desperation" representation under mounting failure drives reward hacking; the mod measures the observable proxy, not the model. `/dnp-pressure` lists the events. |
-| v3.5.0 | ✅ shipped | **Guard and format fixes.** The pressure mod's test-integrity guard now covers `Write` (compared with the file on disk) as well as `Edit`; the status line shows `pressure 0 steady` from session start instead of staying blank; correction detection no longer fires on "again"/"wrong" alone. `dnp-post-edit-format` queues saved `.cs` files and formats once per project at Stop instead of blocking every edit. |
-| v3.5.1 | ✅ shipped | **Haiku 5.5.** The statusline no longer reports a user-file top-level `effortLevel` as configured on Haiku 5.5; the consistency check now allows `haiku` with `effort:`, and the docs state that the alias resolves to Haiku 5.5 only on the Anthropic API (Haiku 4.5, without effort, on Bedrock, Google Cloud, Foundry and Claude Platform on AWS). |
-| v3.6.0 | ✅ shipped | **Pixel city.** An opt-in mod (`pixel_city`) draws an animated pixel-art city above the terminal prompt: storm on a failed `dotnet build`/`dotnet test`, rainbow on the next green run, windows that light with tool activity; `/city` controls it. |
-| v3.7.0 | ✅ shipped | **Pixel band scenes.** Beach, dino and time-lapse sunset join the city (`/city <scene>`, `/city next`, option `pixel_city_scene`); `/city` now explains how to enable the band instead of being an unknown command. |
-| v3.8 | 🔜 backlog | MAUI / mobile support |
-
----
-
-## Requirements
-
-| Dependency | Version | Purpose |
-| --- | --- | --- |
-| [Claude Code](https://claude.ai/code) | Latest | AI coding assistant (CLI, desktop, or IDE) |
-| [.NET SDK](https://dotnet.microsoft.com/) | 10+ | Your .NET project must build |
-| [Node.js](https://nodejs.org/) | 18+ | Hooks are JS scripts executed by Claude Code |
-| [dnp-roslyn](https://github.com/zdanovichnick/dotnet-pilot-mcp-roslyn) | v0.3+ | Roslyn MCP for semantic C# analysis |
-| [Context7](https://github.com/upstash/context7) | latest | Live library docs for the agents (recommended) |
-| [jq](https://jqlang.github.io/jq/) | any | Better JSON parsing in commit-format hook (optional) |
-| [GitHub CLI](https://cli.github.com/) | any | Required only for `project:ship` (optional) |
-
-**.NET SDK**
-```
-winget install Microsoft.DotNet.SDK.10   # Windows
-brew install dotnet-sdk                  # macOS
-sudo apt-get install -y dotnet-sdk-10.0  # Ubuntu/Debian
-```
-
-**Node.js**
-```
-winget install OpenJS.NodeJS   # Windows
-brew install node              # macOS
-sudo apt-get install -y nodejs # Ubuntu/Debian
-```
-
-**dnp-roslyn**
-```
-dotnet tool install -g DotnetPilot.Mcp.Roslyn
-dotnet tool update  -g DotnetPilot.Mcp.Roslyn
-dnp-roslyn version
-```
-
-**jq (optional)**
-```
-winget install jqlang.jq   # Windows
-brew install jq            # macOS
-sudo apt-get install -y jq # Ubuntu/Debian
-```
-
-**GitHub CLI (optional)**
-```
-winget install GitHub.cli  # Windows
-brew install gh            # macOS
-sudo apt-get install -y gh # Ubuntu/Debian
-```
-
----
-
-**[Nick Zdanovych](https://github.com/zdanovichnick)** · <zdanovichnick@gmail.com>
-
-MIT License · © 2026
+Created by [Nick Zdanovych](https://github.com/zdanovichnick) · [MIT License](LICENSE)
