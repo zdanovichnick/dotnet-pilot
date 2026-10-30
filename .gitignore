@@ -4,6 +4,7 @@ Thumbs.db
 .planning/
 /.vs
 .claude/
+/dist/plugins/
 
 # Written by the engine when the plugin loads as a mod
 .claude-plugin/types/

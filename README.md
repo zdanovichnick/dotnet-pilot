@@ -1,6 +1,6 @@
 # 🚀 DotnetPilot
 
-**A .NET development assistant plugin for [Claude Code](https://claude.ai/code)**
+**A .NET development assistant plugin for [Claude Code](https://claude.ai/code), with generated Codex and Cursor packages**
 
 Roslyn-backed DI verification · EF Core migration safety · Clean-architecture enforcement · Convention-aware scaffolders
 
@@ -11,6 +11,11 @@ Roslyn-backed DI verification · EF Core migration safety · Clean-architecture 
 ---
 
 ## Quick Install
+
+**Codex / Cursor:** See the [installation and compatibility guide](docs/HOST-PLUGINS.md).
+Build their packages with `node scripts/build-host-plugins.js`. These include skills,
+core workflows, and Roslyn MCP configuration; interactive host verification is pending.
+The commands below install the full Claude Code plugin.
 
 ```
 /plugin marketplace add zdanovichnick/dotnet-pilot

@@ -5,6 +5,17 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [Unreleased]
+
+### Added
+
+- Generated Codex and Cursor plugin packages with shared pattern skills, 13 core
+  workflows, host-neutral specialist checklists, and local Roslyn MCP configuration.
+  Cursor also exposes native commands and specialist agents.
+- Package integrity tests, isolated Codex CLI installation smoke test, Windows/Linux
+  packaging CI, and installation and publication guidance. Claude-specific hooks,
+  UI mods, and the sharded review runtime are excluded from these packages.
+
 ## [3.7.0] - 2026-10-08
 
 ### Added

@@ -1,0 +1,47 @@
+name: host-plugins
+
+on:
+  push:
+    branches: [master]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Test host adaptations
+        run: node --test scripts/build-host-plugins.test.js
+      - name: Build packages
+        run: node scripts/build-host-plugins.js
+      - name: Check package contents
+        run: node scripts/build-host-plugins.js --check
+      - name: Upload Codex marketplace
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-pilot-codex
+          path: dist/plugins/codex/
+          include-hidden-files: true
+          if-no-files-found: error
+      - name: Upload Cursor marketplace
+        if: runner.os == 'Linux'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dotnet-pilot-cursor
+          path: dist/plugins/cursor/
+          include-hidden-files: true
+          if-no-files-found: error
