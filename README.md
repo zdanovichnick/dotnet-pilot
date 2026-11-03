@@ -56,6 +56,18 @@ Open your .NET solution directory and run:
 Use `/dotnet-pilot:utility:help` to see all commands.
 
 <details>
+<summary>Install from the terminal instead</summary>
+
+```sh
+claude plugin marketplace add zdanovichnick/dotnet-pilot
+claude plugin install dotnet-pilot@dotnet-pilot-marketplace
+```
+
+Start a new Claude Code session in your solution directory afterwards.
+
+</details>
+
+<details>
 <summary>Updates and local development</summary>
 
 In `/plugin`, open the installed DotnetPilot plugin and choose **Update now**, then run
@@ -68,6 +80,9 @@ To refresh the marketplace manually:
 /plugin marketplace update dotnet-pilot-marketplace
 /reload-plugins
 ```
+
+From the terminal, `claude plugin update dotnet-pilot@dotnet-pilot-marketplace` does the
+same; restart Claude Code to apply it.
 
 For a session using a local clone, run in your terminal:
 
@@ -256,41 +271,44 @@ For example, `quality:security-scan` becomes `$dnp-quality-security-scan` in Cod
 
 ### Project — project lifecycle
 
-| Command | Usage | What it does |
+| Command | Arguments | What it does |
 | --- | --- | --- |
-| `project:init` | `/dotnet-pilot:project:init [--refresh]` | Initialize for a .NET solution — discover projects, write the user-scoped `.planning/` (`config.json`, `solution-map.json`) |
-| `project:verify` | `/dotnet-pilot:project:verify [--quick]` | Verify readiness before shipping — build, tests, DI completeness, architecture check. `--quick` is the pre-commit form: adds the format check, downgrades DI/architecture to warnings |
-| `project:ship` | `/dotnet-pilot:project:ship [--draft]` | Create a pull request for completed work — runs final checks and invokes `gh pr create` |
+| `project:init` | `[--refresh]` | Discover the solution's projects and write `config.json` and `solution-map.json` to the user-scoped `.planning/` |
+| `project:verify` | `[--quick]` | Check readiness before shipping: build, tests, DI completeness, architecture. `--quick` is the pre-commit form: it adds a format check and downgrades DI and architecture findings to warnings |
+| `project:ship` | `[--draft]` | Run final checks and open a pull request with `gh pr create` |
 
 ### Dotnet — scaffolding & solution management
 
-| Command | Usage | What it does |
+| Command | Arguments | What it does |
 | --- | --- | --- |
-| `dotnet:scaffold` | `scaffold [feature\|api\|service\|project] <Name> [--arch vsa\|clean\|ddd]` | Detect the solution's architecture via Roslyn, then scaffold a feature (default), an API surface over an entity (`--minimal` for minimal APIs), a service with interface + DI registration (`--lifetime`), or a new project (`--type`) |
-| `dotnet:create-entity` | `create-entity <name> [--properties '...']` | Create a full entity stack: entity class, EF configuration, repository, service, and DI registration, then hand off to `dotnet:add-migration` for the migration |
-| `dotnet:add-endpoint` | `add-endpoint <controller> <method> <route> [--with-dto]` | Add an endpoint to an existing controller or endpoint group |
-| `dotnet:add-migration` | `add-migration <name> [--context <Name>]` | Generate an EF Core migration safely — checks for pending migrations, runs `migrations add` with `--context`, has `dnp-ef-migration-planner` inspect `Up()` and asks whether to keep or remove a destructive migration, then builds and emits an idempotent `migrations script` for review |
-| `dotnet:tdd` | `tdd <task> [--complexity easy\|hard] [--existing <target>]` | Implement a feature using TDD — failing tests first, then production code. `--existing` adds tests to a class, file, or project that already exists without touching production code |
-| `dotnet:run-tests` | `run-tests [project] [--coverage] [--filter ...]` | Run tests with coverage reporting and failure diagnosis |
-| `dotnet:health-check` | `health-check [--fix]` | Validate full solution health — build, tests, NuGet, project references, DI completeness |
+| `dotnet:scaffold` | `[feature\|api\|service\|project] <Name> [--arch vsa\|clean\|ddd]` | Detect the solution's architecture, then scaffold a feature (default), an API over an entity (`--minimal` for minimal APIs), a service with its interface and DI registration (`--lifetime`), or a new project (`--type`) |
+| `dotnet:create-entity` | `<name> [--properties '...']` | Create the entity, EF configuration, repository, service and DI registration, then hand off to `dotnet:add-migration` |
+| `dotnet:add-endpoint` | `<controller> <method> <route> [--with-dto]` | Add an endpoint to an existing controller or endpoint group |
+| `dotnet:add-migration` | `<name> [--context <Name>]` | Check for pending migrations, run `migrations add` with `--context`, have `dnp-ef-migration-planner` review `Up()` for data loss, then build and emit an idempotent SQL script for review |
+| `dotnet:tdd` | `<task> [--complexity easy\|hard] [--existing <target>]` | Write failing tests first, then the production code. `--existing` adds tests to existing code without changing it |
+| `dotnet:run-tests` | `[project] [--coverage] [--filter ...]` | Run tests with coverage and diagnose failures |
+| `dotnet:health-check` | `[--fix]` | Check build, tests, NuGet, project references and DI completeness |
 
 ### Quality — safety checks
 
-| Command | Usage | What it does |
+| Command | Arguments | What it does |
 | --- | --- | --- |
-| `quality:review` | `review [--base <ref> \| --staged \| --last-commit \| --scope <glob>] [--depth quick\|standard\|deep]` | Sharded, Workflow-backed .NET review — haiku scouts per diff shard (shards validated in JS from the preflight manifest), opus confirmers per finding (routed to the specialist agent for security / performance / DI / architecture), one deterministic digest that names every coverage gap |
-| `quality:check-architecture` | `/dotnet-pilot:quality:check-architecture` | Scan for clean architecture layer violations — forbidden project references, DI issues, package placement |
-| `quality:security-scan` | `/dotnet-pilot:quality:security-scan` | Three-phase audit: `dotnet list package --vulnerable` → `dnp-security-auditor` OWASP scan → combined CRITICAL findings report |
-| `quality:de-sloppify` | `de-sloppify [--scope path]` | Safe refactoring pass — dead code removal, naming normalization, duplication elimination. Requires tests passing first |
+| `quality:review` | `[--base <ref> \| --staged \| --last-commit \| --scope <glob>] [--depth quick\|standard\|deep]` | .NET review of your changes. Fast scouts read each part of the diff, a stronger model tries to refute every finding against the source, and the report lists confirmed findings and anything it could not cover |
+| `quality:check-architecture` | — | Find layer violations: forbidden project references, DI issues, misplaced packages |
+| `quality:security-scan` | — | Run `dotnet list package --vulnerable`, then an OWASP review by `dnp-security-auditor`, and report the combined findings |
+| `quality:de-sloppify` | `[--scope path]` | Remove dead code, normalize naming and remove duplication. Tests must pass first |
 
-> `quality:review` is Workflow-backed. A Node preflight (`scripts/dnp-review-preflight.js`, Node ≥18, no deps) shards the selected diff and the command hands the manifest's shards to the workflow, which validates them in JS (falling back to per-file, then whole-diff units); haiku scouts read each shard, near-duplicate findings are merged, opus confirmers try to refute every finding against the source, and a fixed-format digest reports confirmed, refuted and unconfirmed findings plus every coverage gap — same change set, same report shape, every run. `--depth quick` stops after the scouts (≤6 agents), `standard` adds one confirmer per finding (≤11), `deep` adds four lens sweeps (≤20). Artifacts land in `${CLAUDE_PLUGIN_DATA}/review/<runId>/`; if Claude Code prompts on every run, allow the permission rule `Workflow(dnp-review)`.
+`--depth` sets how many agents `quality:review` may use: `quick` up to 6 (scouts only),
+`standard` up to 11, `deep` up to 20. Each run writes its files to
+`${CLAUDE_PLUGIN_DATA}/review/<runId>/`. If Claude Code asks for permission on every run,
+allow `Workflow(dnp-review)`.
 
 ### Utility — housekeeping
 
-| Command | Usage | What it does |
+| Command | Arguments | What it does |
 | --- | --- | --- |
-| `utility:help` | `/dotnet-pilot:utility:help` | Print the version banner, every command with its arguments, the agent / skill / hook rosters (each hook with its `hooks.*` toggle key), and a "Did you mean" table for command names removed in v3.0.0 |
-| `utility:statusline` | `statusline [--manual]` | Install the .NET-aware statusline and wire it into `~/.claude/settings.json` (backs up any existing statusLine) |
+| `utility:help` | — | Show the version, every command with its arguments, the agent, skill and hook rosters, and replacements for commands removed in v3.0.0 |
+| `utility:statusline` | `[--manual]` | Install the .NET-aware statusline in `~/.claude/settings.json`, backing up any existing one |
 
 ## Specialist roles
 
@@ -343,7 +361,7 @@ Claude's permission protocol. Configure toggles per solution.
 | Hook | Trigger | What it does |
 | --- | --- | --- |
 | **Global CLAUDE.md Sync** | On session start/resume/clear/compact | Injects/updates the DotnetPilot rule block in `~/.claude/CLAUDE.md` — replaces an existing block only when the plugin version is newer, and never rewrites an unparseable `settings.json`. Toggle `hooks.sync_global_claude_md: false` to disable |
-| **Git Auto-Approve** | Before `git`/`gh` commands from the Bash tool | Returns `permissionDecision: allow` for single git/gh commands that pass a per-subcommand allowlist (status/diff/log/add/commit/branch/switch/push, read-only `gh pr`/`run`/`issue`/`repo` verbs, `gh pr create`, one exact heredoc-commit shape) so commit + PR run without a prompt. Falls through to the normal prompt for chained, multi-line or redirected commands; `$`, globs, braces or backslashes anywhere; force pushes and ref deletion; `--output`, `--ext-diff`, `-c`; `reset`/`restore`/`clean`, `checkout` other than `-b`, `git config`, `gh api`, `--no-verify` commits; and anything from the PowerShell tool. Toggle `hooks.git_autoapprove: false` to disable |
+| **Git Auto-Approve** | Before `git`/`gh` commands from the Bash tool | Skips the permission prompt for single, allowlisted `git` and `gh` commands (status, diff, log, add, commit, branch, push, `gh pr create`, read-only `gh` views) so committing and opening a PR need no clicks. Anything chained, redirected, force-pushed, destructive (`reset`, `clean`, `git config`) or sent from the PowerShell tool still prompts. The full allowlist is in [CLAUDE.md](CLAUDE.md#hook-behaviors). Toggle `hooks.git_autoapprove: false` to disable |
 | **DI Registration Check** | After writing/editing `.cs` files | New services missing DI registration |
 | **Migration Guard** | Before writing/editing migration files | Warns when manually editing EF migration files |
 | **Project Scope Guard** | After writing/editing any file | Warns when editing outside the current phase's focused projects (`<Project>.Tests` counts as inside); at most one advisory per project per hour |
@@ -356,8 +374,8 @@ Claude's permission protocol. Configure toggles per solution.
 | **Code-Analyzer Redirect** | Before a `code-analyzer` MCP tool call | When the call targets C# (a `.cs` file, a .NET `project_path`, or a .NET cwd), nudges toward the C#-aware `mcp__roslyn__` tools — the Python/TS/JS code-analyzer has no C# support. Advisory only; never blocks. Toggle `hooks.code_analyzer_redirect: false` to disable |
 | **Build-failure toasts** *(mod)* | After `dotnet build` / `dotnet test` through the Bash or PowerShell tool | Same classification as Build Verify; shows a toast at the 3rd and 5th consecutive failure. Needs a Claude Code build with mod support; additive to the Node hook. Toggle plugin option `build_status` |
 | **Routing roster** *(mod)* | Each system-prompt composition | In a .NET project, adds the routing guidance once per session as a session-scoped section. Needs mod support. With it active, set `hooks.dotnet_priority: false` to drop the per-`Agent` nudge. Toggle plugin option `routing` |
-| **Pressure meter** *(mod)* | After `dotnet build`/`dotnet test`, Edit calls, and prompts | Scores the session 0–100 from red runs (+25/+30), re-edits of the same file after a red run (+10), corrections in your prompt (+10) and loosening test edits (+25); a green run takes 45 off. Shows `pressure N steady/strained/high` in the status line, `/dnp-pressure` lists the events. After a red run, an Edit to a test file that adds `Skip`, removes an assertion or a `[Fact]`, or comments an assertion out gets a toast; with `pressure_test_guard_block: true` it is denied while the score is ≥ 60. While the score is ≥ 60 a short system-prompt section asks for a stated blocker or `[HALT]` instead of another retry. Toggle plugin option `pressure` |
-| **Pixel band** *(mod, opt-in)* | Terminal only, above the prompt | Animated pixel-art band in four scenes: **city** (windows light with tool activity), **beach** (sea, palm, sailboat, crab), **dino** (a T-rex that jumps the cacti and runs faster while tools run; meteors in a storm) and **sunset** (a time-lapse day over mountains and a lake). The sky follows the local clock, a failed `dotnet build`/`dotnet test` brings a storm and the next green run a 30-second rainbow, and a comet crosses at the end of each turn. `/city [city\|beach\|dino\|sunset\|next\|show\|hide\|status\|dawn\|day\|dusk\|night\|auto\|storm\|rainbow\|clear\|comet]`. Needs mod support and a terminal with at least 5 free rows. Off by default — enable **Pixel city band** (`pixel_city`) in `/config`; **Pixel band scene** (`pixel_city_scene`) picks the starting scene |
+| **Pressure meter** *(mod)* | After `dotnet build`/`dotnet test`, Edit calls, and prompts | Scores the session 0–100 from failed runs, repeated edits after a failure, corrections in your prompts and edits that loosen tests; a green run lowers it. Shows `pressure N` in the status line, and `/dnp-pressure` lists what raised it. After a failed run, an edit that skips or removes a test assertion gets a toast (or is denied with `pressure_test_guard_block: true` once the score reaches 60). At 60 and above, Claude is asked to state the blocker instead of retrying again. Toggle plugin option `pressure` |
+| **Pixel band** *(mod, opt-in)* | Terminal only, above the prompt | Animated pixel-art band with four scenes: `city`, `beach`, `dino` and `sunset`. The sky follows your local clock, a failed build brings a storm and the next green run a rainbow. Switch scenes with `/city <scene>` (`/city status` lists every option). Needs a terminal with at least 5 free rows. Off by default: enable `pixel_city`, and pick the starting scene with `pixel_city_scene` |
 | **Statusline Sync** | On session start/resume/clear/compact | Refreshes the installed statusline script at `~/.claude/dnp-statusline.js` when the plugin ships a newer version. Only wires `~/.claude/settings.json` when `statusline.auto_enable: true` (default off) — never clobbers an existing statusLine without opt-in |
 
 ![pixel band scenes: city at night, beach, dino, dino in a meteor storm, sunset](./assets/pixel-band.png)
@@ -373,9 +391,19 @@ Run `/dotnet-pilot:utility:statusline` to install the .NET-aware statusline. It 
 model, reasoning effort, context usage, Git state, elapsed time, cost, solution, framework,
 and recent build failures. Use `--manual` to print configuration instead of wiring it.
 
-UI mods add optional build-failure toasts, routing guidance, a pressure meter, and animated
-pixel-band scenes. They require a Claude Code build with mod support; enable them through
-the plugin's options. They are not part of the Codex or Cursor packages.
+UI mods add build-failure toasts, routing guidance, a pressure meter, and animated
+pixel-band scenes. They require a Claude Code build with mod support and are not part of
+the Codex or Cursor packages. Turn them on or off in `/config`, or list them from the
+terminal with `claude plugin configure dotnet-pilot@dotnet-pilot-marketplace`:
+
+| Option | Default | Controls |
+| --- | --- | --- |
+| `build_status` | on | Build-failure toasts |
+| `routing` | on | Routing guidance in the system prompt |
+| `pressure` | on | Pressure meter |
+| `pressure_test_guard_block` | off | Deny test-loosening edits under high pressure |
+| `pixel_city` | off | Pixel band above the prompt |
+| `pixel_city_scene` | `city` | Starting scene: `city`, `beach`, `dino` or `sunset` |
 
 </details>
 
@@ -403,6 +431,7 @@ and EF model inspection.
 | `find_symbol` | Locate any type, method, or property by name across the solution |
 | `find_callers` | Find all callers of a specific method (call graph, not text search) |
 | `find_dead_code` | Identify unreferenced types and members — confidence-scored by accessibility |
+| `reload_solution` | Reload the solution from disk after adding or removing projects |
 | `detect_antipatterns` | Syntax-level scan: `async void`, `.Result`/`.Wait()`, `new HttpClient()`, log interpolation, `Thread.Sleep`, missing `CancellationToken`, broad `catch (Exception)`, `DateTime.Now` |
 | `detect_circular_dependencies` | DFS cycle detection across project reference graph |
 
@@ -439,14 +468,17 @@ For Claude Code, hook toggles belong in `config.json`. For example:
 }
 ```
 
-The [hook configuration resolver](hooks/_lib/config.js) documents the supported keys.
-Claude hooks also support legacy repository-local `.planning/` state.
+Every `hooks.*` key is on by default and only switches a hook off: `build_verify`,
+`code_analyzer_redirect`, `commit_format`, `di_check`, `dotnet_priority`, `git_autoapprove`,
+`migration_guard`, `post_edit_format`, `project_scope_guard`, `stop_verify`,
+`subagent_result`, `sync_global_claude_md`. The one opt-in key is `stop_verify_block`.
+Claude hooks also read a repository-local `.planning/config.json` when one exists.
 
 ## Troubleshooting
 
 | Problem | What to check |
 | --- | --- |
-| Roslyn fails to connect | Confirm `dnp-roslyn` is on PATH, open the solution directory, and run `dnp-roslyn doctor` there |
+| Roslyn fails to connect | Confirm `dnp-roslyn` is on PATH, open the solution directory, and run `dnp-roslyn doctor` there. In Claude Code, reconnect it from `/mcp` once fixed |
 | App cannot find a solution | Open the folder containing `.sln` / `.slnx`; if necessary configure Roslyn with `--solution` and an absolute path |
 | New Codex skills are missing | Start a new local chat; check the installed plugin and any namespaced skills in the picker |
 | Cursor plugin is missing | Verify `~/.cursor/plugins/local/dotnet-pilot/.cursor-plugin/plugin.json` exists, then restart Cursor |
