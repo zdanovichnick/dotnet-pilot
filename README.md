@@ -13,9 +13,15 @@ review architecture boundaries, and generate EF Core migrations with Roslyn-back
 
 ## Install
 
-Choose your app below. All three use the same Roslyn companion.
+Every app needs two steps. Install the Roslyn companion once, then add the plugin to your app.
 
-**Jump to:** [Claude Code](#claude-code) · [Codex](#codex) · [Cursor](#cursor)
+![Install DotnetPilot in Claude Code, Codex, or Cursor](assets/install-overview.svg)
+
+| App | Where you type | What you run | Then check with |
+| --- | --- | --- | --- |
+| [Claude Code](#claude-code) | Claude Code chat | 3 `/plugin` commands | `/dotnet-pilot:dotnet:health-check` |
+| [Codex](#codex) | Terminal | Clone, build, 2 `codex plugin` commands | `$dnp-dotnet-health-check` |
+| [Cursor](#cursor) | Terminal | Clone, build, copy one folder | `/dnp-dotnet-health-check` |
 
 ### 1. Install the Roslyn companion
 
@@ -32,7 +38,7 @@ Restart your coding app if you just installed the SDK or changed PATH.
 
 #### Claude Code
 
-Run these commands **in Claude Code chat**:
+Use Node.js 18+ (the hooks run on it). Run these commands **in Claude Code chat**:
 
 ```text
 /plugin marketplace add zdanovichnick/dotnet-pilot
@@ -47,7 +53,7 @@ Open your .NET solution directory and run:
 /dotnet-pilot:dotnet:health-check
 ```
 
-Use `/dotnet-pilot:utility:help` to see all commands. Node.js 18+ is required for hooks.
+Use `/dotnet-pilot:utility:help` to see all commands.
 
 <details>
 <summary>Updates and local development</summary>
