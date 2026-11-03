@@ -7,6 +7,8 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 
 ## [Unreleased]
 
+## [3.8.0] - 2026-11-03
+
 ### Added
 
 - Generated Codex and Cursor plugin packages with shared pattern skills, 13 core
