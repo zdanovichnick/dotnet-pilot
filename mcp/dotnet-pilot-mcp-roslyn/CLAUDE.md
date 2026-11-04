@@ -40,6 +40,7 @@ Tools are exposed as `mcp__roslyn__<name>` when registered in a consuming projec
 - WorkspaceCache is registered as singleton — one workspace per MCP server process.
 - DiAnalyzer uses semantic model (`GetSemanticModel`, `GetDeclaredSymbol`) not syntax-only analysis. This is the whole point vs regex.
 - Framework types (ILogger, IConfiguration, IOptions, etc.) are excluded from "missing registration" reports.
+- Scrutor `Scan(...)` calls are detected (`DiAnalyzer.FindScansAsync`) and reported under `scans` with a `note`; the types a scan registers are not resolved.
 - Captive dependency detection: Singleton consuming Scoped/Transient is flagged.
 - MCP SDK 1.2.0 treats all method parameters as required — use non-nullable `string` with empty-string-to-null conversion for optional parameters.
 

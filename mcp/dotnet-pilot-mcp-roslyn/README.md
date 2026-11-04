@@ -423,29 +423,33 @@ Finds all classes with constructor injection — any constructor parameter that 
 Cross-references registrations with consumers to find:
 - **Missing registrations** — a type is injected but never registered
 - **Captive dependencies** — a Scoped service injected into a Singleton (shorter-lived service captured by longer-lived one)
+- **Scrutor scans** — `Scan(...)` call sites are listed under `scans`; the types they register are not resolved, so `missing` may include them (a `note` says so)
 
 **Parameters:** none
 
 **Returns:**
 ```json
 {
-  "registeredServices": 12,
-  "consumers": 8,
-  "missingRegistrations": [
+  "registered": [
+    { "interface": "IOrderRepo", "implementation": "OrderRepo", "lifetime": "Scoped",
+      "registrationMethod": "AddScoped", "file": "src/MyApp.Infrastructure/DependencyInjection.cs", "line": 8 }
+  ],
+  "missing": [
     {
-      "consumer": "OrderService",
-      "missingType": "IPaymentGateway",
-      "file": "src/MyApp.Application/Services/OrderService.cs",
-      "line": 10
+      "interface": "IPaymentGateway",
+      "consumedBy": [
+        { "type": "OrderService", "file": "src/MyApp.Application/Services/OrderService.cs", "line": 10 }
+      ]
     }
   ],
-  "captiveDependencies": [
-    {
-      "singleton": "CacheService",
-      "captive": "ApplicationDbContext",
-      "captiveLifetime": "Scoped"
-    }
-  ]
+  "captive": [
+    { "dependency": "ApplicationDbContext", "lifetime": "Scoped", "consumer": "CacheService",
+      "consumerLifetime": "Singleton", "file": "src/MyApp.Infrastructure/CacheService.cs", "line": 6 }
+  ],
+  "scans": [
+    { "file": "src/MyApp.Application/DependencyInjection.cs", "line": 12 }
+  ],
+  "note": "Scrutor Scan(...) calls were found; the types they register are not resolved, so entries in 'missing' may be registered by a scan."
 }
 ```
 
@@ -675,7 +679,7 @@ dnp-roslyn doctor --solution path/to/Your.slnx
 
 - **`find_references` / `find_implementations` return nothing:** The symbol name must match exactly (case-sensitive). Use `get_class_outline` first to see exact member names.
 - **`get_ef_models` returns no contexts:** Ensure your DbContext class inherits from `DbContext`, `IdentityDbContext`, or `ApiAuthorizationDbContext`. The context must be in a project that's part of the solution.
-- **`check_di_completeness` misses registrations:** Only `Add*<T>` method-call patterns are detected. Custom extension methods that wrap DI registration may not be recognized.
+- **`check_di_completeness` misses registrations:** Only `Add*<T>` method-call patterns are detected, in any file. Custom extension methods that wrap DI registration may not be recognized. Scrutor `Scan(...)` registrations are not resolved: the call sites appear under `scans` and the report carries a `note`; treat `missing` entries as unverified when it is present.
 
 ### MCP transport issues
 

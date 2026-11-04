@@ -250,6 +250,35 @@ writeWorkspaceFile('src/Demo.Api/Extensions/HostingExtensions.cs',
   '        services.AddScoped<IBazService, BazService>();\n' +
   '    }\n}\n');
 
+// Registrations outside Program.cs / *Extensions.cs, each in its own workspace so a
+// Scrutor scan cannot silence the advisory cases that share `workspace`.
+function makeDiWorkspace(label, registrationFile, registrationSource) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), `dnp-hook-test-${label}-`));
+  const file = (rel, src) => {
+    const full = path.join(dir, rel);
+    fs.mkdirSync(path.dirname(full), { recursive: true });
+    fs.writeFileSync(full, src);
+    return full;
+  };
+  file(registrationFile, registrationSource);
+  return { dir, file };
+}
+const diTemplate = makeDiWorkspace('ditemplate', 'src/Demo.Infrastructure/DependencyInjection.cs',
+  'public static class DependencyInjection\n{\n' +
+  '    public static IServiceCollection AddInfrastructure(this IServiceCollection services)\n    {\n' +
+  '        services.AddScoped<IOrderRepo, OrderRepo>();\n        return services;\n    }\n}\n');
+const diTemplateRegistered = diTemplate.file('src/Demo.Infrastructure/OrderRepo.cs',
+  'public class OrderRepo(IDb db) : IOrderRepo { }\n');
+const diTemplateUnregistered = diTemplate.file('src/Demo.Infrastructure/AuditRepo.cs',
+  'public class AuditRepo(IDb db) : IAuditRepo { }\n');
+const diScrutor = makeDiWorkspace('discrutor', 'src/Demo.Application/DependencyInjection.cs',
+  'public static class DependencyInjection\n{\n' +
+  '    public static IServiceCollection AddApplication(this IServiceCollection services)\n    {\n' +
+  '        services.Scan(s => s.FromAssemblyOf<Marker>().AddClasses().AsImplementedInterfaces().WithScopedLifetime());\n' +
+  '        return services;\n    }\n}\n');
+const diScrutorScanned = diScrutor.file('src/Demo.Application/PricingService.cs',
+  'public class PricingService(IRates rates) : IPricingService { }\n');
+
 // Scope-guard map whose project paths are absolute (a hand-edited or legacy map).
 const scopeAbsWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-scopeabs-'));
 fs.mkdirSync(path.join(scopeAbsWorkspace, '.planning'), { recursive: true });
@@ -688,6 +717,31 @@ const CASES = [
     input: { cwd: workspace, tool_input: { file_path: diSuffixCollision } },
     expectExit: 0,
     expectSubstrings: ['[dnp-di-check]', 'Class `Service`'],
+  },
+
+  {
+    name: 'di-check: registration in DependencyInjection.cs is found',
+    hook: 'dnp-di-registration-check.js',
+    runtime: 'node',
+    input: { cwd: diTemplate.dir, tool_input: { file_path: diTemplateRegistered } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'di-check: class missing from DependencyInjection.cs still triggers advisory',
+    hook: 'dnp-di-registration-check.js',
+    runtime: 'node',
+    input: { cwd: diTemplate.dir, tool_input: { file_path: diTemplateUnregistered } },
+    expectExit: 0,
+    expectSubstrings: ['[dnp-di-check]', 'AuditRepo'],
+  },
+  {
+    name: 'di-check: Scrutor scan in the solution keeps the advisory silent',
+    hook: 'dnp-di-registration-check.js',
+    runtime: 'node',
+    input: { cwd: diScrutor.dir, tool_input: { file_path: diScrutorScanned } },
+    expectExit: 0,
+    expectEmpty: true,
   },
 
   // --- dnp-project-scope-guard (case-insensitive path resolution) ---

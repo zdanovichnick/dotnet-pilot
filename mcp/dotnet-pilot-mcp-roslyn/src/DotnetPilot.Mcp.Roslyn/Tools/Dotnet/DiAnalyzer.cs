@@ -8,7 +8,8 @@ namespace DotnetPilot.Mcp.Roslyn.Tools.Dotnet;
 /// <summary>
 /// Semantic analysis of DI registrations and consumers across a Roslyn Solution.
 /// Handles AddScoped/AddTransient/AddSingleton, keyed variants, TryAdd*,
-/// AddHttpClient, AddDbContext, and Scrutor assembly scanning.
+/// AddHttpClient, AddDbContext. Scrutor <c>Scan(...)</c> calls are detected and reported,
+/// but the types they register are not resolved.
 /// </summary>
 public static class DiAnalyzer
 {
@@ -65,6 +66,38 @@ public static class DiAnalyzer
         return registrations;
     }
 
+    public static async Task<List<DiScan>> FindScansAsync(Solution solution, CancellationToken ct)
+    {
+        var scans = new List<DiScan>();
+
+        foreach (var project in solution.Projects)
+        {
+            var compilation = await project.GetCompilationAsync(ct);
+            if (compilation is null) continue;
+
+            foreach (var tree in compilation.SyntaxTrees)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var model = compilation.GetSemanticModel(tree);
+                var root = await tree.GetRootAsync(ct);
+
+                foreach (var invocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
+                {
+                    if (GetMethodName(invocation) != "Scan" || !IsScrutorScan(invocation, model)) continue;
+
+                    scans.Add(new DiScan
+                    {
+                        File = GetRelativePath(solution, tree.FilePath),
+                        Line = invocation.GetLocation().GetLineSpan().StartLinePosition.Line + 1
+                    });
+                }
+            }
+        }
+
+        return scans;
+    }
+
     public static async Task<List<DiConsumer>> FindConsumersAsync(Solution solution, CancellationToken ct)
     {
         var consumers = new List<DiConsumer>();
@@ -98,6 +131,7 @@ public static class DiAnalyzer
     {
         var registrations = await FindRegistrationsAsync(solution, ct);
         var consumers = await FindConsumersAsync(solution, ct);
+        var scans = await FindScansAsync(solution, ct);
 
         var registeredTypes = new HashSet<string>(StringComparer.Ordinal);
         var lifetimeByType = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -184,7 +218,12 @@ public static class DiAnalyzer
         {
             Registered = registrations,
             Missing = missing,
-            Captive = captive
+            Captive = captive,
+            Scans = scans,
+            Note = scans.Count == 0
+                ? null
+                : "Scrutor Scan(...) calls were found; the types they register are not resolved, " +
+                  "so entries in 'missing' may be registered by a scan."
         };
     }
 
@@ -327,6 +366,16 @@ public static class DiAnalyzer
             Line = lineSpan.StartLinePosition.Line + 1,
             ConstructorParams = injectedParams
         };
+    }
+
+    private static bool IsScrutorScan(InvocationExpressionSyntax invocation, SemanticModel model)
+    {
+        var symbol = model.GetSymbolInfo(invocation).Symbol;
+        if (symbol is not null)
+            return symbol.ContainingNamespace?.ToDisplayString() == "Scrutor";
+
+        // Scrutor is not resolvable (missing reference): fall back to its fluent shape.
+        return invocation.ToString().Contains("AddClasses", StringComparison.Ordinal);
     }
 
     private static string? GetMethodName(InvocationExpressionSyntax invocation)

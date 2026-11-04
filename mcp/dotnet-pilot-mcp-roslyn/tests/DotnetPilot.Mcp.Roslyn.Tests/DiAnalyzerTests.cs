@@ -1,6 +1,8 @@
 using DotnetPilot.Mcp.Roslyn.Tools.Dotnet;
 using DotnetPilot.Mcp.Roslyn.Workspace;
+using System.Reflection;
 using Microsoft.Build.Locator;
+using Microsoft.CodeAnalysis;
 using Xunit;
 
 namespace DotnetPilot.Mcp.Roslyn.Tests;
@@ -72,6 +74,57 @@ public class DiAnalyzerTests : IAsyncLifetime
             Assert.NotNull(c.Type);
             Assert.NotEmpty(c.ConstructorParams);
         });
+    }
+
+    [Fact]
+    public async Task CheckCompleteness_ScrutorScan_IsReportedWithNote()
+    {
+        const string source = """
+            using Scrutor;
+
+            namespace Scrutor
+            {
+                public static class ScanExtensions
+                {
+                    public static object Scan(this object services, System.Action<object> selector) => services;
+                }
+            }
+
+            public interface IClock { }
+            public class Consumer(IClock clock) { }
+
+            public static class DependencyInjection
+            {
+                public static void Wire(object services) => services.Scan(s => { });
+            }
+            """;
+
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("Demo", LanguageNames.CSharp)
+            .AddMetadataReference(MetadataReference.CreateFromFile(typeof(object).Assembly.Location))
+            .AddMetadataReference(MetadataReference.CreateFromFile(
+                Assembly.Load("System.Runtime").Location));
+        var document = project.AddDocument("DependencyInjection.cs", source);
+
+        var report = await DiAnalyzer.CheckCompletenessAsync(document.Project.Solution, CancellationToken.None);
+
+        var scan = Assert.Single(report.Scans);
+        Assert.Equal(16, scan.Line);
+        Assert.NotNull(report.Note);
+    }
+
+    [Fact]
+    public async Task CheckCompleteness_NoScan_HasNoNote()
+    {
+        using var workspace = new AdhocWorkspace();
+        var project = workspace.AddProject("Demo", LanguageNames.CSharp)
+            .AddMetadataReference(MetadataReference.CreateFromFile(typeof(object).Assembly.Location));
+        var document = project.AddDocument("Plain.cs", "public class Plain { }");
+
+        var report = await DiAnalyzer.CheckCompletenessAsync(document.Project.Solution, CancellationToken.None);
+
+        Assert.Empty(report.Scans);
+        Assert.Null(report.Note);
     }
 
     [Fact]

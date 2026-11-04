@@ -99,44 +99,39 @@ process.stdin.on('end', () => {
       `TryAddEnumerable[^;]*\\b${className}\\b`,
     ];
 
-    // Quick scan: check Program.cs and extension files in the same solution
-    const searchDirs = [cwd];
+    // Registrations live wherever the project puts them (Program.cs, *Extensions.cs,
+    // DependencyInjection.cs, Startup.cs, ...), so select files by content, not name.
     let found = false;
 
-    for (const dir of searchDirs) {
-      try {
-        const programCs = findFilesByName(dir, n => n === 'Program.cs', 6);
-        const extensionFiles = findFilesByName(dir, n => n.includes('Extensions') && n.endsWith('.cs'), 6);
-        const filesToCheck = [...programCs, ...extensionFiles];
-
-        for (const f of filesToCheck) {
-          try {
-            // Strip comments first — a commented-out `AddScoped<FooService>`
-            // must NOT count as a real registration (it would false-suppress
-            // the advisory).
-            const c = stripComments(fs.readFileSync(f, 'utf8'));
-            if (genericRegistrationTargets(c).has(className)) {
-              found = true;
-              break;
-            }
-            for (const pattern of registrationPatterns) {
-              if (new RegExp(pattern).test(c)) {
-                found = true;
-                break;
-              }
-            }
-            if (found) break;
-          } catch (e) { /* skip unreadable */ }
-        }
-        if (found) break;
-      } catch (e) { /* skip */ }
-    }
+    try {
+      for (const f of findFilesByName(cwd, n => n.endsWith('.cs'), 6)) {
+        try {
+          // Strip comments first — a commented-out `AddScoped<FooService>`
+          // must NOT count as a real registration (it would false-suppress
+          // the advisory).
+          const raw = fs.readFileSync(f, 'utf8');
+          if (!REGISTRATION_HINT.test(raw)) continue;
+          const c = stripComments(raw);
+          // A Scrutor scan registers types by convention; a regex cannot tell which,
+          // so the advisory would be a guess. Stay silent rather than false-alarm.
+          if (SCRUTOR_SCAN.test(c)) {
+            found = true;
+            break;
+          }
+          if (genericRegistrationTargets(c).has(className) ||
+              registrationPatterns.some(pattern => new RegExp(pattern).test(c))) {
+            found = true;
+            break;
+          }
+        } catch (e) { /* skip unreadable */ }
+      }
+    } catch (e) { /* skip */ }
 
     if (!found) {
       const interfaceName = `I${className}`;
       emit(`DI ADVISORY: Class \`${className}\` has constructor injection but no DI registration was found. ` +
         `Remember to register it (e.g., \`services.AddScoped<${interfaceName}, ${className}>()\`) ` +
-        `in Program.cs or a ServiceCollectionExtensions class. ` +
+        `in Program.cs, a ServiceCollectionExtensions class or a DependencyInjection class. ` +
         `(Detection is regex-based; for semantic accuracy use \`mcp__roslyn__check_di_completeness\` via dnp-di-wiring-checker.)`);
     }
 
@@ -145,6 +140,9 @@ process.stdin.on('end', () => {
     process.exit(0);
   }
 });
+
+const REGISTRATION_HINT = /IServiceCollection|\.Services\b|\bAdd(?:Keyed)?(?:Scoped|Transient|Singleton)\b|\.Scan\s*\(/;
+const SCRUTOR_SCAN = /\.Scan\s*\([^;]*\.AddClasses\s*\(/;
 
 // Controllers, hubs, hosted services, Razor pages, view components, endpoints
 // and conventional middleware are constructed by the framework from the

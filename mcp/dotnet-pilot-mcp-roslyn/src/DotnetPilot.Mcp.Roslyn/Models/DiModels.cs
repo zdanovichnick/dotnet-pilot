@@ -57,6 +57,21 @@ public sealed class DiCompletenessReport
 
     [JsonPropertyName("captive")]
     public required List<DiCaptive> Captive { get; init; }
+
+    [JsonPropertyName("scans")]
+    public required List<DiScan> Scans { get; init; }
+
+    [JsonPropertyName("note")]
+    public string? Note { get; init; }
+}
+
+public sealed class DiScan
+{
+    [JsonPropertyName("file")]
+    public required string File { get; init; }
+
+    [JsonPropertyName("line")]
+    public int Line { get; init; }
 }
 
 public sealed class DiMissing

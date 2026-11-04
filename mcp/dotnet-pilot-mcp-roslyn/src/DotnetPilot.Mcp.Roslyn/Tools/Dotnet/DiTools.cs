@@ -26,7 +26,7 @@ public sealed class DiTools
         return JsonSerializer.Serialize(consumers, JsonOptions);
     }
 
-    [McpServerTool(Name = "check_di_completeness"), Description("Cross-references DI registrations with consumers. Returns registered services, missing registrations (consumed but not registered), and captive dependencies (Scoped inside Singleton).")]
+    [McpServerTool(Name = "check_di_completeness"), Description("Cross-references DI registrations with consumers. Returns registered services, missing registrations (consumed but not registered), and captive dependencies (Scoped inside Singleton), and Scrutor Scan(...) call sites. When scans exist, 'missing' may include types the scan registers.")]
     public static async Task<string> CheckCompleteness(WorkspaceCache workspace, CancellationToken ct)
     {
         var solution = await workspace.GetSolutionAsync(ct);

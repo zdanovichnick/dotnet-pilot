@@ -7,6 +7,17 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 
 ## [Unreleased]
 
+### Fixed
+
+- `dnp-di-registration-check` finds registrations in any `.cs` file that contains registration
+  calls, not only `Program.cs` and files named `*Extensions*`. A registration in
+  `DependencyInjection.cs` or `Startup.cs` no longer produces a false advisory.
+- `dnp-di-registration-check` stays silent when a Scrutor `Scan(...).AddClasses(...)` is present,
+  since the types it registers cannot be resolved by regex.
+- Roslyn `check_di_completeness`: the `DiAnalyzer` doc comment claimed Scrutor support that did
+  not exist. The report now carries `scans` (each Scrutor `Scan` call site) and a `note` warning
+  that `missing` may include types a scan registers. Scanned types are still not resolved.
+
 ## [3.8.0] - 2026-11-03
 
 ### Added
