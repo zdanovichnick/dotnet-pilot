@@ -7,6 +7,8 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 
 ## [Unreleased]
 
+## [3.8.1] - 2026-11-04
+
 ### Fixed
 
 - `dnp-di-registration-check` finds registrations in any `.cs` file that contains registration

@@ -29,7 +29,7 @@ const { spawnSync } = require('child_process');
 
 // Installed-version stamp — read by dnp-statusline-sync.js to decide whether to
 // refresh the copy in ~/.claude. Keep in sync with plugin.json on release.
-const STATUSLINE_VERSION = '3.8.0';
+const STATUSLINE_VERSION = '3.8.1';
 
 const DOTNET_MARKERS = ['.sln', '.slnx', '.csproj'];
 
