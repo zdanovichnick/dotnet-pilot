@@ -48,7 +48,7 @@ jobs:
         id: login
         uses: NuGet/login@v1
         with:
-          user: zdanovichnick
+          user: ${{ vars.NUGET_USER }}
 
       - name: Push NuGet package
         run: dotnet nuget push mcp/dotnet-pilot-mcp-roslyn/artifacts/packages/*.nupkg --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
