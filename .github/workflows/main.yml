@@ -8,12 +8,13 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    environment: nuget-publish
+    environment: production
 
     steps:
       - name: Checkout
@@ -43,8 +44,14 @@ jobs:
           path: mcp/dotnet-pilot-mcp-roslyn/artifacts/packages/*
           if-no-files-found: error
 
+      - name: NuGet login (trusted publishing)
+        id: login
+        uses: NuGet/login@v1
+        with:
+          user: zdanovichnick
+
       - name: Push NuGet package
-        run: dotnet nuget push mcp/dotnet-pilot-mcp-roslyn/artifacts/packages/*.nupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push mcp/dotnet-pilot-mcp-roslyn/artifacts/packages/*.nupkg --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Push symbol package
-        run: dotnet nuget push mcp/dotnet-pilot-mcp-roslyn/artifacts/packages/*.snupkg --api-key "${{ secrets.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push mcp/dotnet-pilot-mcp-roslyn/artifacts/packages/*.snupkg --api-key "${{ steps.login.outputs.NUGET_API_KEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
