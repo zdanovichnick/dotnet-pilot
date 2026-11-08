@@ -7,6 +7,83 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 
 ## [Unreleased]
 
+## [3.9.0] - 2026-11-08
+
+### Added
+
+- `samples/SmokeSolution`: a five-project clean-architecture fixture with planted defects (an
+  unregistered `IPaymentGateway`, a captive `OrderCache`, a Scrutor scan, and a test that fails
+  only when `SMOKE_FAIL=1`). EF Core runs on SQLite with a design-time factory, so a migration
+  can be generated and scripted offline. Its README lists the finding each Roslyn tool must return.
+- `scripts/smoke-roslyn.js` drives the Roslyn server over stdio against the sample and checks
+  13 expected findings; `--server dnp-roslyn` checks the installed global tool.
+- `roslyn` CI workflow (Windows and Linux): builds and tests the sample, builds and tests the
+  server with `DNP_TEST_SOLUTION` pointing at the sample, runs the stdio smoke test, and packs.
+  Before this, the integration tests returned early in CI and passed without running.
+- **Roslyn MCP health** mod (plugin option `mcp_health`, on by default). At session start in a
+  .NET project it connects to the `roslyn` server. A failed start is classified right away with
+  `dnp-roslyn version` and `doctor`: not installed or not on PATH, no MSBuild, no solution,
+  solution load failed, unresponsive, version below 0.5, or an `/mcp` setting. There is no retry,
+  because the engine does not respawn a failed server; the advice says to Reconnect in `/mcp`.
+  A connected server is probed only when `mcp__roslyn__*` is already allowed, because the probe
+  goes through the permission layer. Otherwise the status shows `roslyn ✓ unprobed` and no
+  dialog opens. The status line shows `roslyn ✓` or `roslyn ✗ <reason>` next to the pressure
+  score, and the fix is toasted once. While roslyn is down, Claude is told to fall back to
+  Grep/Read and say so. `/dnp-mcp` shows the state and a doctor excerpt; `/dnp-mcp retry`
+  checks again.
+  A failed `mcp__roslyn__*` call re-checks the server mid-session and toasts only when it newly
+  went down. The check hooks `tool.call`, not `classic.PostToolUseFailure`, because an
+  enterprise's builtin plugin seated outermost continues past user-tier `classic.*` hooks. A start the engine skipped because it
+  cached a failure from the last 15 minutes, possibly in another folder, is reported as
+  `failure cached` with Reconnect advice, unless doctor finds a real cause.
+- `docs/HOST-PLUGINS.md`: a 12-step Codex/Cursor checklist with pass criteria and a results
+  table. Codex CLI passes all 12 steps; Cursor CLI passes with the step 11 migration half
+  inferred from the Codex run.
+
+### Changed
+
+- Roslyn server (0.5.3): with no `.sln`/`.slnx` at or above its working directory it now starts
+  unbound instead of exiting, and every tool answers `No solution is loaded … call reload_solution
+  with solutionPath`. `reload_solution` takes an optional `solutionPath` (a solution file or a
+  directory to search upward from) and reports the path it loaded. Codex starts plugin servers in
+  the plugin's own folder and exposes no workspace root, so before this the server exited and
+  Codex listed no Roslyn tools. The health mod reports that answer as `no solution`. An explicit
+  `--solution` that does not resolve still exits.
+- `.mcp.json` drops `DNP_ROSLYN_MIN_VERSION`, which nothing read; the minimum now lives in
+  `hooks/mods/mcp-health.ts`.
+- The `hooks` workflow now fails on `claude plugin validate` errors; the strict pass stays
+  advisory.
+- The NuGet publish workflow builds the sample and runs the integration tests against it.
+- The Roslyn README documents `find_symbol`, `find_callers`, `find_dead_code`,
+  `detect_antipatterns` and `detect_circular_dependencies`, matching the 16 tools the server
+  exposes.
+
+### Fixed
+
+- Roslyn tools no longer answer from a stale solution. Every call compares the cached workspace
+  with disk (timestamps and lengths, no `FileSystemWatcher`; about 20 ms per 5,000 files):
+  edited, added and deleted `.cs` files are applied in place, and a change to the solution, a
+  `.csproj`, `project.assets.json`, `Directory.Build.*`, `Directory.Packages.props` or
+  `global.json` triggers a full reload once the file has been quiet for 500 ms. Before this, a
+  document whose text Roslyn had already read stayed stale until `reload_solution`.
+  `dnp-di-wiring-checker` and both TDD agents can now call `reload_solution` when a result
+  contradicts the code on disk.
+- Roslyn `find_dead_code` reported each type once per project that referenced its assembly,
+  attributing duplicates to the wrong project. It also flagged static classes whose extension
+  methods are called, such as `DependencyInjection`. A type now counts as used when any of its
+  members or nested types is referenced.
+- Roslyn `check_di_completeness` no longer ignores Scrutor. `Scan(...)` is matched in
+  Scrutor's real namespace, and its selectors (`FromAssemblyOf<T>`, `FromAssemblies`,
+  `FromTypes`, `AddClasses`, `InNamespaceOf`, `AssignableTo`, `As*`, lifetimes) are evaluated
+  against the compilation. Each scan reports `status` (`resolved` / `partial` / `unresolved`),
+  `reasons` and `registeredCount`, and a missing type that an unresolved scan might cover is
+  flagged `possiblyRegisteredByScan` instead of reported as certain.
+- `check_di_completeness` false positives and negatives around framework types: `IEnumerable<T>`
+  and the `DbContextOptions<T>` that `AddDbContext` registers are no longer reported missing;
+  `TimeProvider` and `IHttpClientFactory` are no longer treated as host-provided (neither host
+  registers them), and any `AddHttpClient` form, untyped or named included, now provides
+  `IHttpClientFactory`. Typed HttpClients are reported as Transient, not Scoped.
+
 ## [3.8.1] - 2026-11-04
 
 ### Fixed
