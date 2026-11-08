@@ -1,0 +1,32 @@
+<svg width="720" height="374" viewBox="0 0 720 374" xmlns="http://www.w3.org/2000/svg" xml:space="preserve" role="img" aria-label="Claude Code: /dnp-mcp diagnoses a missing dnp-roslyn tool, then reports roslyn ok after a retry; the status line shows pressure and roslyn state">
+  <style>
+    text { font-family: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace; font-size: 13px; white-space: pre; }
+  </style>
+  <rect width="720" height="374" rx="8" fill="#0d1117"/>
+  <rect width="720" height="44" rx="8" fill="#161b22"/>
+  <rect y="36" width="720" height="8" fill="#161b22"/>
+  <circle cx="20" cy="22" r="6" fill="#ff5f56"/>
+  <circle cx="40" cy="22" r="6" fill="#ffbd2e"/>
+  <circle cx="60" cy="22" r="6" fill="#27c93f"/>
+  <text x="360" y="27" text-anchor="middle" fill="#8b949e" font-size="12">claude — MyApp.slnx</text>
+
+  <text x="22" y="72"><tspan fill="#58a6ff">&gt; </tspan><tspan fill="#e6edf3">/dnp-mcp</tspan></text>
+  <text x="22" y="98"><tspan fill="#e6edf3">roslyn: </tspan><tspan fill="#f85149">down (not installed)</tspan></text>
+  <text x="22" y="120"><tspan fill="#8b949e">  fix: </tspan><tspan fill="#e6edf3">`dnp-roslyn` could not be started. Install it with</tspan></text>
+  <text x="22" y="142" fill="#e6edf3">       <tspan fill="#d2a8ff">`dotnet tool install -g DotnetPilot.Mcp.Roslyn`</tspan>, then Reconnect roslyn</text>
+  <text x="22" y="164" fill="#e6edf3">       in `/mcp`, then `/dnp-mcp retry` re-checks it. If it is installed,</text>
+  <text x="22" y="186" fill="#e6edf3">       add the .NET global tools folder (`~/.dotnet/tools`) to PATH and</text>
+  <text x="22" y="208" fill="#e6edf3">       restart Claude Code.</text>
+
+  <text x="22" y="244" fill="#6e7681"># tool installed, roslyn reconnected in /mcp</text>
+
+  <text x="22" y="274"><tspan fill="#58a6ff">&gt; </tspan><tspan fill="#e6edf3">/dnp-mcp retry</tspan></text>
+  <text x="22" y="300"><tspan fill="#e6edf3">roslyn: </tspan><tspan fill="#3fb950">ok</tspan></text>
+
+  <rect y="328" width="720" height="46" rx="8" fill="#161b22"/>
+  <rect y="328" width="720" height="10" fill="#161b22"/>
+  <rect y="328" width="720" height="1" fill="#30363d"/>
+  <text x="22" y="356"><tspan fill="#8b949e">status  </tspan><tspan fill="#e6edf3">pressure 0 steady</tspan><tspan fill="#6e7681"> · </tspan><tspan fill="#3fb950">roslyn ✓</tspan></text>
+  <text x="698" y="356" text-anchor="end" fill="#6e7681" font-size="12">mcp_health mod</text>
+  <rect width="720" height="374" rx="8" fill="none" stroke="#30363d" stroke-width="1"/>
+</svg>

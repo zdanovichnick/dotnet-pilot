@@ -7,9 +7,24 @@ review architecture boundaries, and generate EF Core migrations with Roslyn-back
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![.NET 10+](https://img.shields.io/badge/.NET-10%2B-512BD4?logo=dotnet)](https://dotnet.microsoft.com/download)
+[![dnp-roslyn on NuGet](https://img.shields.io/nuget/v/DotnetPilot.Mcp.Roslyn?label=dnp-roslyn&logo=nuget)](https://www.nuget.org/packages/DotnetPilot.Mcp.Roslyn)
+[![Hooks](https://github.com/zdanovichnick/dotnet-pilot/actions/workflows/hooks.yml/badge.svg)](https://github.com/zdanovichnick/dotnet-pilot/actions/workflows/hooks.yml)
+[![Roslyn](https://github.com/zdanovichnick/dotnet-pilot/actions/workflows/roslyn.yml/badge.svg)](https://github.com/zdanovichnick/dotnet-pilot/actions/workflows/roslyn.yml)
 [![Plugin packages](https://github.com/zdanovichnick/dotnet-pilot/actions/workflows/host-plugins.yml/badge.svg)](https://github.com/zdanovichnick/dotnet-pilot/actions/workflows/host-plugins.yml)
 
 [Install](#install) · [First steps](#first-steps) · [Compatibility](#compatibility) · [Workflows](#workflows) · [Troubleshooting](#troubleshooting)
+
+> **New in 3.9.0** (with `dnp-roslyn` 0.5.3)
+> - **Roslyn health check:** Claude Code shows `roslyn ✓` or `roslyn ✗ <reason>` in the status line
+>   and explains how to fix a failed start; run `/dnp-mcp` for details.
+> - **Results stay current:** Roslyn tools pick up edited, added and deleted files from disk, so
+>   results no longer go stale after an edit.
+> - **Scrutor coverage:** `check_di_completeness` evaluates `Scan(...)` calls instead of
+>   ignoring them.
+> - **Verified hosts:** the 12-step smoke checklist passes in Codex CLI and Cursor CLI, and runs
+>   in CI against a sample solution.
+>
+> [Full changelog →](CHANGELOG.md)
 
 ## Install
 
@@ -31,8 +46,10 @@ With the **.NET 10 SDK** installed, run this in your terminal:
 dotnet tool install -g DotnetPilot.Mcp.Roslyn
 ```
 
-Already installed? Use `dotnet tool update -g DotnetPilot.Mcp.Roslyn` instead.
-Restart your coding app if you just installed the SDK or changed PATH.
+Already installed? Use `dotnet tool update -g DotnetPilot.Mcp.Roslyn` instead. Check the
+installed version with `dnp-roslyn version`. Codex needs 0.5.3 or later, which starts
+without a solution and loads one when asked. Restart your coding app if you just installed
+the SDK or changed PATH.
 
 ### 2. Install for your app
 
@@ -117,8 +134,9 @@ Use `$dotnet-pilot` to browse workflows. If skill names are namespaced, select t
 corresponding DotnetPilot skill in the picker. Keep the clone and generated marketplace
 folder available for updates.
 
-**Verified:** local marketplace registration and installation through Codex CLI on Windows.
-Desktop workflow checks are pending. See the [Codex setup guide](docs/HOST-PLUGINS.md#install-in-codex).
+**Verified:** all 12 [smoke checks](docs/HOST-PLUGINS.md#interactive-smoke-checks) pass in
+Codex CLI on Windows. The desktop app has not been tested yet. See the
+[Codex setup guide](docs/HOST-PLUGINS.md#install-in-codex).
 Use the CLI or desktop app for plugins; the Codex IDE extension does not support them.
 
 #### Cursor
@@ -163,8 +181,10 @@ and its Roslyn MCP server. Choose these commands from the command picker:
 /dnp-dotnet-health-check
 ```
 
-**Status:** the package is generated and validated; interactive Cursor verification is pending.
-See the [Cursor setup guide](docs/HOST-PLUGINS.md#install-in-cursor) for updates.
+**Verified:** the [smoke checks](docs/HOST-PLUGINS.md#interactive-smoke-checks) pass in
+Cursor CLI (`cursor-agent`) on Windows, except that step 11's migration was not run there. Its
+result is carried over from Codex, which runs the same workflow text. The desktop app has not
+been tested yet. See the [Cursor setup guide](docs/HOST-PLUGINS.md#install-in-cursor) for updates.
 
 <details>
 <summary>Codex / Cursor: download a package instead of building</summary>
@@ -198,6 +218,11 @@ starts the Roslyn server automatically; you do not need to launch it separately.
 Run the health-check workflow for your app. Confirm the report shows which build, test,
 DI, and architecture checks ran. If semantic tools are unavailable, the workflows can use
 file inspection and .NET CLI fallbacks and should report skipped semantic checks.
+
+In Claude Code, the Roslyn health check runs at session start. The status line shows
+whether the server is up. If it isn't, `/dnp-mcp` gives the reason and the fix.
+
+![Roslyn health check: /dnp-mcp diagnoses a missing tool, then reports ok after a retry](assets/roslyn-health.svg)
 
 ## First steps
 
@@ -236,7 +261,7 @@ migration and SQL before applying a database change.
 | Build, test, DI, migration checks | Workflow steps + hooks | Explicit workflow steps | Explicit workflow steps |
 | Sharded review, help, statusline commands | Included | — | — |
 | Automatic hooks and UI mods | Included | — | — |
-| Validation status | Existing plugin and hook suite | Package + local CLI install tested | Package validated; app testing pending |
+| Validation status | Hook, mod and Roslyn suites in CI | 12/12 smoke checks (CLI) | 12/12 smoke checks (CLI; step 11 migration taken from Codex) |
 
 The Codex and Cursor packages use the host's tools and model. They execute specialist
 checklists directly by default. Claude-specific tool permissions, model routing, hooks,
@@ -415,6 +440,16 @@ The local `dnp-roslyn` MCP companion analyzes C# through Roslyn and MSBuild.
 It exposes solution structure, symbol navigation, DI checks, architecture checks,
 and EF model inspection.
 
+- **Stays in sync with disk.** Before every call it compares the workspace with the files
+  on disk. Edited, added and deleted `.cs` files are applied in place. A change to the
+  solution, a `.csproj`, `Directory.Build.*`, `Directory.Packages.props` or `global.json`
+  reloads the solution once the file has stopped changing.
+- **Starts without a solution.** In a directory with no `.sln`/`.slnx` it keeps running and
+  asks for `reload_solution` with `solutionPath`. This is how Codex uses it.
+- **Understands Scrutor.** `check_di_completeness` evaluates `Scan(...)` selectors against
+  the compilation. When it can't fully resolve a scan, it marks the missing types the scan
+  might register as `possiblyRegisteredByScan` instead of reporting them as missing.
+
 <details>
 <summary>Tool reference</summary>
 
@@ -427,13 +462,13 @@ and EF model inspection.
 | `find_implementations` | Interface/abstract class implementations |
 | `find_di_registrations` | All service registrations (`AddScoped`, `AddTransient`, etc.) |
 | `find_di_consumers` | All constructor-injected types |
-| `check_di_completeness` | Missing registrations + captive dependency detection |
+| `check_di_completeness` | Missing registrations + captive dependency detection, with Scrutor scans evaluated |
 | `check_architecture_violations` | Clean architecture layer rule enforcement |
 | `get_ef_models` | DbContexts, entities, properties, navigations |
 | `find_symbol` | Locate any type, method, or property by name across the solution |
 | `find_callers` | Find all callers of a specific method (call graph, not text search) |
 | `find_dead_code` | Identify unreferenced types and members — confidence-scored by accessibility |
-| `reload_solution` | Reload the solution from disk after adding or removing projects |
+| `reload_solution` | Force a full reload, or load a solution with `solutionPath` (a file, or a directory to search upward from) |
 | `detect_antipatterns` | Syntax-level scan: `async void`, `.Result`/`.Wait()`, `new HttpClient()`, log interpolation, `Thread.Sleep`, missing `CancellationToken`, broad `catch (Exception)`, `DateTime.Now` |
 | `detect_circular_dependencies` | DFS cycle detection across project reference graph |
 
@@ -482,6 +517,8 @@ Claude hooks also read a repository-local `.planning/config.json` when one exist
 | --- | --- |
 | Roslyn fails to connect | Run `/dnp-mcp`: it shows roslyn's state, the reason (not installed, no MSBuild, no solution, version below minimum, unresponsive, a failed start Claude Code cached from the last 15 minutes in any folder, or an `/mcp` setting), the fix, and a `dnp-roslyn doctor` excerpt. After fixing, Reconnect roslyn in `/mcp` (the session never respawns a server that failed to start), then `/dnp-mcp retry` re-checks. Without mods, confirm `dnp-roslyn` is on PATH, open the solution directory, and run `dnp-roslyn doctor` there |
 | Roslyn tools answer `No solution is loaded` (Codex starts the server in the plugin folder) | Ask for `reload_solution` with `solutionPath` set to the solution, or add `--solution` and an absolute path to the server's arguments |
+| `dotnet tool update` fails with `Access to the path … is denied` (Windows) | A running `dnp-roslyn` holds its files open. Disable roslyn in `/mcp`, or close the apps that run it (Claude Code, Codex, Cursor), then update and re-enable it |
+| `dotnet tool update` says the requested version is lower | You have a newer prerelease installed. Add `--version <x.y.z> --allow-downgrade` |
 | New Codex skills are missing | Start a new local chat; check the installed plugin and any namespaced skills in the picker |
 | Cursor plugin is missing | Verify `~/.cursor/plugins/local/dotnet-pilot/.cursor-plugin/plugin.json` exists, then restart Cursor |
 | Duplicate Roslyn tools | Keep one plugin installation and remove any duplicate manual registration |
@@ -508,6 +545,17 @@ node hooks/__tests__/run.js
 With Codex CLI installed, `node scripts/smoke-codex-plugin.js` checks local installation
 in a disposable profile. Package CI runs on Windows and Linux and uploads separate
 Codex and Cursor artifacts.
+
+Mods and the Roslyn server have their own tests. [`samples/SmokeSolution`](samples/SmokeSolution/README.md)
+is a small clean-architecture solution with deliberate defects; its README lists what each
+Roslyn tool must find. The `roslyn` CI workflow runs the same commands on Windows and Linux:
+
+```sh
+claude plugin test .
+dotnet build samples/SmokeSolution/SmokeSolution.slnx
+dotnet test  mcp/dotnet-pilot-mcp-roslyn/DotnetPilot.Mcp.Roslyn.slnx   # set DNP_TEST_SOLUTION to the sample to run the integration tests
+node scripts/smoke-roslyn.js                                          # --server dnp-roslyn checks the installed tool
+```
 
 Read [CLAUDE.md](CLAUDE.md) for repository conventions and [CHANGELOG.md](CHANGELOG.md)
 for release history and command migrations.
