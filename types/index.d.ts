@@ -30,8 +30,22 @@ export type PixelCityScene = {
   view?: PixelCityView
 }
 
+export type McpServerHealth = {
+  server: string
+  state: 'ok' | 'down'
+  // An McpConnectRefusal, a probe verdict or a doctor classification; set on an 'ok' server only when it is outdated or its probe was refused ('unprobed').
+  reason?: string
+  // The connect refusal's own sentence, when there was one.
+  message?: string
+  // First lines of `dnp-roslyn version` / `doctor` output; never environment values.
+  doctor?: string
+  checkedMs: number
+}
+
+export type McpHealth = { servers: McpServerHealth[] }
+
 declare module 'claude-code' {
   interface PluginState {
-    'dotnet-pilot': { buildStreak: BuildStreak; pressure: Pressure; cityScene: PixelCityScene }
+    'dotnet-pilot': { buildStreak: BuildStreak; pressure: Pressure; cityScene: PixelCityScene; mcpHealth: McpHealth }
   }
 }

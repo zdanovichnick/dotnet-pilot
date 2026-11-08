@@ -60,6 +60,12 @@
       "description": "The scene the pixel band starts with: city, beach, dino (a running T-rex that jumps the cacti; meteors instead of rain in a storm) or sunset (a time-lapse sunrise-to-sunset over mountains and a lake). /city <scene> switches it for the session.",
       "options": ["city", "beach", "dino", "sunset"],
       "default": "city"
+    },
+    "mcp_health": {
+      "type": "boolean",
+      "title": "Roslyn MCP health check",
+      "description": "At session start in a .NET project, connect and probe the roslyn MCP server and diagnose a failed start with dnp-roslyn version/doctor and show the fix in the status line and a toast. When healthy it only shows roslyn ✓ in the status line; /dnp-mcp shows the state and /dnp-mcp retry re-checks. Requires a Claude Code build with mods.",
+      "default": true
     }
   }
 }

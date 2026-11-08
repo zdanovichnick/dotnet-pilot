@@ -3,6 +3,7 @@ import type { Engine, On } from 'claude-code'
 
 import type { Pressure, PressureEvent } from '../../types'
 import { classify, commandKind } from './build-classify'
+import { statusLine } from './status-line'
 
 // Anthropic's interpretability work on Claude Sonnet 4.5 ("Emotion concepts and their function",
 // 2026) found a "desperation" representation that rises under mounting failure and causally
@@ -12,6 +13,8 @@ import { classify, commandKind } from './build-classify'
 // a 0–100 pressure score the person can see, and a guard on test edits while the score is high.
 
 const state = { plugin: 'dotnet-pilot', key: 'pressure' } as const
+// Same ref as mcp-health.ts's; the engine's scan needs the literal in the file that reads it.
+const mcpHealthState = { plugin: 'dotnet-pilot', key: 'mcpHealth' } as const
 
 export const STEADY_MAX = 29
 export const STRAINED_MAX = 59
@@ -76,11 +79,15 @@ const bump = async ($: Engine, kind: PressureEvent['kind'], delta: number, detai
     }
     return next
   })
-  showStatus($, next.score)
+  await showStatus($, next.score)
   return next
 }
 
-const showStatus = ($: Engine, score: number) => $.ui.status(`pressure ${score} ${labelOf(score)}`)
+export const pressureSegment = (score: number) => `pressure ${score} ${labelOf(score)}`
+
+async function showStatus($: Engine, score: number) {
+  await $.ui.status(statusLine(pressureSegment(score), await read($, mcpHealthState)))
+}
 
 const fileName = (path: string) => path.slice(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1)
 
@@ -155,16 +162,17 @@ export const registerPressure = (on: On, blockTestGuard: boolean) => {
     return next(e)
   })
 
-  on('session.start', async ($, e, next) => {
-    showStatus($, (await read($, state))?.score ?? 0)
-    $.command.register({ name: 'dnp-pressure', description: 'Show the dotnet-pilot pressure score and the events behind it', immediate: true })
-    return next(e)
-  })
-
   on('command.run', { command: 'dnp-pressure' }, async $ => {
     const prev = await read($, state)
     if (prev === undefined || prev.events.length === 0) return { text: 'pressure 0 steady — no red dotnet run recorded this session' }
     const lines = prev.events.map(ev => `${ev.delta >= 0 ? '+' : ''}${ev.delta}  ${ev.kind}: ${ev.detail}`)
     return { text: [`pressure ${prev.score} ${labelOf(prev.score)}`, ...lines].join('\n') }
   })
+}
+
+// Run by session-start.ts, which holds the module's one unmatched session.start hook. A function
+// declaration, because the engine follows `$` across an import only into one.
+export async function pressureSessionStart($: Engine) {
+  await showStatus($, (await read($, state))?.score ?? 0)
+  $.command.register({ name: 'dnp-pressure', description: 'Show the dotnet-pilot pressure score and the events behind it', immediate: true })
 }

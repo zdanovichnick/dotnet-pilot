@@ -3,8 +3,9 @@ import type { Engine, On, PromptComposeSection } from 'claude-code'
 
 import { HIGH_AT } from './pressure'
 
-// Same ref as pressure.ts's; the engine's scan needs the literal in the file that reads it.
+// Same refs as pressure.ts's and mcp-health.ts's; the engine's scan needs the literal in the file that reads it.
 const pressureState = { plugin: 'dotnet-pilot', key: 'pressure' } as const
+const mcpHealthState = { plugin: 'dotnet-pilot', key: 'mcpHealth' } as const
 
 const MARKERS = ['.sln', '.slnx', '.csproj']
 const MAX_UP = 5
@@ -16,8 +17,9 @@ const parentOf = (dir: string) => {
   return /^[A-Za-z]:$/.test(parent) ? dir.slice(0, cut + 1) : parent
 }
 
-// Walks up from the session directory, as hooks/_lib/dotnet.js does.
-export const isDotNetProject = async ($: Engine, start: string) => {
+// Walks up from the session directory, as hooks/_lib/dotnet.js does. A function declaration
+// because mcp-health.ts passes `$` to it across an import.
+export async function isDotNetProject($: Engine, start: string) {
   let dir = start
   for (let i = 0; i <= MAX_UP; i++) {
     const entries = await $.fs.list(dir).catch(() => [])
@@ -61,10 +63,20 @@ const pressureSection = async ($: Engine): Promise<PromptComposeSection | null> 
   return { id: 'dotnet-pilot:pressure', text, scope: 'session' }
 }
 
+// Present only while a server is down, so agents that whitelist mcp__roslyn__* degrade on purpose.
+const mcpHealthSection = async ($: Engine): Promise<PromptComposeSection | null> => {
+  const down = ((await read($, mcpHealthState))?.servers ?? []).filter(s => s.state === 'down')
+  if (down.length === 0) return null
+  const text = down
+    .map(s => `${s.server === 'roslyn' ? 'Roslyn' : s.server} MCP is unavailable: ${s.reason ?? 'down'}. Use Grep/Read for C# navigation and say the results are text-based.`)
+    .join('\n')
+  return { id: 'dotnet-pilot:mcp-health', text, scope: 'session' }
+}
+
 // The engine allows one unmatched prompt.compose hook per module and never follows `$` across an
 // import, so every section source lives in this file.
-export const registerCompose = (on: On, enabled: { routing: boolean; pressure: boolean }) => {
-  if (!enabled.routing && !enabled.pressure) return
+export const registerCompose = (on: On, enabled: { routing: boolean; pressure: boolean; mcpHealth: boolean }) => {
+  if (!enabled.routing && !enabled.pressure && !enabled.mcpHealth) return
 
   on('prompt.compose', async ($, e, next) => {
     const composed = await next(e)
@@ -75,6 +87,10 @@ export const registerCompose = (on: On, enabled: { routing: boolean; pressure: b
     }
     if (enabled.pressure) {
       const section = await pressureSection($)
+      if (section !== null) added.push(section)
+    }
+    if (enabled.mcpHealth) {
+      const section = await mcpHealthSection($)
       if (section !== null) added.push(section)
     }
     return added.length === 0 ? composed : { sections: [...composed.sections, ...added] }

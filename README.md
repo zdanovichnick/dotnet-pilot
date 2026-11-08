@@ -375,6 +375,7 @@ Claude's permission protocol. Configure toggles per solution.
 | **Build-failure toasts** *(mod)* | After `dotnet build` / `dotnet test` through the Bash or PowerShell tool | Same classification as Build Verify; shows a toast at the 3rd and 5th consecutive failure. Needs a Claude Code build with mod support; additive to the Node hook. Toggle plugin option `build_status` |
 | **Routing roster** *(mod)* | Each system-prompt composition | In a .NET project, adds the routing guidance once per session as a session-scoped section. Needs mod support. With it active, set `hooks.dotnet_priority: false` to drop the per-`Agent` nudge. Toggle plugin option `routing` |
 | **Pressure meter** *(mod)* | After `dotnet build`/`dotnet test`, Edit calls, and prompts | Scores the session 0–100 from failed runs, repeated edits after a failure, corrections in your prompts and edits that loosen tests; a green run lowers it. Shows `pressure N` in the status line, and `/dnp-pressure` lists what raised it. After a failed run, an edit that skips or removes a test assertion gets a toast (or is denied with `pressure_test_guard_block: true` once the score reaches 60). At 60 and above, Claude is asked to state the blocker instead of retrying again. Toggle plugin option `pressure` |
+| **Roslyn MCP health** *(mod)* | Session start in a .NET project | Connects to the `roslyn` server and diagnoses a failed start with `dnp-roslyn version`/`doctor`. It probes the server only when `mcp__roslyn__*` is already allowed; otherwise it shows `roslyn ✓ unprobed`. Shows `roslyn ✓` or `roslyn ✗ <reason>` in the status line, toasts the fix once, and while roslyn is down tells Claude to fall back to Grep/Read and say so. `/dnp-mcp` shows the state, `/dnp-mcp retry` re-checks. Toggle plugin option `mcp_health` |
 | **Pixel band** *(mod, opt-in)* | Terminal only, above the prompt | Animated pixel-art band with four scenes: `city`, `beach`, `dino` and `sunset`. The sky follows your local clock, a failed build brings a storm and the next green run a rainbow. Switch scenes with `/city <scene>` (`/city status` lists every option). Needs a terminal with at least 5 free rows. Off by default: enable `pixel_city`, and pick the starting scene with `pixel_city_scene` |
 | **Statusline Sync** | On session start/resume/clear/compact | Refreshes the installed statusline script at `~/.claude/dnp-statusline.js` when the plugin ships a newer version. Only wires `~/.claude/settings.json` when `statusline.auto_enable: true` (default off) — never clobbers an existing statusLine without opt-in |
 
@@ -404,6 +405,7 @@ terminal with `claude plugin configure dotnet-pilot@dotnet-pilot-marketplace`:
 | `pressure_test_guard_block` | off | Deny test-loosening edits under high pressure |
 | `pixel_city` | off | Pixel band above the prompt |
 | `pixel_city_scene` | `city` | Starting scene: `city`, `beach`, `dino` or `sunset` |
+| `mcp_health` | on | Roslyn MCP health check, `/dnp-mcp` |
 
 </details>
 
@@ -478,8 +480,8 @@ Claude hooks also read a repository-local `.planning/config.json` when one exist
 
 | Problem | What to check |
 | --- | --- |
-| Roslyn fails to connect | Confirm `dnp-roslyn` is on PATH, open the solution directory, and run `dnp-roslyn doctor` there. In Claude Code, reconnect it from `/mcp` once fixed |
-| App cannot find a solution | Open the folder containing `.sln` / `.slnx`; if necessary configure Roslyn with `--solution` and an absolute path |
+| Roslyn fails to connect | Run `/dnp-mcp`: it shows roslyn's state, the reason (not installed, no MSBuild, no solution, version below minimum, unresponsive, a failed start Claude Code cached from the last 15 minutes in any folder, or an `/mcp` setting), the fix, and a `dnp-roslyn doctor` excerpt. After fixing, Reconnect roslyn in `/mcp` (the session never respawns a server that failed to start), then `/dnp-mcp retry` re-checks. Without mods, confirm `dnp-roslyn` is on PATH, open the solution directory, and run `dnp-roslyn doctor` there |
+| Roslyn tools answer `No solution is loaded` (Codex starts the server in the plugin folder) | Ask for `reload_solution` with `solutionPath` set to the solution, or add `--solution` and an absolute path to the server's arguments |
 | New Codex skills are missing | Start a new local chat; check the installed plugin and any namespaced skills in the picker |
 | Cursor plugin is missing | Verify `~/.cursor/plugins/local/dotnet-pilot/.cursor-plugin/plugin.json` exists, then restart Cursor |
 | Duplicate Roslyn tools | Keep one plugin installation and remove any duplicate manual registration |

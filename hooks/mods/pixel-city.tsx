@@ -164,7 +164,7 @@ export const registerPixelCity = (on: On, settings: { enabled: boolean; view: Pi
     return { text: USAGE }
   })
 
-  // Matched on surface: pressure owns the module's one unmatched session.start, and only the terminal draws the band.
+  // Matched on surface: session-start.ts owns the module's one unmatched session.start, and only the terminal draws the band.
   on('session.start', { surface: 'terminal' }, async ($, e, next) => {
     await $.command.register({
       name: 'city',

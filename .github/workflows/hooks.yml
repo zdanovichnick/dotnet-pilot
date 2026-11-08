@@ -64,10 +64,16 @@ jobs:
         continue-on-error: true
         run: claude plugin test .
 
-      # Advisory: under --strict the validator warns that the root CLAUDE.md is
-      # not loaded as plugin context. It is this repo's own development guide,
-      # so the warning is expected and must not fail the build.
+      # Errors in plugin.json, marketplace.json or hooks.json fail the build.
       - name: Validate manifests
+        run: |
+          claude plugin validate .claude-plugin/plugin.json
+          claude plugin validate .
+
+      # Advisory: under --strict the validator warns that the root CLAUDE.md is
+      # not loaded as plugin context (it is this repo's own development guide)
+      # and that no listing icon exists, so strict mode cannot pass yet.
+      - name: Validate manifests (strict)
         continue-on-error: true
         run: |
           claude plugin validate .claude-plugin/plugin.json --strict
