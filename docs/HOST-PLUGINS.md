@@ -51,9 +51,12 @@ dotnet tool install -g DotnetPilot.Mcp.Roslyn
 If already installed, use `dotnet tool update -g DotnetPilot.Mcp.Roslyn`. Ensure `dnp-roslyn`
 is on the app's PATH; restart the app after changing PATH. Open the consumer solution's
 directory, containing its `.sln` / `.slnx`. The bundled `mcp.json` starts the `roslyn` stdio
-server. If the host starts servers in another working directory, configure that server's
-arguments with `--solution` and the absolute solution path. Select a context explicitly
-when there is more than one. No API key is required for this local MCP server.
+server. Codex starts plugin servers in the plugin's own folder and passes no workspace root,
+so the server starts unbound (dnp-roslyn 0.5.3+) and every tool answers `No solution is
+loaded`; the model then calls `reload_solution` with `solutionPath` set to the solution and
+carries on. To skip that step, add `--solution` and the absolute solution path to the server's
+arguments. Select a context explicitly when there is more than one. No API key is required for
+this local MCP server.
 
 ## Install in Codex
 
@@ -105,11 +108,11 @@ They do not touch Claude's user settings. State should be ignored by Git.
 | Automatic hooks, mods, statusline, pixel city | Excluded | Excluded |
 | Claude sharded review workflow | Excluded | Excluded |
 
-Package generation and content validation are automated. Codex CLI local marketplace
-registration, plugin installation, and installed listing were verified on Windows on
-2026-10-30 using a disposable profile. Full interactive installation,
-tool discovery, and end-to-end workflows must be tested in each target app before claiming
-verified runtime support. CLI installation tests, when run, do not establish desktop parity.
+Package generation and content validation are automated. The Codex CLI smoke checks below
+were run on Windows on 2026-11-08 in a disposable `CODEX_HOME`, each step as its own
+`codex exec` session (see the results table). Cursor was run the same way with
+`cursor-agent -p`; its step 11 migration half is inferred from Codex, not run. CLI runs do
+not establish desktop or IDE parity.
 
 ## Release and public discovery
 
@@ -130,16 +133,39 @@ Codex package: it includes Claude-specific hooks that would be auto-discovered.
 
 ## Interactive smoke checks
 
-1. Install into a clean host profile and open a small, buildable .NET solution.
-2. Confirm skills/commands appear and only one Roslyn server starts. Invoke solution
-   structure and DI checks; ensure host-prefixed tool names resolve.
-3. Run init, verify state at the default path, repeat with `DNP_PLANNING_DIR`, and check
-   that no Claude settings changed. Test the multiple-solution prompt.
-4. Run health-check and run-tests, including an intentional failing test. Confirm failures
-   and skipped semantic checks are accurately reported. Repeat without Roslyn available.
-5. Create an entity in a disposable solution. Verify conventions, DI registration, build,
-   and tests. Generate a migration; inspect `Up()` and SQL without applying it to a database.
-6. Confirm no automatic hook, commit, push, or publishing action occurs during these checks.
+The fixture is [`samples/SmokeSolution`](../samples/SmokeSolution/README.md); its README lists
+the findings each Roslyn tool must return. Server behavior is already checked without an app:
+
+```text
+dotnet build samples/SmokeSolution/SmokeSolution.slnx
+node scripts/smoke-roslyn.js --server dnp-roslyn
+```
+
+Run that first with the installed global tool. If it fails, the problem is the server, not the
+host. The checks below cover only what needs the host app. Work on a copy so the repository stays
+clean: copy `samples/SmokeSolution` to a temporary directory and open that directory.
+
+| # | Step | Pass when |
+|---|------|-----------|
+| 1 | Install into a clean host profile; open the copy | The plugin is listed and enabled; no second DotnetPilot copy |
+| 2 | List skills/commands | All 13 workflows are present (Cursor: as commands too) |
+| 3 | Inspect MCP servers | Exactly one `roslyn` server, connected |
+| 4 | Ask for the solution structure, then a DI completeness check | The host calls the Roslyn tools (host-prefixed names resolve) and reports `IPaymentGateway` missing and the `OrderCache` captive dependency — nothing else missing |
+| 5 | Run init | `.planning/config.json` and `solution-map.json` at the copy's root; no Claude settings changed |
+| 6 | Repeat init with `DNP_PLANNING_DIR=state` | State lands in `state/` under the copy |
+| 7 | Add a second `.slnx` next to the first; run init | The workflow asks which solution to use |
+| 8 | Run health-check and run-tests | Build and tests reported green |
+| 9 | Set `SMOKE_FAIL=1` in the host environment; run run-tests | `SmokeFailure_WhenRequested_Fails` reported as failing — not summarized as green |
+| 10 | Remove `dnp-roslyn` from PATH (or rename the shim); restart; run health-check | The report says semantic checks were skipped because Roslyn is unavailable, and falls back to text search explicitly |
+| 11 | Create an entity; generate a migration | Entity, EF config and DI registration follow the sample's conventions; build and tests pass; `Up()` and the SQL script are shown, not applied |
+| 12 | Review the session | No automatic hook, commit, push, or publish happened |
+
+Record each run here. A host counts as verified only with every row passing on a recorded version.
+
+| Date | Host + version | OS | Roslyn version | Failed steps | Notes |
+|------|----------------|----|----------------|--------------|-------|
+| 2026-11-08 | Codex CLI 0.167.0-alpha.3.2 (`codex exec`) | Windows 11 Pro 10.0.26200 | 0.5.3-dev.2 | none | Step 4 needed `reload_solution` with `solutionPath` (Codex starts the server in the plugin folder). Step 7 asked which solution. Step 10 reported the semantic skip. Step 11 first failed on the sample's in-memory provider and passed after the sample moved to SQLite with a design-time factory. Desktop app not run |
+| 2026-11-08 | Cursor CLI 2026.11.05-86047df (`cursor-agent -p`; desktop 3.29.9 installed) | Windows 11 Pro 10.0.26200 | 0.5.3-dev.2 | none (step 11 migration half inferred) | The CLI loads the plugin from `~/.cursor/plugins/local/dotnet-pilot` with 29 skills, 13 commands, 9 agents and one MCP server, `plugin-dotnet-pilot-roslyn`, ready. In `--mode ask` the Roslyn calls are rejected before they run, so steps ran with `--force`. The step 4 calls (`get_solution_structure`, `check_di_completeness`) ran inside step 8's health-check and reported exactly `IPaymentGateway` missing and the `OrderCache` captive. Step 7 asked which solution. Step 10 said Roslyn MCP was unavailable and used the grep fallback. Step 11 wrote a failing `CustomerServiceTests` first, then the entity, repository, service, EF configuration, `DbContext` set and both DI registrations; the copy built and its 3 tests passed. It stopped at Cursor's Free-plan usage limit before generating the migration, so the migration half was not run on Cursor. It is accepted as inferred from the Codex run, which used the same generated workflow text; re-run step 11 to replace the inference. Desktop app not run |
 
 ## Official references
 
