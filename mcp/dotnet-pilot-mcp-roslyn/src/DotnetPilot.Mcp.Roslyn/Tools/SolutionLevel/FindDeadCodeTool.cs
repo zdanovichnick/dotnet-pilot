@@ -27,6 +27,11 @@ public sealed class FindDeadCodeTool
         CancellationToken ct)
     {
         var solution = await workspace.GetSolutionAsync(ct);
+        return await AnalyzeAsync(solution, scope, ct);
+    }
+
+    public static async Task<string> AnalyzeAsync(Solution solution, string scope, CancellationToken ct)
+    {
         var solutionDir = Path.GetDirectoryName(solution.FilePath) ?? "";
         var scopeFilter = string.IsNullOrWhiteSpace(scope) ? null : scope;
         var items = new List<object>();
@@ -44,10 +49,11 @@ public sealed class FindDeadCodeTool
             foreach (var typeSymbol in EnumerateNamedTypes(compilation.GlobalNamespace))
             {
                 if (items.Count >= MaxResults) break;
+                if (!SymbolEqualityComparer.Default.Equals(typeSymbol.ContainingAssembly, compilation.Assembly)) continue;
                 if (ShouldSkipType(typeSymbol)) continue;
 
                 inspected++;
-                if (await IsUnreferencedAsync(typeSymbol, solution, ct))
+                if (await IsTypeUnusedAsync(typeSymbol, solution, ct))
                 {
                     AddItem(items, typeSymbol, solutionDir, project.Name);
                     continue;
@@ -141,6 +147,26 @@ public sealed class FindDeadCodeTool
         if (member.Name.StartsWith("op_", StringComparison.Ordinal)) return true;
 
         return false;
+    }
+
+    private static async Task<bool> IsTypeUnusedAsync(INamedTypeSymbol type, Solution solution, CancellationToken ct)
+    {
+        if (!await IsUnreferencedAsync(type, solution, ct)) return false;
+
+        foreach (var member in type.GetMembers())
+        {
+            if (member.IsImplicitlyDeclared) continue;
+            if (member is INamedTypeSymbol nested)
+            {
+                if (!await IsTypeUnusedAsync(nested, solution, ct)) return false;
+            }
+            else if (!await IsUnreferencedAsync(member, solution, ct))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private static async Task<bool> IsUnreferencedAsync(ISymbol symbol, Solution solution, CancellationToken ct)

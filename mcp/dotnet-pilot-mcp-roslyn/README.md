@@ -39,6 +39,11 @@ dnp-roslyn is an [MCP (Model Context Protocol)](https://modelcontextprotocol.io/
 | File-level | `get_method_body` | Full source of one method — token-efficient alternative to reading whole files |
 | Solution-level | `find_references` | Every usage of a symbol across the entire solution |
 | Solution-level | `find_implementations` | All implementations of an interface or overrides of a virtual method |
+| Solution-level | `find_symbol` | Locates a type or member by name when you don't know its file |
+| Solution-level | `find_callers` | Every call site of a method (all overloads), with the containing method |
+| Solution-level | `find_dead_code` | Unreferenced types and members, confidence-scored by accessibility |
+| Solution-level | `detect_antipatterns` | Syntax scan for async void, sync-over-async, `new HttpClient()`, and similar |
+| Solution-level | `detect_circular_dependencies` | Cycles in the project reference graph |
 | DI | `find_di_registrations` | Every `AddScoped`, `AddTransient`, `AddSingleton` call |
 | DI | `find_di_consumers` | Every class with constructor injection |
 | DI | `check_di_completeness` | Missing registrations + captive dependency detection |
@@ -250,11 +255,12 @@ Returns the full solution structure as JSON.
 
 #### `reload_solution`
 
-Invalidates the cached workspace and reloads from disk. Call this after adding/removing projects, changing project references, or making structural `.csproj` changes.
+Discards the cached workspace and loads the solution from disk. Edits are picked up on every tool call (see [Workspace caching](#workspace-caching)), so call this only when a result contradicts the code on disk — or with `solutionPath` to bind a solution when the server started outside one.
 
-**Parameters:** none
+**Parameters:**
+- `solutionPath` (string, optional): absolute path of a `.sln`/`.slnx`, or a directory to search upward from. Omit to reload the current solution. A path with no solution at or above it is an error and keeps the current solution.
 
-**Returns:** `"Solution reloaded. 5 projects loaded."`
+**Returns:** `"Solution reloaded. 5 projects loaded from D:\src\MyApp\MyApp.slnx."`
 
 ### File-Level Tools
 
@@ -400,6 +406,63 @@ Finds all implementations of an interface, derived classes of a base class, or o
 }
 ```
 
+#### `find_symbol`
+
+Locates a type, method, property, field, or event by name across the whole solution. Use it when you don't know which file a symbol lives in, then pass the result to `find_references` or `get_class_outline`.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `symbolName` | string | yes | Bare identifier, case-sensitive (`UserService`, not `MyApp.UserService`) |
+
+**Returns:** `symbolName`, `count`, and `definitions` — each with file, line, kind, and containing type. A plain-text message when nothing matches.
+
+#### `find_callers`
+
+Finds every caller of a method through semantic call-graph analysis (not text search). Overloads are all searched.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `filePath` | string | yes | File where the method is defined |
+| `methodName` | string | yes | Method name, case-sensitive |
+
+**Returns:** `method`, `overloadCount`, `callerCount`, and `callers` — each with file, line, surrounding code, and the containing method.
+
+#### `find_dead_code`
+
+Identifies unreferenced types and members. Confidence is `high` for private, `medium` for internal, `low` for public symbols. Skips tests, fixtures, migrations, interfaces, entry points, and framework conventions. Capped at 100 items.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `scope` | string | yes | Project name filter (e.g. `MyApp.Application`). Pass empty string for all non-test projects |
+
+**Returns:** `inspectedSymbols`, `deadCount`, `truncated` (true when the 100-item cap was hit), and `items`.
+
+#### `detect_antipatterns`
+
+Syntax-based scan for `async void`, broad `catch (Exception)`, `DateTime.Now`, `new HttpClient()`, sync-over-async (`.Result`/`.Wait()`), async methods without a `CancellationToken`, string interpolation in `ILogger` calls, and `Thread.Sleep`. Skips test files and generated code.
+
+**Parameters:**
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `filePath` | string | yes | File to scope the scan to. Pass empty string for the whole solution |
+
+**Returns:** `scannedFiles`, `issueCount`, and `issues`.
+
+#### `detect_circular_dependencies`
+
+Detects cycles in the project reference graph (DFS).
+
+**Parameters:** none
+
+**Returns:** `projectCount`, `cycleCount`, and `projectCycles` — each `{ "cycle": [...] }` as an ordered list of project names.
+
 ### DI Analysis Tools
 
 #### `find_di_registrations`
@@ -423,7 +486,28 @@ Finds all classes with constructor injection — any constructor parameter that 
 Cross-references registrations with consumers to find:
 - **Missing registrations** — a type is injected but never registered
 - **Captive dependencies** — a Scoped service injected into a Singleton (shorter-lived service captured by longer-lived one)
-- **Scrutor scans** — `Scan(...)` call sites are listed under `scans`; the types they register are not resolved, so `missing` may include them (a `note` says so)
+- **Scrutor scans** — each `services.Scan(...)` selector is evaluated statically (see below); the types it registers appear in `registered` with `"registrationMethod": "Scan"` and the `Scan` call site as `file`/`line`, and they count for both the missing and the captive checks
+
+Always treated as available: host-provided types (`ILogger<T>`, `IOptions<T>` / `IOptionsSnapshot<T>` / `IOptionsMonitor<T>`, `IConfiguration`, `IHostEnvironment`, `IWebHostEnvironment`, `IServiceProvider`, `IServiceScopeFactory`, and a few more), and `IEnumerable<T>`, which MS DI resolves to an empty sequence when nothing is registered. `TimeProvider` and `IHttpClientFactory` are not exempt — neither host registers them; any `AddHttpClient` form (untyped, named or typed) provides `IHttpClientFactory`, and typed clients are Transient. `AddDbContext` / `AddDbContextPool` / `AddDbContextFactory` also register `DbContextOptions<T>` and `DbContextOptions`, and `AddDbContextFactory` registers `IDbContextFactory<T>`.
+
+**Scrutor support.** The analyzer does not reference Scrutor. It finds `Scan` by the `Scrutor` assembly or namespace, or by the `Scan(IServiceCollection, Action<ITypeSourceSelector>)` shape, and finds the fluent calls by name and selector type. It matches the public API of Scrutor 6.1.0.
+
+| Stage | Evaluated | Not evaluated → status |
+|-------|-----------|------------------------|
+| Source | `FromAssemblyOf<T>()`, `FromAssembliesOf(typeof(A), …)`, `FromAssemblies(typeof(A).Assembly, Assembly.GetExecutingAssembly(), …)`, `FromType<T>()` / `FromTypes(typeof(A), …)`, `FromCallingAssembly()` / `FromExecutingAssembly()` (earlier Scrutor releases; treated as the project containing the call) | `FromApplicationDependencies`, `FromEntryAssembly`, `FromAssemblyDependencies`, `FromDependencyContext`, any non-`typeof` argument → `unresolved` |
+| Classes | `AddClasses()` (public only), `AddClasses(publicOnly)`, filters `AssignableTo<T>()` / `AssignableTo(typeof(IOpen<>))` / `AssignableToAny(…)`, `WithAttribute` / `WithoutAttribute` (`<T>()` or `typeof`), `InNamespaceOf`, `InNamespaces("…")`, `InExactNamespaceOf`, `InExactNamespaces`, `NotInNamespaceOf`, `NotInNamespaces` | `Where(...)`, `WithAttribute<T>(predicate)`, non-constant arguments → `partial` |
+| Services | `AsSelf()` (also the default), `AsImplementedInterfaces()`, `AsSelfWithInterfaces()`, `AsMatchingInterface()`, `As<T>()`, `As(typeof(T), …)` | predicate/selector overloads, `UsingAttributes()` → `partial` |
+| Lifetime | `WithScopedLifetime()`, `WithTransientLifetime()`, `WithSingletonLifetime()`, `WithLifetime(ServiceLifetime.X)`; Transient when omitted | `WithLifetime(selector)` → `partial`, lifetime `Unknown` |
+| Strategy | — | `UsingRegistrationStrategy(...)` → `partial`; registrations still count, but the lifetime that wins may differ |
+
+Each `scans` entry carries `status`, `reasons`, and `registeredCount`:
+- `resolved`: every call in the selector was evaluated.
+- `partial`: the assemblies are known but some filter or mapping is not. A selection that is not fully evaluated contributes no registrations. Its candidate classes, their base types, and their interfaces are used only to flag `missing` entries.
+- `unresolved`: the assembly source is unknown, or the selector is not an inline lambda made of fluent calls. Any `missing` entry may be covered by this scan.
+
+A `missing` entry that a partial or unresolved scan could cover gets `"possiblyRegisteredByScan": true` and `candidateScans` (`file`/`line`). An entry without these fields is confirmed missing as far as the analysis goes. The `note` names every scan that was not resolved and gives its reasons.
+
+**Blind spots:** selectors passed as method groups or variables; chains split across local variables; nested lambdas outside `AddClasses`; `Where` predicates; the effects of a registration strategy (`Skip`, `Replace`, `Throw`); `AsImplementedInterfaces()` on open generic classes (all interfaces are listed, with no arity filtering); internal classes in assemblies loaded from metadata. Service types are matched by their simple name without generic arguments, the same way as explicit registrations, so `IRepo<Order>` matches any `IRepo<…>` registration. Also as with explicit registrations, a scanned implementation class counts as registered under its own name even without `AsSelf()`.
 
 **Parameters:** none
 
@@ -432,7 +516,9 @@ Cross-references registrations with consumers to find:
 {
   "registered": [
     { "interface": "IOrderRepo", "implementation": "OrderRepo", "lifetime": "Scoped",
-      "registrationMethod": "AddScoped", "file": "src/MyApp.Infrastructure/DependencyInjection.cs", "line": 8 }
+      "registrationMethod": "AddScoped", "file": "src/MyApp.Infrastructure/DependencyInjection.cs", "line": 8 },
+    { "interface": "IOrderHandler", "implementation": "AuditHandler", "lifetime": "Scoped",
+      "registrationMethod": "Scan", "file": "src/MyApp.Application/DependencyInjection.cs", "line": 12 }
   ],
   "missing": [
     {
@@ -440,6 +526,14 @@ Cross-references registrations with consumers to find:
       "consumedBy": [
         { "type": "OrderService", "file": "src/MyApp.Application/Services/OrderService.cs", "line": 10 }
       ]
+    },
+    {
+      "interface": "IClock",
+      "consumedBy": [
+        { "type": "ReportService", "file": "src/MyApp.Application/Services/ReportService.cs", "line": 7 }
+      ],
+      "possiblyRegisteredByScan": true,
+      "candidateScans": [ { "file": "src/MyApp.Api/Program.cs", "line": 20 } ]
     }
   ],
   "captive": [
@@ -447,9 +541,12 @@ Cross-references registrations with consumers to find:
       "consumerLifetime": "Singleton", "file": "src/MyApp.Infrastructure/CacheService.cs", "line": 6 }
   ],
   "scans": [
-    { "file": "src/MyApp.Application/DependencyInjection.cs", "line": 12 }
+    { "file": "src/MyApp.Application/DependencyInjection.cs", "line": 12,
+      "status": "resolved", "reasons": [], "registeredCount": 2 },
+    { "file": "src/MyApp.Api/Program.cs", "line": 20,
+      "status": "partial", "reasons": ["Where(...) predicate in AddClasses is not evaluated; the scan may register fewer types than reported as candidates"], "registeredCount": 0 }
   ],
-  "note": "Scrutor Scan(...) calls were found; the types they register are not resolved, so entries in 'missing' may be registered by a scan."
+  "note": "Scrutor scans not fully resolved: src/MyApp.Api/Program.cs:20 (partial: Where(...) predicate in AddClasses is not evaluated; the scan may register fewer types than reported as candidates). Entries in 'missing' with possiblyRegisteredByScan=true may be registered by one of these scans; entries without it are not covered by any scan."
 }
 ```
 
@@ -566,13 +663,24 @@ When no `--solution` is specified, dnp-roslyn searches the current directory and
 1. `*.slnx` files (modern format, preferred)
 2. `*.sln` files (legacy format, fallback)
 
-The first match wins. If no solution is found, the server exits with an error.
+The first match wins. If no solution is found the server still starts, writes a warning to stderr, and answers every tool with `No solution is loaded: … Call reload_solution with solutionPath …` until `reload_solution` binds one. Some hosts (Codex) start plugin servers in the plugin's own folder and expose no workspace root, so exiting there would hide every tool. An explicit `--solution` that does not resolve still exits with an error.
 
 ### Workspace caching
 
-The solution is loaded once on first tool call and cached in memory. Subsequent calls reuse the cached compilation. Call `reload_solution` to force a fresh load after structural changes (adding projects, changing references, etc.).
+The solution is loaded once (eagerly at startup) and cached in memory. Before answering, every tool call checks the cached solution against disk and applies what changed:
 
-File-level and method-level tools do NOT require a reload for content changes — Roslyn reads the file from disk on each call.
+| Change on disk | What happens on the next tool call |
+|----------------|------------------------------------|
+| Existing `.cs` document edited | Its new text is applied incrementally (`Solution.WithDocumentText`); compilations of unaffected projects are reused |
+| New `.cs` file inside an SDK-style project directory | Added to the project incrementally — excluding the project's `bin/` and `obj/` and dot-folders, as the SDK's default globbing does |
+| New `.cs` file in a project whose MSBuild files customise compile items (`<Compile …>`, `EnableDefaultCompileItems`, `DefaultItemExcludes`, `BaseOutputPath`, `BaseIntermediateOutputPath` in the `.csproj` or a `Directory.Build.props/targets` above it) | Full reload, so MSBuild decides whether the file is compiled |
+| `.cs` document deleted | Removed from the solution (generated files under `obj/` are kept, so a `dotnet clean` does not break compilation) |
+| `.sln`/`.slnx`, any loaded `.csproj`, `obj/project.assets.json`, or a `Directory.Build.props`, `Directory.Build.targets`, `Directory.Packages.props` or `global.json` in or above a project or solution directory created, changed or deleted | Full reload, after waiting until the file has been quiet for 500 ms (at most 2 s), so a burst of saves costs one reload |
+| Nothing | The same cached `Solution` instance is returned |
+
+Detection is a stat-only pass on each call: one directory listing per project folder plus a timestamp/length check on the tracked build inputs. No file content is read unless its timestamp or length changed. There is no `FileSystemWatcher`, so nothing is lost to watcher buffer overflows, network drives or containers where change notifications don't arrive. On a 5,000-file project the pass takes about 20 ms. Edits, adds and deletes that happen between two calls are applied together on the next call, and calls are serialized, so concurrent tools never see a half-applied solution.
+
+`reload_solution` still forces a full load and remains the escape hatch for changes the pass cannot see: MSBuild imports other than `Directory.Build.*`/`Directory.Packages.props`, files whose timestamp and length are both preserved across a write, `.editorconfig` and additional files, and non-`.cs` sources.
 
 ## Examples
 
@@ -650,17 +758,17 @@ brew install dotnet-sdk
 sudo apt-get install dotnet-sdk-10.0
 ```
 
-### "No .sln or .slnx file found" / "Failed to reconnect to roslyn"
+### "No solution is loaded" / "No .sln or .slnx file found"
 
-dnp-roslyn auto-detects the solution by searching the current directory and walking up parent directories. If you see this error (or `Failed to reconnect to plugin:dotnet-pilot:roslyn` in Claude Code), it means **Claude Code is not open in a .NET solution directory**.
+dnp-roslyn auto-detects the solution by searching the current directory and walking up parent directories. Since 0.5.3 a server that finds none stays up and every tool answers `No solution is loaded: dnp-roslyn started in '<dir>' …` — the host started it outside the solution (Codex always starts plugin servers in the plugin folder). Earlier versions exit instead, which Claude Code shows as `Failed to reconnect to plugin:dotnet-pilot:roslyn`.
 
-Fix: open Claude Code from the directory that contains your `.sln` or `.slnx` file, or specify the path explicitly:
+Fix: call `reload_solution` with `solutionPath` set to the solution file or its directory, open the host from the directory that contains your `.sln` or `.slnx` file, or specify the path explicitly:
 
 ```bash
 dnp-roslyn --solution path/to/MyApp.slnx
 ```
 
-This error is expected and harmless when using Claude Code outside a .NET project — the MCP server simply can't start without a solution to load.
+This is expected and harmless when using Claude Code outside a .NET project.
 
 ### "Failed to load solution" / project load errors
 

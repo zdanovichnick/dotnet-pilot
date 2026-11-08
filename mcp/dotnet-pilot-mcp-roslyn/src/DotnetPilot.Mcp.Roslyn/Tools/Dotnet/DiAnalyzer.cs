@@ -8,8 +8,8 @@ namespace DotnetPilot.Mcp.Roslyn.Tools.Dotnet;
 /// <summary>
 /// Semantic analysis of DI registrations and consumers across a Roslyn Solution.
 /// Handles AddScoped/AddTransient/AddSingleton, keyed variants, TryAdd*,
-/// AddHttpClient, AddDbContext. Scrutor <c>Scan(...)</c> calls are detected and reported,
-/// but the types they register are not resolved.
+/// AddHttpClient, AddDbContext. Scrutor <c>Scan(...)</c> selectors are evaluated by
+/// <see cref="ScrutorScanResolver"/>; scans it cannot fully evaluate are reported as partial or unresolved.
 /// </summary>
 public static class DiAnalyzer
 {
@@ -27,7 +27,10 @@ public static class DiAnalyzer
         "AddDbContextFactory", "AddHostedService",
     };
 
-    // Framework types that are always available without explicit registration
+    // Framework types that are always available without explicit registration.
+    // IEnumerable<T> is always resolvable: MS DI returns an empty sequence when T has no registrations.
+    // TimeProvider and IHttpClientFactory are deliberately absent: neither the web nor the generic host
+    // registers them, so injecting one without TimeProvider.System / AddHttpClient throws at runtime.
     private static readonly HashSet<string> FrameworkTypes = new(StringComparer.Ordinal)
     {
         "ILogger", "ILoggerFactory", "IConfiguration", "IOptions",
@@ -35,6 +38,13 @@ public static class DiAnalyzer
         "IWebHostEnvironment", "IHttpContextAccessor", "IMemoryCache",
         "IDistributedCache", "IServiceProvider", "IServiceScopeFactory",
         "LinkGenerator", "IUrlHelperFactory",
+        "IEnumerable",
+    };
+
+    // These register DbContextOptions<TContext> (and the non-generic DbContextOptions) implicitly.
+    private static readonly HashSet<string> DbContextRegistrations = new(StringComparer.Ordinal)
+    {
+        "AddDbContext", "AddDbContextPool", "AddDbContextFactory",
     };
 
     public static async Task<List<DiRegistration>> FindRegistrationsAsync(Solution solution, CancellationToken ct)
@@ -66,9 +76,12 @@ public static class DiAnalyzer
         return registrations;
     }
 
-    public static async Task<List<DiScan>> FindScansAsync(Solution solution, CancellationToken ct)
+    public static async Task<List<DiScan>> FindScansAsync(Solution solution, CancellationToken ct) =>
+        (await AnalyzeScansAsync(solution, ct)).Select(a => a.Scan).ToList();
+
+    private static async Task<List<ScanAnalysis>> AnalyzeScansAsync(Solution solution, CancellationToken ct)
     {
-        var scans = new List<DiScan>();
+        var scans = new List<ScanAnalysis>();
 
         foreach (var project in solution.Projects)
         {
@@ -84,13 +97,9 @@ public static class DiAnalyzer
 
                 foreach (var invocation in root.DescendantNodes().OfType<InvocationExpressionSyntax>())
                 {
-                    if (GetMethodName(invocation) != "Scan" || !IsScrutorScan(invocation, model)) continue;
+                    if (GetMethodName(invocation) != "Scan" || !ScrutorScanResolver.IsScrutorScan(invocation, model)) continue;
 
-                    scans.Add(new DiScan
-                    {
-                        File = GetRelativePath(solution, tree.FilePath),
-                        Line = invocation.GetLocation().GetLineSpan().StartLinePosition.Line + 1
-                    });
+                    scans.Add(ScrutorScanResolver.Analyze(invocation, model, GetRelativePath(solution, tree.FilePath)));
                 }
             }
         }
@@ -131,7 +140,7 @@ public static class DiAnalyzer
     {
         var registrations = await FindRegistrationsAsync(solution, ct);
         var consumers = await FindConsumersAsync(solution, ct);
-        var scans = await FindScansAsync(solution, ct);
+        var scans = await AnalyzeScansAsync(solution, ct);
 
         var registeredTypes = new HashSet<string>(StringComparer.Ordinal);
         var lifetimeByType = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -144,6 +153,24 @@ public static class DiAnalyzer
 
             var key = reg.Interface ?? reg.Implementation;
             lifetimeByType.TryAdd(StripGeneric(key), reg.Lifetime);
+
+            if (DbContextRegistrations.Contains(reg.RegistrationMethod))
+                registeredTypes.Add("DbContextOptions");
+            if (reg.RegistrationMethod == "AddDbContextFactory")
+                registeredTypes.Add("IDbContextFactory");
+            if (reg.RegistrationMethod == "AddHttpClient")
+                registeredTypes.Add("IHttpClientFactory");
+        }
+
+        // Scan registrations follow explicit ones so an explicit lifetime wins. The implementation
+        // key lets captive detection see a scanned consumer registered only by its interfaces.
+        foreach (var reg in scans.SelectMany(s => s.Registrations))
+        {
+            if (reg.Interface is not null)
+                registeredTypes.Add(StripGeneric(reg.Interface));
+            registeredTypes.Add(StripGeneric(reg.Implementation));
+            lifetimeByType.TryAdd(StripGeneric(reg.Interface ?? reg.Implementation), reg.Lifetime);
+            lifetimeByType.TryAdd(StripGeneric(reg.Implementation), reg.Lifetime);
         }
 
         // Find missing registrations
@@ -214,17 +241,42 @@ public static class DiAnalyzer
             }
         }
 
+        foreach (var entry in missing)
+        {
+            var typeName = StripGeneric(entry.Interface);
+            var candidates = scans
+                .Where(s => s.MayRegisterAnything || s.PlausibleServices.Contains(typeName))
+                .Select(s => s.ToRef())
+                .ToList();
+            if (candidates.Count == 0) continue;
+
+            entry.PossiblyRegisteredByScan = true;
+            entry.CandidateScans = candidates;
+        }
+
         return new DiCompletenessReport
         {
-            Registered = registrations,
+            Registered = [.. registrations, .. scans.SelectMany(s => s.Registrations)],
             Missing = missing,
             Captive = captive,
-            Scans = scans,
-            Note = scans.Count == 0
-                ? null
-                : "Scrutor Scan(...) calls were found; the types they register are not resolved, " +
-                  "so entries in 'missing' may be registered by a scan."
+            Scans = scans.Select(s => s.Scan).ToList(),
+            Note = BuildScanNote(scans.Select(s => s.Scan).ToList())
         };
+    }
+
+    private static string? BuildScanNote(List<DiScan> scans)
+    {
+        if (scans.Count == 0) return null;
+
+        var incomplete = scans.Where(s => s.Status != "resolved").ToList();
+        if (incomplete.Count == 0)
+            return $"{scans.Count} Scrutor scan(s) resolved; the types they register are included in " +
+                   "'registered' with registrationMethod \"Scan\".";
+
+        var details = incomplete.Select(s => $"{s.File}:{s.Line} ({s.Status}: {string.Join("; ", s.Reasons)})");
+        return $"Scrutor scans not fully resolved: {string.Join(" | ", details)}. Entries in 'missing' with " +
+               "possiblyRegisteredByScan=true may be registered by one of these scans; entries without it " +
+               "are not covered by any scan.";
     }
 
     private static DiRegistration? TryParseRegistration(
@@ -246,6 +298,7 @@ public static class DiAnalyzer
             lifetime = methodName switch
             {
                 "AddHostedService" => "Singleton",
+                "AddHttpClient" => "Transient", // typed clients are transient
                 _ => "Scoped" // DbContext defaults to Scoped
             };
             registrationMethod = methodName;
@@ -301,6 +354,14 @@ public static class DiAnalyzer
                 implType = interfaceType;
                 interfaceType = null;
             }
+        }
+
+        // AddHttpClient() / AddHttpClient("name") name no type but still register the factory.
+        if (implType is null && methodName == "AddHttpClient")
+        {
+            interfaceType = "IHttpClientFactory";
+            implType = "IHttpClientFactory";
+            lifetime = "Singleton";
         }
 
         if (implType is null) return null;
@@ -366,16 +427,6 @@ public static class DiAnalyzer
             Line = lineSpan.StartLinePosition.Line + 1,
             ConstructorParams = injectedParams
         };
-    }
-
-    private static bool IsScrutorScan(InvocationExpressionSyntax invocation, SemanticModel model)
-    {
-        var symbol = model.GetSymbolInfo(invocation).Symbol;
-        if (symbol is not null)
-            return symbol.ContainingNamespace?.ToDisplayString() == "Scrutor";
-
-        // Scrutor is not resolvable (missing reference): fall back to its fluent shape.
-        return invocation.ToString().Contains("AddClasses", StringComparison.Ordinal);
     }
 
     private static string? GetMethodName(InvocationExpressionSyntax invocation)

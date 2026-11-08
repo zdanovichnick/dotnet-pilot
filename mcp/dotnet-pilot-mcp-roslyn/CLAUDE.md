@@ -20,7 +20,8 @@ Integration tests require a .NET solution to load. Set the `DNP_TEST_SOLUTION` e
 ## Architecture
 
 - **Program.cs** — MSBuildLocator init (before any Roslyn type loads), CLI arg parsing, MCP host bootstrap via `ModelContextProtocol` stdio transport. Handles `version` and `doctor` subcommands.
-- **Workspace/WorkspaceCache.cs** — Lazy-loads `MSBuildWorkspace` + `Solution`, caches for server lifetime. Thread-safe via semaphore. Supports `ReloadAsync` for invalidation.
+- **Workspace/SolutionLocator.cs** — the one place that finds a solution: `FindUpward(dir)` (`.slnx` before `.sln`) and `Resolve(path)` (file or directory), used by `Program.cs`, `doctor` and `reload_solution`.
+- **Workspace/WorkspaceCache.cs** — Loads `MSBuildWorkspace` + `Solution` and reconciles it with disk on every `GetSolutionAsync` via `DiskSnapshot` (stat-only, no `FileSystemWatcher`): `.cs` edits/adds/deletes are applied incrementally, while changes to project, solution or `Directory.*` build inputs trigger a full reload. Thread-safe via semaphore. `ReloadAsync(solutionPath)` forces a reload and, given a path, binds that solution (the server may start unbound: with no solution found it stays up and `GetSolutionAsync` throws an `McpException` naming `reload_solution`). Never call `workspace.TryApplyChanges` — MSBuildWorkspace would write the in-memory edits back to disk.
 - **Tools/** — MCP tools organized by category. Each tool class uses `[McpServerToolType]` + `[McpServerTool(Name = "...")]` attributes.
   - `Workspace/` — `get_solution_structure`, `reload_solution`
   - `FileLevel/` — `get_class_outline`, `get_method_body`
@@ -40,7 +41,7 @@ Tools are exposed as `mcp__roslyn__<name>` when registered in a consuming projec
 - WorkspaceCache is registered as singleton — one workspace per MCP server process.
 - DiAnalyzer uses semantic model (`GetSemanticModel`, `GetDeclaredSymbol`) not syntax-only analysis. This is the whole point vs regex.
 - Framework types (ILogger, IConfiguration, IOptions, etc.) are excluded from "missing registration" reports.
-- Scrutor `Scan(...)` calls are detected (`DiAnalyzer.FindScansAsync`) and reported under `scans` with a `note`; the types a scan registers are not resolved.
+- Scrutor `Scan(...)` selectors are evaluated by `ScrutorScanResolver` (no Scrutor reference; matched by name, by selector type, and by the `Scrutor` assembly). Resolved selections add `"Scan"` registrations. Anything else makes the scan `partial`/`unresolved` and flags the `missing` entries it could cover. Test stubs mirror the Scrutor 6.1.0 API, where `Scan` is declared in `Microsoft.Extensions.DependencyInjection`.
 - Captive dependency detection: Singleton consuming Scoped/Transient is flagged.
 - MCP SDK 1.2.0 treats all method parameters as required — use non-nullable `string` with empty-string-to-null conversion for optional parameters.
 

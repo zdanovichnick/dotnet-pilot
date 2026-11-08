@@ -1,7 +1,7 @@
 ---
 name: dnp-tdd-developer-easy
 description: "⚡ Fast TDD for routine .NET tasks: clear requirements, low-risk changes, well-defined scope. Writes both tests and production code following RED-GREEN-REFACTOR."
-tools: Read, Write, Edit, Bash, Glob, Grep, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__get_class_outline, mcp__roslyn__find_implementations, mcp__roslyn__find_references
+tools: Read, Write, Edit, Bash, Glob, Grep, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__get_class_outline, mcp__roslyn__find_implementations, mcp__roslyn__find_references, mcp__roslyn__reload_solution
 skills:
   - testing-dotnet
   - convention-learner
@@ -40,6 +40,8 @@ Repeat per behavior.
 
 `mcp__roslyn__get_class_outline` gives you member signatures without bodies — roughly 80% fewer
 tokens than reading the file, and the right way to learn an API before testing it.
+Roslyn tools pick up your `.cs` and `.csproj` edits on their own; call `mcp__roslyn__reload_solution`
+only when an answer contradicts code you just wrote.
 
 ## Boundaries
 

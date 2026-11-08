@@ -72,6 +72,25 @@ public sealed class DiScan
 
     [JsonPropertyName("line")]
     public int Line { get; init; }
+
+    /// <summary><c>resolved</c>, <c>partial</c> or <c>unresolved</c>.</summary>
+    [JsonPropertyName("status")]
+    public string Status { get; init; } = "resolved";
+
+    [JsonPropertyName("reasons")]
+    public List<string> Reasons { get; init; } = [];
+
+    [JsonPropertyName("registeredCount")]
+    public int RegisteredCount { get; init; }
+}
+
+public sealed class DiScanRef
+{
+    [JsonPropertyName("file")]
+    public required string File { get; init; }
+
+    [JsonPropertyName("line")]
+    public int Line { get; init; }
 }
 
 public sealed class DiMissing
@@ -81,6 +100,15 @@ public sealed class DiMissing
 
     [JsonPropertyName("consumedBy")]
     public required List<DiConsumerRef> ConsumedBy { get; init; }
+
+    /// <summary>True when a partial or unresolved Scrutor scan could register this type.</summary>
+    [JsonPropertyName("possiblyRegisteredByScan")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? PossiblyRegisteredByScan { get; set; }
+
+    [JsonPropertyName("candidateScans")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public List<DiScanRef>? CandidateScans { get; set; }
 }
 
 public sealed class DiConsumerRef

@@ -51,19 +51,23 @@ for (var i = 0; i < args.Length; i++)
     }
 }
 
-solutionPath ??= FindSolution(Directory.GetCurrentDirectory());
-
-if (solutionPath is null)
+if (solutionPath is not null)
 {
-    Console.Error.WriteLine("ERROR: No .sln or .slnx file found. Use --solution <path> or run from a directory containing a solution file.");
-    return 1;
+    var requested = solutionPath;
+    solutionPath = SolutionLocator.Resolve(requested);
+    if (solutionPath is null)
+    {
+        Console.Error.WriteLine($"ERROR: Solution file not found: {Path.GetFullPath(requested)}");
+        return 1;
+    }
 }
-
-solutionPath = Path.GetFullPath(solutionPath);
-if (!File.Exists(solutionPath))
+else
 {
-    Console.Error.WriteLine($"ERROR: Solution file not found: {solutionPath}");
-    return 1;
+    solutionPath = SolutionLocator.FindUpward(Directory.GetCurrentDirectory());
+    // Some hosts (Codex) start plugin servers in the plugin's own folder and expose no workspace root, so
+    // exiting here would hide every tool; reload_solution binds the solution once the model names it.
+    if (solutionPath is null)
+        Console.Error.WriteLine("WARNING: No .sln or .slnx file found; tools will ask for reload_solution with solutionPath.");
 }
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -86,26 +90,11 @@ builder.Services
 var app = builder.Build();
 
 // Eagerly start workspace loading in the background
-_ = app.Services.GetRequiredService<WorkspaceCache>().GetSolutionAsync(CancellationToken.None);
+if (solutionPath is not null)
+    _ = app.Services.GetRequiredService<WorkspaceCache>().GetSolutionAsync(CancellationToken.None);
 
 await app.RunAsync();
 return 0;
-
-static string? FindSolution(string startDir)
-{
-    var dir = new DirectoryInfo(startDir);
-    while (dir is not null)
-    {
-        var slnx = dir.GetFiles("*.slnx").FirstOrDefault();
-        if (slnx is not null) return slnx.FullName;
-
-        var sln = dir.GetFiles("*.sln").FirstOrDefault();
-        if (sln is not null) return sln.FullName;
-
-        dir = dir.Parent;
-    }
-    return null;
-}
 
 static async Task<int> RunDoctor(string[] args)
 {
@@ -116,7 +105,9 @@ static async Task<int> RunDoctor(string[] args)
             solutionPath = args[++i];
     }
 
-    solutionPath ??= FindSolution(Directory.GetCurrentDirectory());
+    solutionPath = solutionPath is null
+        ? SolutionLocator.FindUpward(Directory.GetCurrentDirectory())
+        : SolutionLocator.Resolve(solutionPath) ?? solutionPath;
 
     Console.WriteLine("dnp-roslyn doctor");
     Console.WriteLine("=================");

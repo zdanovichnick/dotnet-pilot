@@ -87,7 +87,8 @@ Key rules:
 - Throw only for broken preconditions a correct caller never sends (a programming error), not for
   business outcomes
 - Take `TimeProvider` (BCL, no package) instead of reading `DateTime.UtcNow` — timestamps become
-  testable with `FakeTimeProvider`
+  testable with `FakeTimeProvider`. The host does not register it: add
+  `services.AddSingleton(TimeProvider.System)`, or the first resolve throws
 
 ## Value Objects
 

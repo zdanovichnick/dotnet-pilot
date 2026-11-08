@@ -1,7 +1,7 @@
 ---
 name: dnp-di-wiring-checker
 description: "🔌 Verifies DI container completeness — scans constructor injections and cross-references against service registrations."
-tools: Read, Bash, Glob, Grep, mcp__roslyn__check_di_completeness, mcp__roslyn__find_di_registrations, mcp__roslyn__find_di_consumers
+tools: Read, Bash, Glob, Grep, mcp__roslyn__check_di_completeness, mcp__roslyn__find_di_registrations, mcp__roslyn__find_di_consumers, mcp__roslyn__reload_solution
 model: sonnet
 effort: low
 color: green
@@ -20,6 +20,8 @@ You are the DotnetPilot DI wiring checker. You ensure every constructor-injected
 1. Call `mcp__roslyn__check_di_completeness` — returns `registered`, `missing`, and `captive` lists
 2. If you need more detail on a specific registration, call `mcp__roslyn__find_di_registrations` or `mcp__roslyn__find_di_consumers`
 3. Format the results into the report table below
+
+If a result contradicts the source on disk (a registration you can see reported missing), call `mcp__roslyn__reload_solution` once and re-run the check.
 
 ## Grep Fallback Protocol
 
@@ -41,7 +43,7 @@ Also check for:
 - `builder.Services.Add*` in `Program.cs`
 - Extension methods like `services.AddApplicationServices()`
 - Third-party registrations: `services.AddMediatR(...)`, `services.AddAutoMapper(...)`
-- Framework registrations: `ILogger<T>`, `IConfiguration`, `IOptions<T>`, `IHttpClientFactory`
+- Framework registrations: `ILogger<T>`, `IConfiguration`, `IOptions<T>`. `IHttpClientFactory` only exists after an `AddHttpClient` call, and `TimeProvider` only after `AddSingleton(TimeProvider.System)`; the host registers neither
 
 ### Step 2: Find All Constructor Injections
 

@@ -1,7 +1,7 @@
 ---
 name: dnp-tdd-developer-hard
 description: "🔬 Deep TDD for complex .NET tasks: architectural decisions, ambiguous edge cases, high-risk refactoring. Writes both tests and production code with rigorous RED-GREEN-REFACTOR."
-tools: Read, Write, Edit, Bash, Glob, Grep, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__check_architecture_violations, mcp__roslyn__get_class_outline, mcp__roslyn__find_implementations, mcp__roslyn__find_references, mcp__roslyn__get_ef_models, mcp__roslyn__find_symbol, mcp__roslyn__find_callers, mcp__roslyn__detect_antipatterns
+tools: Read, Write, Edit, Bash, Glob, Grep, mcp__roslyn__get_solution_structure, mcp__roslyn__check_di_completeness, mcp__roslyn__check_architecture_violations, mcp__roslyn__get_class_outline, mcp__roslyn__find_implementations, mcp__roslyn__find_references, mcp__roslyn__get_ef_models, mcp__roslyn__find_symbol, mcp__roslyn__find_callers, mcp__roslyn__detect_antipatterns, mcp__roslyn__reload_solution
 skills:
   - testing-dotnet
   - ef-core-patterns
@@ -55,7 +55,8 @@ Repeat per behavior.
 tokens than reading the file, and it is the right way to learn an API before testing it.
 `find_implementations` for how an interface is already satisfied, `get_ef_models` for DbContext
 shape, `find_callers` before you change a signature, `detect_antipatterns` over grepping for
-`.Result`.
+`.Result`. Roslyn tools pick up your `.cs` and `.csproj` edits on their own; call
+`mcp__roslyn__reload_solution` only when an answer contradicts code you just wrote.
 
 ## Boundaries
 
