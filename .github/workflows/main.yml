@@ -25,6 +25,9 @@ jobs:
         with:
           global-json-file: mcp/dotnet-pilot-mcp-roslyn/global.json
 
+      - name: Build sample solution
+        run: dotnet build samples/SmokeSolution/SmokeSolution.slnx
+
       - name: Restore
         run: dotnet restore mcp/dotnet-pilot-mcp-roslyn/DotnetPilot.Mcp.Roslyn.slnx
 
@@ -32,6 +35,8 @@ jobs:
         run: dotnet build mcp/dotnet-pilot-mcp-roslyn/DotnetPilot.Mcp.Roslyn.slnx -c Release --no-restore
 
       - name: Test
+        env:
+          DNP_TEST_SOLUTION: ${{ github.workspace }}/samples/SmokeSolution/SmokeSolution.slnx
         run: dotnet test mcp/dotnet-pilot-mcp-roslyn/DotnetPilot.Mcp.Roslyn.slnx -c Release --no-build --logger "trx;LogFileName=test-results.trx"
 
       - name: Pack

@@ -8,3 +8,8 @@ Thumbs.db
 
 # Written by the engine when the plugin loads as a mod
 .claude-plugin/types/
+
+# Sample solution build output
+samples/**/bin/
+samples/**/obj/
+samples/SmokeSolution/**/smoke.db

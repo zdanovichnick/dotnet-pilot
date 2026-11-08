@@ -1,0 +1,64 @@
+name: roslyn
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'mcp/**'
+      - 'samples/**'
+      - 'scripts/smoke-roslyn.js'
+      - '.github/workflows/roslyn.yml'
+  pull_request:
+    paths:
+      - 'mcp/**'
+      - 'samples/**'
+      - 'scripts/smoke-roslyn.js'
+      - '.github/workflows/roslyn.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    env:
+      DOTNET_NOLOGO: 'true'
+      # The integration tests return early without a solution; point them at the in-repo sample
+      # so a green run means they executed.
+      DNP_TEST_SOLUTION: ${{ github.workspace }}/samples/SmokeSolution/SmokeSolution.slnx
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: mcp/dotnet-pilot-mcp-roslyn/global.json
+
+      # MSBuildWorkspace evaluates the sample's projects, which needs their packages restored.
+      - name: Build sample solution
+        run: dotnet build samples/SmokeSolution/SmokeSolution.slnx
+
+      - name: Test sample solution
+        run: dotnet test samples/SmokeSolution/SmokeSolution.slnx --no-build
+
+      - name: Build server
+        run: dotnet build mcp/dotnet-pilot-mcp-roslyn/DotnetPilot.Mcp.Roslyn.slnx -c Release
+
+      - name: Test server
+        run: dotnet test mcp/dotnet-pilot-mcp-roslyn/DotnetPilot.Mcp.Roslyn.slnx -c Release --no-build
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Smoke test server over stdio
+        run: node scripts/smoke-roslyn.js --verbose
+
+      - name: Pack server
+        run: dotnet pack mcp/dotnet-pilot-mcp-roslyn/src/DotnetPilot.Mcp.Roslyn/DotnetPilot.Mcp.Roslyn.csproj -c Release --no-build

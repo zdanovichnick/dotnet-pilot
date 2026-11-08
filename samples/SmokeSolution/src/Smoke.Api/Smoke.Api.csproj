@@ -1,0 +1,6 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <ItemGroup>
+    <ProjectReference Include="..\Smoke.Application\Smoke.Application.csproj" />
+    <ProjectReference Include="..\Smoke.Infrastructure\Smoke.Infrastructure.csproj" />
+  </ItemGroup>
+</Project>

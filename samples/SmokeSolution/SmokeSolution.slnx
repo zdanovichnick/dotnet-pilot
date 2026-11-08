@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Smoke.Domain/Smoke.Domain.csproj" />
+    <Project Path="src/Smoke.Application/Smoke.Application.csproj" />
+    <Project Path="src/Smoke.Infrastructure/Smoke.Infrastructure.csproj" />
+    <Project Path="src/Smoke.Api/Smoke.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Smoke.Tests/Smoke.Tests.csproj" />
+  </Folder>
+</Solution>
