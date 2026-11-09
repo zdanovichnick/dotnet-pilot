@@ -1,15 +1,16 @@
 # Proposals: Claude Code gaps DotnetPilot can close
 
-These are implementation instructions for four features Claude Code does not ship natively:
+These are implementation instructions for features Claude Code does not ship natively. Each spec
+was checked against existing tools on 2026-11-09 (see each spec's prior-art note):
 
-| # | Feature | Shape | Spec |
-|---|---------|-------|------|
-| 1 | Native .NET debugging | New stdio MCP server `dnp-debug` (DAP client over netcoredbg) + skill + command | [01-debugger-dap.md](01-debugger-dap.md) |
-| 2 | Session and context visibility | Mod: pane + `/dnp-context` | [02-session-context.md](02-session-context.md) |
-| 3 | Hook tracing and ordering | Mod timing layer + opt-in Node self-trace | [03-hook-trace.md](03-hook-trace.md) |
-| 4 | MCP reliability | Mod: health check, retry, status entry for `roslyn` and `debug` | [04-mcp-health.md](04-mcp-health.md) |
+| # | Feature | Status | Shape | Spec |
+|---|---------|--------|-------|------|
+| 1 | .NET test debugging | Rescoped | Skill + command debugging `dotnet test` through a user-installed DAP MCP server (mcp-debugger or netcoredbg-mcp); no server of our own | [01-debugger-dap.md](01-debugger-dap.md) |
+| 2 | Session and context visibility | Dropped | Covered by cc-viewer and claude-agent-flow | [02-session-context.md](02-session-context.md) |
+| 3 | Hook tracing and ordering | Open | Mod timing layer + opt-in Node self-trace | [03-hook-trace.md](03-hook-trace.md) |
+| 4 | MCP reliability | Shipped (3.9.0) | Mod: health check, status entry, `/dnp-mcp` for `roslyn` | [04-mcp-health.md](04-mcp-health.md) |
 
-Build order: 4 first (smallest, and 1 depends on it for `debug` health), then 2, 3, and 1 last.
+Build order: 3 next, then 1 once its attach-by-PID check passes.
 
 ## Scope tension
 
@@ -67,5 +68,4 @@ feature 1 cannot use a native API and has to bring its own adapter.
    `statusline/dnp-statusline.js` and the `help.md` banner. MCP servers version in their own
    `.csproj`.
 8. Codex/Cursor packages (`scripts/build-host-plugins.js`, see `docs/HOST-PLUGINS.md`) exclude
-   hooks and mods. Feature 1's MCP server
-   and skill should be included. Features 2 to 4 should not.
+   hooks and mods. Feature 1's skill and command should be included. Features 2 to 4 should not.

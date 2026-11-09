@@ -13,6 +13,17 @@ Scope tension: generic tooling (see [README](README.md#scope-tension)). Part B (
 DotnetPilot's own Node hooks) is .NET-plugin maintenance and fits the scope. Part A ships behind
 `hook_trace`, default **off**.
 
+## Prior art (checked 2026-11-09)
+
+[disler/claude-code-hooks-multi-agent-observability](https://github.com/disler/claude-code-hooks-multi-agent-observability)
+logs hook events but does not time individual hooks or show what they inject. No other tool found
+does either, so this is the one proposal with no existing replacement.
+
+An external mod, offered but not yet reviewed here, reports per-hook injected text. In one smoke
+run it showed a single SessionStart hook injecting about 13k tokens. Before writing Part A, find
+out how it attributes text to **one hook**. If that works, it contradicts the per-event limit
+below, and Part B may be unnecessary.
+
 ## What Claude Code gives (and does not)
 
 - Matching settings hooks for one event **run in parallel**. Identical handlers from several
@@ -108,8 +119,11 @@ No ordering API is documented for plugin hooks, so the spec doesn't fake one. Wh
   (`docs/HOST-PLUGINS.md` covers Codex/Cursor packaging, not this) saying a higher-tier plugin's
   `prompt.compose` can bypass ours. The debug log line is the proof (`claude --debug`, search for
   `bypassed by`). `/dnp-hooks` adds a hint when the routing section is missing from the last
-  compose. **UNCONFIRMED**: whether a mod can observe its own compose being bypassed. Check: run
-  with cc-plugin-sec-default installed and see whether our `prompt.compose` hook fires at all.
+  compose. Confirmed: with cc-plugin-sec-default seated, our `prompt.compose` does not fire
+  ([04-mcp-health.md](04-mcp-health.md#verified)), and the session receives a task notification
+  saying so ("dotnet-pilot: its prompt.compose hook was skipped. "cc-plugin-sec-default" runs first
+  and sent the event on past it.", 2026-11-09). **UNCONFIRMED**: whether the mod itself can see
+  the skip (an event or a `$` call), not just the model.
 
 ## Wiring
 

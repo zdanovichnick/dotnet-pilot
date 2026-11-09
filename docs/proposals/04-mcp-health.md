@@ -18,7 +18,11 @@ This happens. A session on this machine on 2026-11-03 reported `plugin:dotnet-pi
   manual (`/mcp`, or `/mcp reconnect all` in v2.1.284+). Under `claude -p` / the Agent SDK, a
   stdio server restarts on the next tool call, and plugin stdio servers skip new `-p` runs for
   15 min after a failure.
-- No hook input and no status line field carries MCP state.
+- No hook input and no status line field carries MCP state
+  ([anthropics/claude-code#101745](https://github.com/anthropics/claude-code/issues/101745), open).
+- A plugin cannot revive its own stdio server after a startup failure
+  ([anthropics/claude-code#106087](https://github.com/anthropics/claude-code/issues/106087), open);
+  see **Verified**.
 - A mod can call `$.mcp.connect(server)` for servers **in its own plugin's manifest** only
   (`roslyn`, later `debug`). It resolves to `{ isConnected: true, server }` or
   `{ isConnected: false, reason: 'unlisted' | 'unapproved' | 'disabled' | 'policy' | 'auth' | 'failed' }`.

@@ -1,5 +1,14 @@
 # 2. Session and context visibility: `context` mod
 
+> **Dropped 2026-11-09.** This is generic Claude Code tooling (see the
+> [scope tension](README.md#scope-tension)), and existing tools cover it:
+> [weiesky/cc-viewer](https://github.com/weiesky/cc-viewer) records every API request, so it shows
+> exactly what was loaded, and
+> [Charlie0113-T/claude-agent-flow](https://github.com/Charlie0113-T/claude-agent-flow) is a mod
+> with a live subagent tree. Since 2.1.277, `/context all` no longer lists instruction files one by
+> one ([anthropics/claude-code#95443](https://github.com/anthropics/claude-code/issues/95443), open).
+> The spec below is kept as a record and is not scheduled.
+
 ## Goal
 
 One place to see what is in the context window and where it came from: memory files, skills, MCP
