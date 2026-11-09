@@ -7,6 +7,16 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 
 ## [Unreleased]
 
+## [3.9.1] - 2026-11-09
+
+### Changed
+
+- `docs/proposals` checked against existing tools. Feature 1 (debugging) is rescoped to a skill and
+  command that debug `dotnet test` through a user-installed DAP MCP server (mcp-debugger or
+  netcoredbg-mcp) instead of a `dnp-debug` server of our own. Feature 2 (context view) is dropped in
+  favour of cc-viewer and claude-agent-flow. Feature 3 (hook trace) stays open, with prior art and
+  the confirmed `prompt.compose` skip recorded. Feature 4 is marked shipped in 3.9.0.
+
 ## [3.9.0] - 2026-11-08
 
 ### Added
