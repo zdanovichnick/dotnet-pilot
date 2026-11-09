@@ -32,7 +32,7 @@ description: Vetted NuGet packages by category. Prefer these over alternatives u
 | `xunit` | Test framework |
 | `xunit.runner.visualstudio` | VS test runner |
 | `NSubstitute` | Mocking — prefer over Moq (cleaner API, no setup/verify sprawl) |
-| `FluentAssertions` | Assertion library — `.Should().Be()` over Assert.Equal |
+| `FluentAssertions` | Assertion library — `.Should().Be()` over Assert.Equal. Pin `[7,8)`: v8+ needs a commercial licence; Shouldly is the free alternative |
 | `Testcontainers` | Container-based integration testing |
 | `Testcontainers.MsSql` | SQL Server container |
 | `Testcontainers.PostgreSql` | PostgreSQL container |
@@ -58,7 +58,7 @@ description: Vetted NuGet packages by category. Prefer these over alternatives u
 | Package | Use |
 |---------|-----|
 | `Wolverine` | In-process and outbox messaging with Mediator-like API |
-| `MediatR` | CQRS mediator pattern (simpler, no outbox) |
+| `MediatR` | CQRS mediator pattern (simpler, no outbox). v13+ is commercial; see the licensing note in the clean-architecture skill |
 | `MassTransit` | Distributed messaging (RabbitMQ, Azure Service Bus, etc.) |
 
 ## API Documentation
@@ -71,6 +71,6 @@ description: Vetted NuGet packages by category. Prefer these over alternatives u
 | Package | Reason |
 |---------|--------|
 | `Newtonsoft.Json` | Use `System.Text.Json` unless consuming a legacy API that requires it |
-| `AutoMapper` | Encourages implicit mapping — use explicit projection or records |
+| `AutoMapper` | Encourages implicit mapping, and v15+ is commercial — use explicit projection or records |
 | `Dapper + EF Core together` | Pick one ORM approach per DbContext boundary |
 | Any package with last commit > 2 years and no active fork | Unmaintained |

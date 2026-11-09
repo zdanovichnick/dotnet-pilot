@@ -77,7 +77,7 @@ Verify:
 
 ```bash
 dnp-roslyn version
-# dnp-roslyn 0.4.0
+# dnp-roslyn 0.5.3
 ```
 
 ### Update to latest
@@ -93,7 +93,7 @@ dnp-roslyn version    # confirm new version
 
 ```bash
 dotnet tool list -g                                          # see installed version
-dotnet tool update -g DotnetPilot.Mcp.Roslyn --version 0.4.0 # pin to a specific version
+dotnet tool update -g DotnetPilot.Mcp.Roslyn --version 0.5.3 # pin to a specific version
 dotnet tool uninstall -g DotnetPilot.Mcp.Roslyn              # remove
 ```
 
@@ -787,7 +787,7 @@ dnp-roslyn doctor --solution path/to/Your.slnx
 
 - **`find_references` / `find_implementations` return nothing:** The symbol name must match exactly (case-sensitive). Use `get_class_outline` first to see exact member names.
 - **`get_ef_models` returns no contexts:** Ensure your DbContext class inherits from `DbContext`, `IdentityDbContext`, or `ApiAuthorizationDbContext`. The context must be in a project that's part of the solution.
-- **`check_di_completeness` misses registrations:** Only `Add*<T>` method-call patterns are detected, in any file. Custom extension methods that wrap DI registration may not be recognized. Scrutor `Scan(...)` registrations are not resolved: the call sites appear under `scans` and the report carries a `note`; treat `missing` entries as unverified when it is present.
+- **`check_di_completeness` misses registrations:** Only `Add*<T>` method-call patterns are detected, in any file. Custom extension methods that wrap DI registration may not be recognized. Scrutor `Scan(...)` selectors are evaluated statically; a scan that is only `partial` or `unresolved` (a `Where(...)` predicate, `FromApplicationDependencies`, a non-`typeof` argument) is listed under `scans` with its reasons in `note`, and the `missing` entries it could cover carry `possiblyRegisteredByScan`. Treat only those entries as unverified.
 
 ### MCP transport issues
 
@@ -833,29 +833,37 @@ Requires `dnp-roslyn` to be installed as a global tool and a valid .NET solution
 
 ```
 src/DotnetPilot.Mcp.Roslyn/
-  Program.cs                              # Entry point, MSBuildLocator, arg parsing, doctor command
+  Program.cs                              # Entry point, MSBuildLocator, arg parsing, doctor and version commands
   Workspace/
-    WorkspaceCache.cs                     # MSBuildWorkspace loader with caching + reload
+    WorkspaceCache.cs                     # MSBuildWorkspace loader; reconciles with disk on every call
+    DiskSnapshot.cs, FileStamp.cs         # Stat-only change detection (no FileSystemWatcher)
+    SolutionLocator.cs                    # Finds a solution upward from a directory (.slnx before .sln)
     WorkspaceOptions.cs                   # Solution path config
   Tools/
     Workspace/
       GetSolutionStructureTool.cs         # Solution-level project enumeration
-      ReloadSolutionTool.cs               # Cache invalidation
+      ReloadSolutionTool.cs               # Forced reload; binds a solution via solutionPath
     FileLevel/
       GetClassOutlineTool.cs              # Class member signatures + FindDocument helper
       GetMethodBodyTool.cs                # Method/constructor/property source extraction
     SolutionLevel/
       FindReferencesTool.cs               # Cross-solution SymbolFinder.FindReferences
       FindImplementationsTool.cs          # Interface/abstract implementation finder
+      FindSymbolTool.cs                   # Symbol lookup by name
+      FindCallersTool.cs                  # Callers of a method
+      FindDeadCodeTool.cs                 # Unreferenced symbols
+      DetectAntiPatternsTool.cs           # Semantic anti-pattern detection
+      DetectCircularDependenciesTool.cs   # Project-reference cycles
     Dotnet/
       DiAnalyzer.cs                       # DI registration + consumer analysis engine
       DiTools.cs                          # MCP wrappers for DI tools
+      ScrutorScanResolver.cs              # Static evaluation of Scrutor Scan(...) selectors
       ArchitectureAnalyzer.cs             # Layer classification + rule enforcement
       ArchitectureTools.cs                # MCP wrapper for architecture tool
       EfCoreAnalyzer.cs                   # DbContext/entity introspection engine
       EfCoreTools.cs                      # MCP wrapper for EF Core tool
   Models/
-    SolutionModels.cs                     # SolutionStructure, ProjectInfo
+    SolutionStructure.cs                  # SolutionStructure, ProjectInfo
     DiModels.cs                           # DiRegistration, DiConsumer, DiCompletenessReport
     ArchitectureModels.cs                 # ArchitectureReport, LayerInfo, ArchitectureViolation
     EfCoreModels.cs                       # EfCoreReport, DbContextInfo, EntityInfo, etc.
@@ -869,7 +877,7 @@ tests/
 | Component | Version | Purpose |
 |-----------|---------|---------|
 | .NET | 10.0 | Runtime and target framework |
-| ModelContextProtocol | 1.2.0 | MCP server SDK (stdio transport, tool discovery) |
+| ModelContextProtocol | 1.3.0 | MCP server SDK (stdio transport, tool discovery) |
 | Microsoft.CodeAnalysis.CSharp.Workspaces | 5.3.0 | Roslyn C# workspace + semantic analysis |
 | Microsoft.CodeAnalysis.Workspaces.MSBuild | 5.3.0 | MSBuild project/solution loader |
 | Microsoft.Build.Locator | 1.11.2 | Runtime MSBuild SDK resolution |

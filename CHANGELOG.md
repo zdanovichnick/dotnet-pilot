@@ -7,6 +7,19 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 
 ## [Unreleased]
 
+## [3.9.2] - 2026-11-09
+
+### Changed
+
+- Documentation brought in line with the repository: `utility:help` gains a MODS section (`/dnp-mcp`,
+  `/dnp-pressure`, `/city` and the mod options); the README lists `quality:security-scan --scope`; the
+  repo `CLAUDE.md` Layout covers `docs/`, `packaging/hosts/`, `knowledge/`, `templates/` and `assets/`.
+- Roslyn server docs: version examples now 0.5.3, ModelContextProtocol 1.3.0 and Hosting 10.0.8, the
+  project tree lists every source file, and the Scrutor limitation describes partial and unresolved scans.
+- `docs/proposals/04-mcp-health.md` version check points at `MIN_ROSLYN_VERSION` in `mcp-health.ts`.
+- `knowledge/package-recommendations.md` pins FluentAssertions to `[7,8)` and marks MediatR and
+  AutoMapper as commercial from v13 and v15; the web-api template README targets .NET 10.
+
 ## [3.9.1] - 2026-11-09
 
 ### Changed

@@ -75,15 +75,10 @@ A mod in `hooks/mods/mcp-health.ts`:
 
 ## Version check
 
-`.mcp.json` sets `DNP_ROSLYN_MIN_VERSION=0.3`, but nothing in the repo reads it. A grep of
-`mcp/dotnet-pilot-mcp-roslyn/src` and `hooks/_lib` finds no reader. Choose one:
-
-- **Enforce it in the server**: `Program.cs` reads the variable and exits with a clear stderr line
-  when its own version is lower. Then `doctor` reports it as well.
-- **Or enforce it in the mod**: run `dnp-roslyn version`, compare it with a constant in
-  `mcp-health.ts`, and delete the env var from `.mcp.json`. This keeps the fact in one place.
-
-The second option is simpler, and the minimum moves with plugin releases, so recommend it.
+The mod runs `dnp-roslyn version` and compares it with `MIN_ROSLYN_VERSION` in
+`hooks/mods/mcp-health.ts` (currently `0.5`). That constant is the only place the minimum
+lives; `.mcp.json` carries no version variable. A lower version is reported with
+`dotnet tool update -g DotnetPilot.Mcp.Roslyn`.
 
 ## State
 

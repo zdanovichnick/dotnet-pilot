@@ -9,7 +9,7 @@ Use this template for REST APIs built with ASP.NET Core minimal APIs.
 - No complex domain logic requiring DDD
 
 **Stack assumptions:**
-- .NET 9 or 10
+- .NET 10
 - Minimal APIs (not MVC controllers)
 - EF Core for data access
 - FluentValidation for input validation

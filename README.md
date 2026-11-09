@@ -320,7 +320,7 @@ For example, `quality:security-scan` becomes `$dnp-quality-security-scan` in Cod
 | --- | --- | --- |
 | `quality:review` | `[--base <ref> \| --staged \| --last-commit \| --scope <glob>] [--depth quick\|standard\|deep]` | .NET review of your changes. Fast scouts read each part of the diff, a stronger model tries to refute every finding against the source, and the report lists confirmed findings and anything it could not cover |
 | `quality:check-architecture` | — | Find layer violations: forbidden project references, DI issues, misplaced packages |
-| `quality:security-scan` | — | Run `dotnet list package --vulnerable`, then an OWASP review by `dnp-security-auditor`, and report the combined findings |
+| `quality:security-scan` | `[--scope <Project>]` | Run `dotnet list package --vulnerable`, then an OWASP review by `dnp-security-auditor`, and report the combined findings |
 | `quality:de-sloppify` | `[--scope path]` | Remove dead code, normalize naming and remove duplication. Tests must pass first |
 
 `--depth` sets how many agents `quality:review` may use: `quick` up to 6 (scouts only),
@@ -558,7 +558,8 @@ node scripts/smoke-roslyn.js                                          # --server
 ```
 
 Read [CLAUDE.md](CLAUDE.md) for repository conventions and [CHANGELOG.md](CHANGELOG.md)
-for release history and command migrations.
+for release history and command migrations. [docs/proposals](docs/proposals/README.md) holds
+the specs for features under consideration and their status.
 
 ---
 

@@ -43,14 +43,14 @@ Tools are exposed as `mcp__roslyn__<name>` when registered in a consuming projec
 - Framework types (ILogger, IConfiguration, IOptions, etc.) are excluded from "missing registration" reports.
 - Scrutor `Scan(...)` selectors are evaluated by `ScrutorScanResolver` (no Scrutor reference; matched by name, by selector type, and by the `Scrutor` assembly). Resolved selections add `"Scan"` registrations. Anything else makes the scan `partial`/`unresolved` and flags the `missing` entries it could cover. Test stubs mirror the Scrutor 6.1.0 API, where `Scan` is declared in `Microsoft.Extensions.DependencyInjection`.
 - Captive dependency detection: Singleton consuming Scoped/Transient is flagged.
-- MCP SDK 1.2.0 treats all method parameters as required — use non-nullable `string` with empty-string-to-null conversion for optional parameters.
+- Optional parameters: most tools take a non-nullable `string` and convert empty to null (the pattern from when the SDK treated every parameter as required); `reload_solution` declares `string? solutionPath = null`. Follow the neighbouring tool.
 
 ## Dependencies
 
 | Package | Purpose |
 |---------|---------|
-| `ModelContextProtocol` 1.2.0 | MCP server SDK (stdio transport) |
+| `ModelContextProtocol` 1.3.0 | MCP server SDK (stdio transport) |
 | `Microsoft.CodeAnalysis.CSharp.Workspaces` 5.3.0 | Roslyn C# semantic analysis |
 | `Microsoft.CodeAnalysis.Workspaces.MSBuild` 5.3.0 | MSBuildWorkspace for loading .sln/.slnx |
 | `Microsoft.Build.Locator` 1.11.2 | Finds local MSBuild installation |
-| `Microsoft.Extensions.Hosting` 10.0.0 | Generic host for DI + lifetime |
+| `Microsoft.Extensions.Hosting` 10.0.8 | Generic host for DI + lifetime |

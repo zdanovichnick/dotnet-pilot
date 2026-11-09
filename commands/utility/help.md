@@ -8,7 +8,7 @@ effort: low
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v3.9.1 — .NET development plugin for Claude Code
+DotnetPilot v3.9.2 — .NET development plugin for Claude Code
 Usage: /dotnet-pilot:<category>:<command> [args]      e.g. /dotnet-pilot:dotnet:create-entity Product
 
 COMMANDS (16)
@@ -89,6 +89,13 @@ HOOKS (13) — advisory (exit 0) except dnp-git-autoapprove, which grants permis
   dnp-subagent-result          (subagent_result)         show [HALT / [PARTIAL / [ROUTING: from dnp-* agents
   dnp-statusline-sync          (statusline.auto_enable)  refresh ~/.claude/dnp-statusline.js at session start
                                                          (auto_enable: true also wires settings.json)
+
+MODS — Claude Code builds with mod support only; set the option in /config (not in Codex or Cursor)
+  /dnp-mcp [retry]   (mcp_health)       roslyn server state, reason, fix; retry re-checks after a /mcp Reconnect
+  /dnp-pressure      (pressure)         what raised the 0-100 session pressure score
+  /city [scene|status] (pixel_city)    pixel band above the prompt, off by default; scenes city, beach, dino, sunset
+  Also: build_status (failure toasts), routing (routing roster), pressure_test_guard_block (deny test-loosening edits at 60+),
+        pixel_city_scene (starting scene)
 
 Did you mean — commands removed in v3.0.0 and where their job went
   dotnet:add-project         → dotnet:scaffold project <Name> --type <classlib|web|xunit|worker|console>

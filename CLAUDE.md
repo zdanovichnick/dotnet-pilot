@@ -26,6 +26,9 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 - `scripts/dnp-review-preflight.js` — Node preflight that shards a diff and writes the manifest the review Workflow consumes
 - `rules/global-claude-md.md` — template block injected into `~/.claude/CLAUDE.md` by `dnp-sync-global-claude-md.js` when the plugin version is newer than the installed block (versioned markers keep it idempotent)
 - `skills/<name>/SKILL.md` — 15 skill packs loaded on demand via an agent's `skills:` list. Every `SKILL.md` carries `when_to_use:`; `authentication`, `caching`, `ddd`, `error-handling`, and `resilience` keep their detail in `references/*.md`
+- `docs/` — `HOST-PLUGINS.md` (Codex/Cursor packaging and smoke checks) and `proposals/` (specs for candidate features and their status; each spec names what is verified and what is not)
+- `packaging/hosts/` — `init.md` (the host version of `project:init`) and `runtime.md` (host runtime notes), both read by `scripts/build-host-plugins.js` when it builds the Codex and Cursor packages; `scripts/smoke-codex-plugin.js` installs the Codex package in a disposable profile
+- `knowledge/` (package recommendations, antipatterns, ADRs, breaking changes) and `templates/` (per-archetype `CLAUDE.md` starters) — reference content the host packages copy; `assets/` holds the README images
 - `CHANGELOG.md` — Keep-a-Changelog history; the only place that names removed commands and agents
 
 ### Authoring Rules
