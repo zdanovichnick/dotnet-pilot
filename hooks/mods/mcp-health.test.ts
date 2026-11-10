@@ -308,7 +308,7 @@ test('/dnp-mcp before any check says so', opts, async ($, on) => {
 test('pressure and mcp-health share the one status line and session start', async ($, on) => {
   const out = stubEngine(on)
   await start($, out)
-  expect(out.commands.filter(c => c.startsWith('dnp-'))).toEqual(['dnp-pressure', 'dnp-mcp'])
+  expect(out.commands.filter(c => c.startsWith('dnp-'))).toEqual(['dnp-pressure', 'dnp-mcp', 'dnp-dashboard'])
   expect(out.status).toEqual(['pressure 0 steady', 'pressure 0 steady · roslyn ✓'])
 })
 
@@ -316,6 +316,6 @@ test('mcp_health:false checks nothing', { options: { mcp_health: false } }, asyn
   const out = stubEngine(on)
   await start($, out)
   expect(out.connects).toEqual([])
-  expect(out.commands.filter(c => c.startsWith('dnp-'))).toEqual(['dnp-pressure'])
+  expect(out.commands.filter(c => c.startsWith('dnp-'))).toEqual(['dnp-pressure', 'dnp-dashboard'])
   expect(await healthSection($)).toBe(undefined)
 })

@@ -17,7 +17,7 @@ allowed-tools: Bash(node:*), Workflow, ToolSearch
    ```
    node "${CLAUDE_PLUGIN_ROOT}/scripts/dnp-review-preflight.js" --repo "<cwd>" --out "${CLAUDE_PLUGIN_DATA}/review" <selection flag, if any>
    ```
-   It prints one JSON manifest. `ok: false` → print `error` and stop. `fileCount: 0` → say "nothing to review (mode: <mode>)" and stop. Otherwise keep `scriptPath`, `manifestPath`, `diffPath`, `shardsDir`, `repoRoot`, `skillsDir`, `runId`, `fileCount`, `shards` and `files`.
+   It prints one JSON manifest. `ok: false` → print `error` and stop. `fileCount: 0` → say "nothing to review (mode: <mode>)" and stop. Otherwise keep `scriptPath`, `manifestPath`, `latestPath`, `diffPath`, `shardsDir`, `repoRoot`, `skillsDir`, `runId`, `fileCount`, `shards` and `files`.
 
 3. **Probe Roslyn.** `ToolSearch` with query `+roslyn`; `roslynAvailable` is `true` when any `mcp__roslyn__*` tool is returned, otherwise `false`.
 
@@ -28,7 +28,7 @@ allowed-tools: Bash(node:*), Workflow, ToolSearch
    ```
    `args` is a JSON object, never a stringified one; `shards` and `files` go in as the manifest's arrays, which the workflow checks against `fileCount` before assigning scouts. If the tool asks for permission on every run, the permission rule `Workflow(dnp-review)` silences it.
 
-5. **Report.** Print `result.markdown` verbatim, then `result.summary` as the closing line. The digest is the deliverable: do not re-summarize or re-rank its findings. `result.ok === false` means the workflow did not start; its `markdown` says why. `result.broken === true` means some shards were never read; say so and point at the Coverage gaps section.
+5. **Save, then report.** When `result.ok` is true, write `result` as JSON without its `markdown` key to the manifest's `latestPath`; `/dnp-dashboard` reads that file. Print `result.markdown` verbatim, then `result.summary` as the closing line. The digest is the deliverable: do not re-summarize or re-rank its findings. `result.ok === false` means the workflow did not start; its `markdown` says why. `result.broken === true` means some shards were never read; say so and point at the Coverage gaps section.
 
 ## Depth
 

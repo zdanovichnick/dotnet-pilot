@@ -1,5 +1,6 @@
 import type { Register } from 'claude-code'
 import { registerBuildStatus } from './build-status'
+import { registerDashboard } from './dashboard'
 import { registerMcpHealth } from './mcp-health'
 import { registerPixelCity, viewOf } from './pixel-city'
 import { registerPressure } from './pressure'
@@ -13,6 +14,7 @@ export const register: Register = (on, options) => {
   if (pressure) registerPressure(on, options.pressure_test_guard_block === true)
   if (mcpHealth) registerMcpHealth(on, { pressure })
   registerSessionStart(on, { pressure, mcpHealth })
+  registerDashboard(on)
   registerPixelCity(on, { enabled: options.pixel_city === true, view: viewOf(options.pixel_city_scene) ?? 'city' })
   registerCompose(on, { routing: options.routing !== false, pressure, mcpHealth })
 }

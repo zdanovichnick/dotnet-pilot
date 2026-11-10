@@ -11,6 +11,7 @@
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const os = require('os');
 const { spawnSync } = require('child_process');
 
 // git's well-known empty tree. Diffing against it yields "everything added",
@@ -19,6 +20,11 @@ const EMPTY_TREE = '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
 const DEFAULT_SHARD_LINES = 400;
 const MAX_BUFFER = 512 * 1024 * 1024;
 const DIFF_FLAGS = ['diff', '--no-color', '--no-ext-diff', '--find-renames'];
+
+// Same transform as hooks/_lib/config.js flattenCwd; the dashboard mod reads the file this names.
+function flattenCwd(cwd) {
+  return cwd.replace(/:/g, '-').replace(/[\\/]/g, '-').replace(/^-+/, '');
+}
 
 function fail(message) {
   process.stdout.write(JSON.stringify({ ok: false, error: message }) + '\n');
@@ -324,6 +330,7 @@ function main() {
     diffPath,
     shardsDir,
     manifestPath,
+    latestPath: path.join(os.homedir(), '.claude', 'projects', flattenCwd(repoArg), 'dnp-review-latest.json'),
   };
 
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');

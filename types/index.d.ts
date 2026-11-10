@@ -44,8 +44,16 @@ export type McpServerHealth = {
 
 export type McpHealth = { servers: McpServerHealth[] }
 
+export type DashboardTab = 'telemetry' | 'review' | 'architecture'
+
 declare module 'claude-code' {
   interface PluginState {
-    'dotnet-pilot': { buildStreak: BuildStreak; pressure: Pressure; cityScene: PixelCityScene; mcpHealth: McpHealth }
+    'dotnet-pilot': {
+      buildStreak: BuildStreak
+      pressure: Pressure
+      cityScene: PixelCityScene
+      mcpHealth: McpHealth
+      dashboardTab: Shaped<DashboardTab>
+    }
   }
 }

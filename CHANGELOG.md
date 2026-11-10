@@ -7,6 +7,17 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 
 ## [Unreleased]
 
+## [3.10.0] - 2026-11-10
+
+### Added
+
+- `/dnp-dashboard [telemetry|review|architecture]` opens an in-session pane (mod) with three tabs:
+  telemetry (pressure score and events, build-fail streak, Roslyn health), the last
+  `quality:review` run (counts and confirmed findings by severity) and an architecture map from
+  `solution-map.json` with clean-architecture layer violations flagged.
+- `scripts/dnp-review-preflight.js` adds `latestPath` to its manifest, and `quality:review` saves the
+  run's result (without the markdown digest) there so the dashboard can read it.
+
 ## [3.9.2] - 2026-11-09
 
 ### Changed
