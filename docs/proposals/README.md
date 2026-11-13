@@ -19,7 +19,7 @@ and 4 fit that rule. Features 2 and 3 are generic Claude Code tooling. Before me
 pick one of two options:
 
 - Ship it inside dotnet-pilot behind a userConfig flag that defaults to **off**, and say so in the README.
-- Ship it as a separate plugin (or a Kouhesion mod). These specs work unchanged in a standalone
+- Ship it as a separate plugin. These specs work unchanged in a standalone
   plugin, except the `$.state` key prefix and the `register.ts` wiring.
 
 ## What is verified and what is not

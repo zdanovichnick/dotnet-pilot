@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // DotnetPilot Code-Analyzer Redirect — PreToolUse hook
 //
-// kouhesion's code-analyzer MCP supports Python / TS / JS only — it has no C#
+// The code-analyzer MCP supports Python / TS / JS only — it has no C#
 // support and returns `unsupported_language` on `.cs`. When such a tool is
 // invoked on a .NET solution (or directly against a C# target), this hook nudges
 // toward the C#-aware roslyn MCP (dnp-roslyn).

@@ -171,6 +171,48 @@ fs.writeFileSync(buildStatePath(stopGreenDir), JSON.stringify({
 const stopCleanDir = makeStopDir('clean');   // source committed → nothing left to verify
 const gitOk = git(stopCleanDir, 'add', '.') && git(stopCleanDir, 'commit', '-q', '-m', 'init');
 fs.writeFileSync(editMarkerPath(stopCleanDir), JSON.stringify({ at: new Date().toISOString(), file: 'Thing.cs' }));
+// --- dnp-adr-nudge fixtures ---
+// Each dir is a git repo with Api, Domain and Api.Tests projects committed; the
+// working-tree change on top is what each case varies.
+const adrAdvisedPath = dir => path.join(os.tmpdir(), `dnp-adr-advised-${sha1(path.resolve(dir))}.json`);
+const csproj = (...items) => '<Project Sdk="Microsoft.NET.Sdk">\n  <ItemGroup>\n' +
+  items.map(i => `    ${i}\n`).join('') + '  </ItemGroup>\n</Project>\n';
+function makeAdrDir(tag, { adr = true } = {}) {
+  const dir = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), `dnp-hook-test-adr-${tag}-`)));
+  const write = (rel, text) => {
+    fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
+    fs.writeFileSync(path.join(dir, rel), text);
+  };
+  write('Demo.slnx', '<Solution />\n');
+  write('src/Demo.Api/Demo.Api.csproj', csproj('<PackageReference Include="Polly" Version="8.4.0" />'));
+  write('src/Demo.Domain/Demo.Domain.csproj', csproj());
+  write('tests/Demo.Api.Tests/Demo.Api.Tests.csproj', csproj('<PackageReference Include="xunit" Version="2.9.0" />'));
+  if (adr) write('docs/adr/0001-use-vertical-slices.md', '# 1. Use vertical slices\n');
+  const ok = git(dir, 'init', '-q') && git(dir, 'add', '.') && git(dir, 'commit', '-q', '-m', 'init');
+  return { dir, write, ok };
+}
+const decisionChange = ({ write }) => {
+  write('src/Demo.Api/Demo.Api.csproj', csproj(
+    '<PackageReference Include="Polly" Version="8.5.0" />',
+    '<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />',
+    '<ProjectReference Include="..\\Demo.Domain\\Demo.Domain.csproj" />'));
+  write('src/Demo.Api/Data/AppDbContext.cs',
+    'public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options) { }\n');
+};
+const adrDecision = makeAdrDir('decision');      // decisions, no ADR touched → nudge once
+decisionChange(adrDecision);
+const adrNoDir = makeAdrDir('nodir', { adr: false }); // same decisions, repo keeps no ADRs
+decisionChange(adrNoDir);
+const adrTouchedRepo = makeAdrDir('touched');    // same decisions, an ADR written alongside
+decisionChange(adrTouchedRepo);
+adrTouchedRepo.write('docs/adr/0002-adopt-serilog.md', '# 2. Adopt Serilog\n');
+const adrNoise = makeAdrDir('noise');            // version bump + test-project package only
+adrNoise.write('src/Demo.Api/Demo.Api.csproj', csproj('<PackageReference Include="Polly" Version="8.5.0" />'));
+adrNoise.write('tests/Demo.Api.Tests/Demo.Api.Tests.csproj', csproj(
+  '<PackageReference Include="xunit" Version="2.9.0" />', '<PackageReference Include="NSubstitute" Version="5.3.0" />'));
+const adrRepos = [adrDecision, adrNoDir, adrTouchedRepo, adrNoise];
+const adrGitOk = adrRepos.every(r => r.ok);
+
 // A fresh marker in a non-.NET dir must still produce silence.
 fs.writeFileSync(editMarkerPath(nonDotnetDir), JSON.stringify({ at: new Date().toISOString(), file: 'Thing.cs' }));
 
@@ -1289,6 +1331,61 @@ const CASES = [
     expectSubstrings: ['[dnp-stop-verify]', 'VERIFY BEFORE STOPPING'],
   },
 
+  // --- dnp-adr-nudge (Stop; ADR directory present = opted in) ---
+  ...(adrGitOk ? [
+    {
+      name: 'adr-nudge: stop_hook_active suppresses the nudge',
+      hook: 'dnp-adr-nudge.js',
+      runtime: 'node',
+      input: { cwd: adrDecision.dir, hook_event_name: 'Stop', stop_hook_active: true },
+      expectExit: 0,
+      expectEmpty: true,
+    },
+    {
+      name: 'adr-nudge: package, reference and DbContext changes with no ADR update nudge',
+      hook: 'dnp-adr-nudge.js',
+      runtime: 'node',
+      input: { cwd: adrDecision.dir, hook_event_name: 'Stop', stop_hook_active: false },
+      expectExit: 0,
+      expectSubstrings: ['[dnp-adr-nudge]', 'ARCHITECTURE DECISION?', 'package Serilog.AspNetCore added to Demo.Api',
+        'Demo.Api now references Demo.Domain', 'new DbContext AppDbContext', 'docs/adr/0002-'],
+      expectStdoutAbsent: ['Polly'],
+      expectHookEvent: 'Stop',
+    },
+    {
+      name: 'adr-nudge: the same signals are raised only once',
+      hook: 'dnp-adr-nudge.js',
+      runtime: 'node',
+      input: { cwd: adrDecision.dir, hook_event_name: 'Stop', stop_hook_active: false },
+      expectExit: 0,
+      expectEmpty: true,
+    },
+    {
+      name: 'adr-nudge: repo without an ADR directory is silent',
+      hook: 'dnp-adr-nudge.js',
+      runtime: 'node',
+      input: { cwd: adrNoDir.dir, hook_event_name: 'Stop', stop_hook_active: false },
+      expectExit: 0,
+      expectEmpty: true,
+    },
+    {
+      name: 'adr-nudge: an ADR written in the same change is silent',
+      hook: 'dnp-adr-nudge.js',
+      runtime: 'node',
+      input: { cwd: adrTouchedRepo.dir, hook_event_name: 'Stop', stop_hook_active: false },
+      expectExit: 0,
+      expectEmpty: true,
+    },
+    {
+      name: 'adr-nudge: version bumps and test-project packages are silent',
+      hook: 'dnp-adr-nudge.js',
+      runtime: 'node',
+      input: { cwd: adrNoise.dir, hook_event_name: 'Stop', stop_hook_active: false },
+      expectExit: 0,
+      expectEmpty: true,
+    },
+  ] : []),
+
   // --- dnp-subagent-result (SubagentStop; speaks via systemMessage) ---
   {
     name: 'subagent-result: HALT marker surfaces as a systemMessage',
@@ -1485,12 +1582,13 @@ const stopDirs = [stopDirtyDir, stopBlockDir, stopGreenDir, stopCleanDir];
 for (const f of [slnFailFile, slnGreenFile, buildStateFile,
                  ...stopDirs.map(buildStatePath), ...stopDirs.map(editMarkerPath),
                  editMarkerPath(nonDotnetDir), scopeAdvisedPath(scopeWorkspace, 'Demo.Other'),
-                 scopeAdvisedPath(scopeAbsWorkspace, 'Demo.Worker')]) {
+                 scopeAdvisedPath(scopeAbsWorkspace, 'Demo.Worker'),
+                 ...adrRepos.map(r => adrAdvisedPath(r.dir))]) {
   try { fs.unlinkSync(f); } catch {}
 }
 for (const dir of [workspace, nonDotnetDir, scopeWorkspace, fakeHome, buildDir,
                    slnFailDir, slnGreenDir, slEffortHome, slHomeDefault, slHomeAuto, slAutoWorkspace, ...stopDirs,
-                   slHomeMalformed, scopeAbsWorkspace, relFormatDir, ...syncHomes]) {
+                   slHomeMalformed, scopeAbsWorkspace, relFormatDir, ...syncHomes, ...adrRepos.map(r => r.dir)]) {
   try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
 }
 

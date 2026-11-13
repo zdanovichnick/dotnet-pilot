@@ -14,15 +14,18 @@ review architecture boundaries, and generate EF Core migrations with Roslyn-back
 
 [Install](#install) · [First steps](#first-steps) · [Compatibility](#compatibility) · [Workflows](#workflows) · [Troubleshooting](#troubleshooting)
 
-> **New in 3.9.0** (with `dnp-roslyn` 0.5.3)
-> - **Roslyn health check:** Claude Code shows `roslyn ✓` or `roslyn ✗ <reason>` in the status line
->   and explains how to fix a failed start; run `/dnp-mcp` for details.
-> - **Results stay current:** Roslyn tools pick up edited, added and deleted files from disk, so
->   results no longer go stale after an edit.
-> - **Scrutor coverage:** `check_di_completeness` evaluates `Scan(...)` calls instead of
->   ignoring them.
-> - **Verified hosts:** the 12-step smoke checklist passes in Codex CLI and Cursor CLI, and runs
->   in CI against a sample solution.
+> **New in 3.11.0**
+> - **ADR nudge:** in a repo with a `docs/adr/` (or `docs/decisions/`, `adr/`, ...) folder, Claude
+>   is asked to record an ADR before it stops when the change adds or removes a package or project
+>   reference, creates or deletes a project, or adds a `DbContext`. Create the folder to opt in;
+>   toggle `hooks.adr_nudge`.
+> - **ADR rule:** the global rule block says when to write an ADR, how to supersede one, and to get
+>   the options from `dnp-architect`.
+> - **Less delegation pressure:** the routing guidance picks a `dnp-*` agent once Claude spawns
+>   one, and says lookups and small edits need no agent.
+>
+> **New in 3.10.0:** `/dnp-dashboard` opens a pane with telemetry, the last `quality:review` run
+> and an architecture map.
 >
 > [Full changelog →](CHANGELOG.md)
 
@@ -392,10 +395,11 @@ Claude's permission protocol. Configure toggles per solution.
 | **Project Scope Guard** | After writing/editing any file | Warns when editing outside the current phase's focused projects (`<Project>.Tests` counts as inside); at most one advisory per project per hour |
 | **Build Verify** | After `dotnet build` / `dotnet test` runs — including ones that exit non-zero | Classifies the output by text markers, so builds piped through `2>&1 \| grep` still count; records consecutive failures in the per-solution state the statusline `BUILD ✗` segment reads; warns at 3, escalates at 5; a green run resets it. Toggle `hooks.build_verify: false` to disable |
 | **Stop Verify** | When Claude is about to stop after editing `.cs`/`.csproj`/`.razor` files | If the tree has uncommitted source changes and no green `dotnet build`/`dotnet test` was recorded since the last edit, nudges with the exact commands to run before reporting done. Advisory; set `hooks.stop_verify_block: true` to make it block instead. Toggle `hooks.stop_verify: false` to disable |
+| **ADR Nudge** | When Claude is about to stop, in a repo that keeps ADRs (`docs/adr/`, `docs/decisions/`, `adr/`, ...) | If the uncommitted changes add or remove a package or project reference in a production project, create or delete a project, or add a `DbContext`, and nothing under the ADR folder changed, asks Claude to record the decision as the next numbered ADR, supersede the one it reverses, or say why none is needed. Version-only bumps and test projects are ignored; the same set of changes is raised once. Repos without an ADR folder never see it. Toggle `hooks.adr_nudge: false` to disable |
 | **Subagent Result** | When a `dnp-*` agent finishes | Surfaces `[HALT: …]`, `[PARTIAL …]` and `[ROUTING: …]` verdicts as a system message so a halted or truncated worker is not silently absorbed. Toggle `hooks.subagent_result: false` to disable |
 | **Post-Edit Format** | After Write/Edit/MultiEdit on `.cs` files (formats at Stop) | Queues the saved file; at Stop runs `dotnet format --include <files>` once per project, so the file is not rewritten mid-turn; skips `obj/`, `bin/`, `Migrations/`, generated files |
 | **Commit Format** | Before `git commit` (Bash or PowerShell tool) | Enforces `type(scope): message` conventional commit format |
-| **Priority Router** | Before spawning an Agent | Detects .NET projects and injects DotnetPilot agent routing priority over generic equivalents; also steers C# code inspection to `mcp__roslyn__` over `mcp__*code-analyzer__`. Toggle `hooks.dotnet_priority: false` to disable |
+| **Priority Router** | Before spawning an Agent | Detects .NET projects and, when an agent is spawned, steers the choice to the matching `dnp-*` agent over generic equivalents (lookups and small edits need no agent); also steers C# code inspection to `mcp__roslyn__` over `mcp__*code-analyzer__`. Toggle `hooks.dotnet_priority: false` to disable |
 | **Code-Analyzer Redirect** | Before a `code-analyzer` MCP tool call | When the call targets C# (a `.cs` file, a .NET `project_path`, or a .NET cwd), nudges toward the C#-aware `mcp__roslyn__` tools — the Python/TS/JS code-analyzer has no C# support. Advisory only; never blocks. Toggle `hooks.code_analyzer_redirect: false` to disable |
 | **Build-failure toasts** *(mod)* | After `dotnet build` / `dotnet test` through the Bash or PowerShell tool | Same classification as Build Verify; shows a toast at the 3rd and 5th consecutive failure. Needs a Claude Code build with mod support; additive to the Node hook. Toggle plugin option `build_status` |
 | **Routing roster** *(mod)* | Each system-prompt composition | In a .NET project, adds the routing guidance once per session as a session-scoped section. Needs mod support. With it active, set `hooks.dotnet_priority: false` to drop the per-`Agent` nudge. Toggle plugin option `routing` |
@@ -506,7 +510,7 @@ For Claude Code, hook toggles belong in `config.json`. For example:
 }
 ```
 
-Every `hooks.*` key is on by default and only switches a hook off: `build_verify`,
+Every `hooks.*` key is on by default and only switches a hook off: `adr_nudge`, `build_verify`,
 `code_analyzer_redirect`, `commit_format`, `di_check`, `dotnet_priority`, `git_autoapprove`,
 `migration_guard`, `post_edit_format`, `project_scope_guard`, `stop_verify`,
 `subagent_result`, `sync_global_claude_md`. The one opt-in key is `stop_verify_block`.

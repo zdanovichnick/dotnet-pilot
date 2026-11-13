@@ -5,7 +5,25 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
-## [Unreleased]
+## [3.11.0] - 2026-11-13
+
+### Added
+
+- `dnp-adr-nudge` Stop hook: in a repo that keeps ADRs (`docs/adr/`, `docs/decisions/`, `adr/`, ...),
+  a change that adds or removes a package or project reference in a production project, creates or
+  deletes a project, or adds a `DbContext` with no ADR update gets one advisory asking for the next
+  numbered ADR, a superseding note, or a one-line reason none is needed. Version bumps and test
+  projects are ignored. Toggle `hooks.adr_nudge`.
+- `rules/global-claude-md.md` gains an "Architecture Decision Records" section: when to record one,
+  how to supersede, and `dnp-architect` for the options and trade-offs.
+
+### Changed
+
+- Routing text no longer invites delegation by default. `hooks/_lib/routing.md` (read by
+  `dnp-dotnet-priority` and the routing mod) says to pick a `dnp-*` agent once an agent is being
+  spawned, and that lookups and small edits need none; `rules/global-claude-md.md` names when a
+  `dnp-*` agent or command pays for itself (Roslyn analysis, a separate context) instead of
+  "prefer `dnp-*` agents for .NET work".
 
 ## [3.10.0] - 2026-11-10
 

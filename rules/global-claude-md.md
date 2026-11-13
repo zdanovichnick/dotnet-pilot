@@ -47,5 +47,13 @@ for anything beyond trivial rules · `IHttpClientFactory` + a Polly pipeline, ne
 In a solution containing `.sln` / `.slnx` / `.csproj`, inspect C# with `mcp__roslyn__*`
 (dnp-roslyn) — DI completeness, architecture violations, EF models, references, class outlines.
 `mcp__*code-analyzer__*` supports Python/TS/JS only and returns `unsupported_language` on `.cs`;
-it stays the right tool for the non-C# files in the same repo. Prefer `dnp-*` agents and
-`/dotnet-pilot:*` commands for .NET work.
+it stays the right tool for the non-C# files in the same repo. When a task needs Roslyn analysis
+or a separate context (an audit, a review, a TDD loop), use the matching `dnp-*` agent or
+`/dotnet-pilot:*` command; do lookups and small edits directly.
+
+## Architecture Decision Records
+In a repo that keeps ADRs (`docs/adr/` or similar), record one as the next numbered file, in the
+existing ADRs' format, when a change adds or reverses a NuGet package for a new concern, a project
+or project reference, a `DbContext`, a cross-cutting pattern (Result, caching, resilience, auth) or
+a layer rule. A reversed decision supersedes its ADR — mark the old one `Superseded by NNNN`, never
+rewrite its decision. Get the options and trade-offs from `dnp-architect`; write the file yourself.

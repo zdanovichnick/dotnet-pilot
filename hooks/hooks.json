@@ -129,6 +129,11 @@
           },
           {
             "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-adr-nudge.js\"",
+            "timeout": 15
+          },
+          {
+            "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-post-edit-format.js\"",
             "timeout": 30
           }

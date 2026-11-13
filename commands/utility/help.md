@@ -8,7 +8,7 @@ effort: low
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v3.10.0 — .NET development plugin for Claude Code
+DotnetPilot v3.11.0 — .NET development plugin for Claude Code
 Usage: /dotnet-pilot:<category>:<command> [args]      e.g. /dotnet-pilot:dotnet:create-entity Product
 
 COMMANDS (16)
@@ -72,7 +72,7 @@ SKILLS (15) — knowledge packs agents load on demand
   cross-cutting    caching · resilience · logging · opentelemetry
   language & test  modern-csharp · testing-dotnet
 
-HOOKS (13) — advisory (exit 0) except dnp-git-autoapprove, which grants permission; switch one
+HOOKS (14) — advisory (exit 0) except dnp-git-autoapprove, which grants permission; switch one
             off with hooks.<key>: false in .planning/config.json
   dnp-sync-global-claude-md    (sync_global_claude_md)   at session start, refresh the rules block in ~/.claude/CLAUDE.md
   dnp-dotnet-priority          (dotnet_priority)         steer .NET work to dnp-* agents and mcp__roslyn__*
@@ -86,6 +86,8 @@ HOOKS (13) — advisory (exit 0) except dnp-git-autoapprove, which grants permis
   dnp-build-verify             (build_verify)            build/test failure streak: warn at 3, escalate at 5
   dnp-stop-verify              (stop_verify)             nudge to build/test before stopping after .cs edits
                                                          (stop_verify_block: true makes it block instead)
+  dnp-adr-nudge                (adr_nudge)               at Stop, decision-shaped change with no ADR update
+                                                         (only in repos that have docs/adr/ or similar)
   dnp-subagent-result          (subagent_result)         show [HALT / [PARTIAL / [ROUTING: from dnp-* agents
   dnp-statusline-sync          (statusline.auto_enable)  refresh ~/.claude/dnp-statusline.js at session start
                                                          (auto_enable: true also wires settings.json)

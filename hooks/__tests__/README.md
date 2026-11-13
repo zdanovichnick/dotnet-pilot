@@ -23,6 +23,7 @@ flowchart TD
         scope["scopeWorkspace<br/>.planning/STATE.md focus_projects<br/>solution-map.json with a projects array"]
         build["buildDir<br/>one state file, asserted as it accumulates"]
         stop["stop dirs, each git init<br/>dirty · block (stop_verify_block) · green · clean (committed)"]
+        adr["adr repos, each committed then changed<br/>decision · nodir (no docs/adr) · touched (ADR added) · noise (bumps, test pkgs)"]
         homes["throwaway HOMEs<br/>fakeHome · slHomeDefault · slHomeAuto"]
         sl["slnFailDir · slnGreenDir<br/>pre-seeded build-state files"]
     end
@@ -106,6 +107,7 @@ flowchart LR
         h_fmt["dnp-post-edit-format"]
         h_build["dnp-build-verify"]
         h_stop["dnp-stop-verify"]
+        h_adr["dnp-adr-nudge"]
         h_sub["dnp-subagent-result"]
         h_slsync["dnp-statusline-sync"]
         h_sl["statusline/dnp-statusline.js"]
@@ -124,7 +126,7 @@ flowchart LR
     pre --> h_prio & h_redir & h_mig & h_git & h_commit
     post --> h_di & h_scope & h_fmt & h_build & h_stop
     postf --> h_build
-    stopE --> h_stop
+    stopE --> h_stop & h_adr
     sub --> h_sub
     sess --> h_slsync & h_sync
     slin --> h_sl
@@ -133,6 +135,7 @@ flowchart LR
     h_git --> o_perm
     h_build --> o_ctx & o_files
     h_stop --> o_ctx & o_dec & o_files
+    h_adr --> o_ctx
     h_sub --> o_sys
     h_sync & h_slsync --> o_files
     h_sl --> o_raw
