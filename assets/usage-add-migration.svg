@@ -1,0 +1,21 @@
+<svg width="860" height="378" viewBox="0 0 860 378" xmlns="http://www.w3.org/2000/svg">
+  <rect width="860" height="378" rx="8" fill="#0d1117"/>
+  <rect width="860" height="44" rx="8" fill="#161b22"/>
+  <rect y="36" width="860" height="8" fill="#161b22"/>
+  <rect x="0.5" y="0.5" width="859" height="377" rx="8" fill="none" stroke="#30363d"/>
+  <circle cx="20" cy="22" r="6" fill="#ff5f56"/>
+  <circle cx="40" cy="22" r="6" fill="#ffbd2e"/>
+  <circle cx="60" cy="22" r="6" fill="#27c93f"/>
+  <text x="430" y="27" text-anchor="middle" fill="#8b949e" font-size="12" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace">Claude Code — MyShop</text>
+  <text y="66" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#58a6ff">&gt; </tspan><tspan fill="#e6edf3">/dotnet-pilot:dotnet:add-migration DropLegacySku --context ShopDbContext</tspan></text>
+  <text y="108" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#3fb950">● </tspan><tspan fill="#8b949e">dotnet ef migrations has-pending-model-changes   </tspan><tspan fill="#3fb950">✓ </tspan><tspan fill="#e6edf3">model changes found</tspan></text>
+  <text y="129" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#3fb950">● </tspan><tspan fill="#8b949e">dotnet ef migrations add DropLegacySku           </tspan><tspan fill="#3fb950">✓ </tspan><tspan fill="#e6edf3">20261113_DropLegacySku.cs</tspan></text>
+  <text y="150" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#bc8cff">● </tspan><tspan fill="#bc8cff">dnp-ef-migration-planner</tspan><tspan fill="#8b949e">  reviewing Up()</tspan></text>
+  <text y="171" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">    chain     </tspan><tspan fill="#3fb950">✓ </tspan><tspan fill="#e6edf3">14 migrations, one head, correct context</tspan></text>
+  <text y="192" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">    </tspan><tspan fill="#f85149" font-weight="bold">✗ BREAKING  </tspan><tspan fill="#e6edf3">DropColumn  Products.LegacySku</tspan><tspan fill="#8b949e">   — existing values are lost</tspan></text>
+  <text y="213" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">    </tspan><tspan fill="#d29922" font-weight="bold">⚠ RISK      </tspan><tspan fill="#e6edf3">AlterColumn Products.Price</tspan><tspan fill="#8b949e">  decimal(18,2) → decimal(10,2), may truncate</tspan></text>
+  <text y="255" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#e6edf3">  Keep this migration, or remove it and rework the model?</tspan></text>
+  <text y="276" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#58a6ff">  › </tspan><tspan fill="#e6edf3">Remove</tspan><tspan fill="#8b949e"> — rework as two steps: copy LegacySku to Sku, then drop it</tspan></text>
+  <text y="297" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">    Keep — I have a backup and accept the data loss</tspan></text>
+  <text y="339" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">  After a keep: </tspan><tspan fill="#e6edf3">dotnet build</tspan><tspan fill="#8b949e">, then </tspan><tspan fill="#e6edf3">migrations script --idempotent</tspan><tspan fill="#8b949e"> for SQL review</tspan></text>
+</svg>

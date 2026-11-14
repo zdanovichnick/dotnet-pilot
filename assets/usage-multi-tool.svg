@@ -1,0 +1,45 @@
+<svg width="960" height="430" viewBox="0 0 960 430" xmlns="http://www.w3.org/2000/svg">
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#8b949e"/></marker></defs>
+  <rect width="960" height="430" rx="10" fill="#010409"/>
+  <text x="480" y="40" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="bold" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace">One workflow, three AI coding tools</text>
+  <rect x="24" y="70" width="288" height="196" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <rect x="24" y="70" width="288" height="32" rx="8" fill="#161b22"/>
+  <rect x="24" y="94" width="288" height="8" fill="#161b22"/>
+  <circle cx="40" cy="86" r="5" fill="#ff5f56"/><circle cx="56" cy="86" r="5" fill="#ffbd2e"/><circle cx="72" cy="86" r="5" fill="#27c93f"/>
+  <text x="188" y="91" text-anchor="middle" fill="#e6edf3" font-size="12" font-weight="bold" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace">Claude Code</text>
+  <text x="40" y="128" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#58a6ff">&gt; </tspan><tspan fill="#e6edf3">/dotnet-pilot:dotnet:health-check</tspan></text>
+  <text x="40" y="160" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">Build        </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="40" y="180" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">Tests        </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="40" y="200" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">DI Wiring    </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="40" y="220" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">Architecture </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="40" y="252" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="11" fill="#bc8cff">+ hooks, mods, sharded review</text>
+  <line x1="168" y1="266" x2="168" y2="310" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="336" y="70" width="288" height="196" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <rect x="336" y="70" width="288" height="32" rx="8" fill="#161b22"/>
+  <rect x="336" y="94" width="288" height="8" fill="#161b22"/>
+  <circle cx="352" cy="86" r="5" fill="#ff5f56"/><circle cx="368" cy="86" r="5" fill="#ffbd2e"/><circle cx="384" cy="86" r="5" fill="#27c93f"/>
+  <text x="500" y="91" text-anchor="middle" fill="#e6edf3" font-size="12" font-weight="bold" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace">Codex CLI</text>
+  <text x="352" y="128" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#58a6ff">&gt; </tspan><tspan fill="#e6edf3">$dnp-dotnet-health-check</tspan></text>
+  <text x="352" y="160" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">Build        </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="352" y="180" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">Tests        </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="352" y="200" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">DI Wiring    </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="352" y="220" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">Architecture </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="352" y="252" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="11" fill="#bc8cff">specialists as checklists</text>
+  <line x1="480" y1="266" x2="480" y2="310" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="648" y="70" width="288" height="196" rx="8" fill="#0d1117" stroke="#30363d"/>
+  <rect x="648" y="70" width="288" height="32" rx="8" fill="#161b22"/>
+  <rect x="648" y="94" width="288" height="8" fill="#161b22"/>
+  <circle cx="664" cy="86" r="5" fill="#ff5f56"/><circle cx="680" cy="86" r="5" fill="#ffbd2e"/><circle cx="696" cy="86" r="5" fill="#27c93f"/>
+  <text x="812" y="91" text-anchor="middle" fill="#e6edf3" font-size="12" font-weight="bold" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace">Cursor</text>
+  <text x="664" y="128" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#58a6ff">&gt; </tspan><tspan fill="#e6edf3">/dnp-dotnet-health-check</tspan></text>
+  <text x="664" y="160" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">Build        </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="664" y="180" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">Tests        </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="664" y="200" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">DI Wiring    </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="664" y="220" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12"><tspan fill="#8b949e">Architecture </tspan><tspan fill="#3fb950">✓ PASS</tspan></text>
+  <text x="664" y="252" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="11" fill="#bc8cff">commands + native agents</text>
+  <line x1="792" y1="266" x2="792" y2="310" stroke="#30363d" stroke-width="2" marker-end="url(#arrow)"/>
+  <rect x="24" y="316" width="912" height="64" rx="8" fill="#161b22" stroke="#58a6ff"/>
+  <text x="480" y="343" text-anchor="middle" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="14"><tspan fill="#58a6ff" font-weight="bold">dnp-roslyn</tspan><tspan fill="#e6edf3">  ·  Roslyn + MSBuild over MyShop.slnx</tspan></text>
+  <text x="480" y="364" text-anchor="middle" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="12" fill="#8b949e">same 15 pattern skills · same DI, architecture and EF checks · local, no API key</text>
+  <text x="480" y="408" text-anchor="middle" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="11" fill="#8b949e">category:name  →  $dnp-category-name (Codex)  ·  /dnp-category-name (Cursor)</text>
+</svg>

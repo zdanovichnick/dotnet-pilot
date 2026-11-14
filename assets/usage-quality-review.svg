@@ -1,0 +1,25 @@
+<svg width="900" height="483" viewBox="0 0 900 483" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="483" rx="8" fill="#0d1117"/>
+  <rect width="900" height="44" rx="8" fill="#161b22"/>
+  <rect y="36" width="900" height="8" fill="#161b22"/>
+  <rect x="0.5" y="0.5" width="899" height="482" rx="8" fill="none" stroke="#30363d"/>
+  <circle cx="20" cy="22" r="6" fill="#ff5f56"/>
+  <circle cx="40" cy="22" r="6" fill="#ffbd2e"/>
+  <circle cx="60" cy="22" r="6" fill="#27c93f"/>
+  <text x="450" y="27" text-anchor="middle" fill="#8b949e" font-size="12" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace">Claude Code — /dotnet-pilot:quality:review</text>
+  <text y="66" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#58a6ff">&gt; </tspan><tspan fill="#e6edf3">/dotnet-pilot:quality:review --depth standard</tspan></text>
+  <text y="108" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">  preflight    </tspan><tspan fill="#e6edf3">18 files → 5 shards</tspan><tspan fill="#8b949e">   skipped: Migrations/, *.g.cs, packages.lock.json</tspan></text>
+  <text y="129" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">  scouts       </tspan><tspan fill="#39c5cf">5 × haiku  </tspan><tspan fill="#e6edf3">14 raw findings → 9 after merge</tspan></text>
+  <text y="150" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">  confirmers   </tspan><tspan fill="#bc8cff">5 × opus   </tspan><tspan fill="#e6edf3">each one tries to refute a finding; no file:line, no confirm</tspan></text>
+  <text y="192" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#58a6ff" font-weight="bold">## dnp-review </tspan><tspan fill="#e6edf3">r7f3a — depth standard · 18 files · 5 shards · agents 11/11 returned</tspan></text>
+  <text y="213" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">   </tspan><tspan fill="#3fb950">3 confirmed</tspan><tspan fill="#8b949e"> · </tspan><tspan fill="#e6edf3">2 refuted</tspan><tspan fill="#8b949e"> · </tspan><tspan fill="#d29922">4 unconfirmed</tspan></text>
+  <text y="255" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#58a6ff" font-weight="bold">### Confirmed (3)</tspan></text>
+  <text y="276" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#f85149" font-weight="bold">- HIGH   </tspan><tspan fill="#e6edf3">src/Application/Orders/OrderService.cs:88</tspan><tspan fill="#8b949e"> performance — N+1: Lines loaded per order</tspan></text>
+  <text y="297" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">    verified: read OrderService.cs:80-95 (dnp-performance-analyst)</tspan></text>
+  <text y="318" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#f85149" font-weight="bold">- HIGH   </tspan><tspan fill="#e6edf3">src/Infrastructure/DependencyInjection.cs:41</tspan><tspan fill="#8b949e"> di — singleton OrderCache captures scoped DbContext</tspan></text>
+  <text y="339" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">    verified: find_di_registrations + OrderCache ctor (dnp-di-wiring-checker)</tspan></text>
+  <text y="360" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#d29922" font-weight="bold">- MEDIUM </tspan><tspan fill="#e6edf3">src/Api/Program.cs:27</tspan><tspan fill="#8b949e"> security — CORS AllowAnyOrigin combined with AllowCredentials</tspan></text>
+  <text y="402" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#58a6ff" font-weight="bold">### Refuted: 2</tspan></text>
+  <text y="423" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#58a6ff" font-weight="bold">### Coverage gaps</tspan></text>
+  <text y="444" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">- 4 finding(s) not confirmed: depth standard allows 11 agents</tspan></text>
+</svg>

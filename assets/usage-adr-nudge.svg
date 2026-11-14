@@ -1,0 +1,22 @@
+<svg width="900" height="399" viewBox="0 0 900 399" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="399" rx="8" fill="#0d1117"/>
+  <rect width="900" height="44" rx="8" fill="#161b22"/>
+  <rect y="36" width="900" height="8" fill="#161b22"/>
+  <rect x="0.5" y="0.5" width="899" height="398" rx="8" fill="none" stroke="#30363d"/>
+  <circle cx="20" cy="22" r="6" fill="#ff5f56"/>
+  <circle cx="40" cy="22" r="6" fill="#ffbd2e"/>
+  <circle cx="60" cy="22" r="6" fill="#27c93f"/>
+  <text x="450" y="27" text-anchor="middle" fill="#8b949e" font-size="12" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace">Claude Code — MyShop (docs/adr/ present)</text>
+  <text y="66" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#58a6ff">&gt; </tspan><tspan fill="#e6edf3">Add retries and a circuit breaker to the payment gateway client</tspan></text>
+  <text y="108" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#3fb950">● </tspan><tspan fill="#e6edf3">Update </tspan><tspan fill="#8b949e">src/Infrastructure/Infrastructure.csproj, PaymentGatewayClient.cs, DependencyInjection.cs</tspan></text>
+  <text y="129" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#3fb950">● </tspan><tspan fill="#e6edf3">dotnet build &amp;&amp; dotnet test   </tspan><tspan fill="#3fb950">✓ Build succeeded · Passed! 112/112</tspan></text>
+  <text y="171" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#d29922" font-weight="bold">  Stop hook › </tspan><tspan fill="#d29922">[dnp-adr-nudge] ARCHITECTURE DECISION?</tspan></text>
+  <text y="192" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">  These uncommitted changes look like decisions, and nothing under docs/adr/ changed:</tspan></text>
+  <text y="213" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#e6edf3">    - package Microsoft.Extensions.Http.Resilience added to Infrastructure</tspan></text>
+  <text y="234" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">  If one records a decision, add docs/adr/0004-&lt;title&gt;.md following the existing</tspan></text>
+  <text y="255" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">  ADRs' naming and sections, or mark the ADR it reverses as superseded.</tspan></text>
+  <text y="297" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#3fb950">● </tspan><tspan fill="#e6edf3">Write </tspan><tspan fill="#39c5cf">docs/adr/0004-resilience-for-outbound-http.md</tspan></text>
+  <text y="318" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">    Status: Accepted · Context: gateway timeouts under load</tspan></text>
+  <text y="339" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">    Decision: Polly v8 via Microsoft.Extensions.Http.Resilience, standard pipeline</tspan></text>
+  <text y="360" xml:space="preserve" font-family="SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace" font-size="13"><tspan x="24" fill="#8b949e">    Considered: hand-rolled retry loop, no retries</tspan><tspan fill="#8b949e">   (options from dnp-architect)</tspan></text>
+</svg>
