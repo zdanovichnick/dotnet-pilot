@@ -57,7 +57,8 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-dotnet-priority.js\"",
-            "timeout": 5
+            "timeout": 5,
+            "onFailure": "continue"
           }
         ]
       },
@@ -67,7 +68,8 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-code-analyzer-redirect.js\"",
-            "timeout": 5
+            "timeout": 5,
+            "onFailure": "continue"
           }
         ]
       },
@@ -77,7 +79,8 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-migration-guard.js\"",
-            "timeout": 5
+            "timeout": 5,
+            "onFailure": "continue"
           }
         ]
       },
@@ -87,7 +90,8 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-git-autoapprove.js\"",
-            "timeout": 5
+            "timeout": 5,
+            "onFailure": "continue"
           }
         ]
       },
@@ -97,7 +101,8 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/dnp-commit-format.js\"",
-            "timeout": 5
+            "timeout": 5,
+            "onFailure": "continue"
           }
         ]
       }

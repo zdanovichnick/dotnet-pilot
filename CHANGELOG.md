@@ -5,6 +5,20 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [3.11.1] - 2026-11-17
+
+### Changed
+
+- Every `PreToolUse` hook in `hooks/hooks.json` sets `"onFailure": "continue"`. In Code Mode
+  (experimental, `CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1`) a `PreToolUse` hook that fails to start or
+  times out refuses the tool call; this keeps the hooks advisory.
+
+### Documentation
+
+- `CLAUDE.md` documents Code Mode: hooks still see calls made from code, compound commands such as
+  `cd 'app' && git commit` may bypass `dnp-commit-format`, `REPL` is the tool to match for code
+  inspection, and whether the `tool.call` mods block Code Mode is unverified.
+
 ## [3.11.0] - 2026-11-13
 
 ### Added

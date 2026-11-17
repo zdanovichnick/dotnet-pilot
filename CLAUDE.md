@@ -158,6 +158,16 @@ the roster — read `agents/dnp-*.md` for detail. What the descriptions don't te
 
 Hook `timeout` values are seconds (`hooks.json`); no hook uses `async: true`, which would drop `additionalContext`. `hookEnabled` keys default **on**, `hookFlag` keys default **off**; both live in `hooks/_lib/config.js`.
 
+### Code Mode (experimental, `CLAUDE_CODE_EXPERIMENTAL_CODE_MODE=1`, v2.1.323+)
+
+Tool calls made from Claude's JavaScript still reach `PreToolUse`/`PostToolUse` hooks under their usual names (`Bash`, `Edit`), so the hooks above apply unchanged. Three differences matter here:
+
+- A `PreToolUse` hook that fails to start, exits 126/127/>128 or times out **refuses** the call. Every `PreToolUse` entry in `hooks.json` therefore carries `"onFailure": "continue"`, which keeps them advisory.
+- Commands can arrive compounded (`cd 'app' && git commit -m "…"`). `dnp-git-autoapprove` already falls through to the normal prompt for chained commands; `dnp-commit-format` parses only a plain `git commit -m` and may skip a compound one.
+- To inspect the code itself, match the `REPL` tool and read `tool_input.code`. No hook here does.
+
+Code Mode refuses to start when "an installed mod … checks tool calls" or a plugin it does not yet support is active. The mods in `hooks/mods/` register `tool.call` handlers (`build-status`, `pressure`, `mcp-health`, `pixel-city`); whether that blocks Code Mode is unverified.
+
 ## Review Workflow
 
 `/dotnet-pilot:quality:review` is the one Workflow-backed command. `commands/quality/review.md` is a

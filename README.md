@@ -14,6 +14,10 @@ review architecture boundaries, and generate EF Core migrations with Roslyn-back
 
 [Install](#install) · [First steps](#first-steps) · [Compatibility](#compatibility) · [Workflows](#workflows) · [Troubleshooting](#troubleshooting)
 
+> **New in 3.11.1**
+> - **Code Mode safe:** every `PreToolUse` hook carries `onFailure: continue`, so a slow or failed
+>   hook no longer refuses a tool call made from Code Mode (experimental). See `CLAUDE.md`.
+>
 > **New in 3.11.0**
 > - **ADR nudge:** in a repo with a `docs/adr/` (or `docs/decisions/`, `adr/`, ...) folder, Claude
 >   is asked to record an ADR before it stops when the change adds or removes a package or project
