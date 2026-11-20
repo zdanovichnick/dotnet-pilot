@@ -46,6 +46,29 @@ export type McpHealth = { servers: McpServerHealth[] }
 
 export type DashboardTab = 'telemetry' | 'review' | 'architecture'
 
+export type AgentRunStatus = 'running' | 'waiting' | 'completed' | 'failed' | 'aborted'
+
+export type AgentRun = {
+  id: string
+  type: string
+  description: string
+  status: AgentRunStatus
+  startMs: number
+  endMs?: number
+  // Summed over the agent's turns; a resumed agent adds to it.
+  durationMs: number
+  model?: string
+  effort?: string
+  parentId?: string
+  // The first [HALT …], [PARTIAL …] or [ROUTING: …] marker of its last answer, at most 200 characters.
+  verdict?: string
+  tokens: number
+  usd?: number
+}
+
+// isPageOpen turns on the writes of dnp-agents.html; before /dnp-agents runs, runs are tracked in state only.
+export type AgentRuns = { runs: AgentRun[]; isPageOpen: boolean }
+
 declare module 'claude-code' {
   interface PluginState {
     'dotnet-pilot': {
@@ -54,6 +77,7 @@ declare module 'claude-code' {
       cityScene: PixelCityScene
       mcpHealth: McpHealth
       dashboardTab: Shaped<DashboardTab>
+      agentRuns: AgentRuns
     }
   }
 }

@@ -5,6 +5,23 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [4.0.0] - 2026-11-20
+
+### Added
+
+- `/dnp-agents` mod command (`hooks/mods/agents.ts`, `agents-data.ts`, `agents-page.ts`). It tracks
+  every subagent and workflow agent through `agent.spawn` and `turn.complete`, and adds model,
+  effort, tokens and cost from `$.agent.list()`. The command writes a self-contained page to
+  `~/.claude/projects/<flattened-cwd>/dnp-agents.html` and opens it in the default browser. The page
+  shows live agents, the last 50 finished runs with their `HALT`/`PARTIAL`/`ROUTING` verdict,
+  per-agent-type stats for the session, the `dnp-*` roster, and the last review run. History is
+  kept for the session only, up to 200 runs. Gated by the new `agents` option (default on).
+
+### Changed
+
+- `hooks/mods/turn-complete.ts` holds the module's one unmatched `turn.complete` hook. The engine
+  refuses a second one per module, so the pixel city's comet and the agents tracker both run from it.
+
 ## [3.11.1] - 2026-11-17
 
 ### Changed

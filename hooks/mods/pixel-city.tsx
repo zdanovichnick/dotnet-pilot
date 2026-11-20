@@ -52,6 +52,11 @@ let flashAt = -1
 let isWorking = false
 let band: { requestId: string; columns: number; rows: number } | undefined
 
+// Called from turn-complete.ts, which holds the module's one unmatched turn.complete hook.
+export const pixelCityTurnComplete = () => {
+  cometAt = frame
+}
+
 export const registerPixelCity = (on: On, settings: { enabled: boolean; view: PixelCityView }) => {
   const viewIn = (s: PixelCityScene) => s.view ?? settings.view
 
@@ -98,11 +103,6 @@ export const registerPixelCity = (on: On, settings: { enabled: boolean; view: Pi
         return ran
       }).catch(($, e, next) => next(e))
     }
-
-    on('turn.complete', ($, e, next) => {
-      cometAt = frame
-      return next(e)
-    })
 
     on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
       const s = await read($, scene)

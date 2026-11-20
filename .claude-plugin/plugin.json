@@ -1,7 +1,7 @@
 {
   "name": "dotnet-pilot",
   "displayName": "DotnetPilot",
-  "version": "3.11.1",
+  "version": "4.0.0",
   "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, convention-aware scaffolding, TDD agents, security and performance review, and project lifecycle commands.",
   "author": {
     "name": "Nick Zdanovych",
@@ -65,6 +65,12 @@
       "type": "boolean",
       "title": "Roslyn MCP health check",
       "description": "At session start in a .NET project, connect and probe the roslyn MCP server and diagnose a failed start with dnp-roslyn version/doctor and show the fix in the status line and a toast. When healthy it only shows roslyn ✓ in the status line; /dnp-mcp shows the state and /dnp-mcp retry re-checks. Requires a Claude Code build with mods.",
+      "default": true
+    },
+    "agents": {
+      "type": "boolean",
+      "title": "Agents dashboard page",
+      "description": "Track subagent and workflow agent runs in the session (status, duration, tokens, cost, HALT/PARTIAL/ROUTING verdicts). /dnp-agents writes a local HTML page with live agents, run history, per-agent stats and the dotnet-pilot roster, opens it in the browser and keeps it refreshed. Nothing is written to disk before the command runs (requires a Claude Code build with mods).",
       "default": true
     }
   }

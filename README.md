@@ -14,6 +14,12 @@ review architecture boundaries, and generate EF Core migrations with Roslyn-back
 
 [Install](#install) · [First steps](#first-steps) · [Compatibility](#compatibility) · [Workflows](#workflows) · [Troubleshooting](#troubleshooting)
 
+> **New in 4.0.0**
+> - **Agents page:** `/dnp-agents` writes a local HTML page and opens it in your browser. It shows
+>   the agents working now, the run history with `HALT`/`PARTIAL`/`ROUTING` verdicts, success rate,
+>   duration, tokens and cost per agent type, and the `dnp-*` roster. It refreshes itself while the
+>   session runs. Toggle `agents` in `/config`.
+>
 > **New in 3.11.1**
 > - **Code Mode safe:** every `PreToolUse` hook carries `onFailure: continue`, so a slow or failed
 >   hook no longer refuses a tool call made from Code Mode (experimental). See `CLAUDE.md`.
@@ -410,6 +416,7 @@ Claude's permission protocol. Configure toggles per solution.
 | **Pressure meter** *(mod)* | After `dotnet build`/`dotnet test`, Edit calls, and prompts | Scores the session 0–100 from failed runs, repeated edits after a failure, corrections in your prompts and edits that loosen tests; a green run lowers it. Shows `pressure N` in the status line, and `/dnp-pressure` lists what raised it. After a failed run, an edit that skips or removes a test assertion gets a toast (or is denied with `pressure_test_guard_block: true` once the score reaches 60). At 60 and above, Claude is asked to state the blocker instead of retrying again. Toggle plugin option `pressure` |
 | **Roslyn MCP health** *(mod)* | Session start in a .NET project | Connects to the `roslyn` server and diagnoses a failed start with `dnp-roslyn version`/`doctor`. It probes the server only when `mcp__roslyn__*` is already allowed; otherwise it shows `roslyn ✓ unprobed`. Shows `roslyn ✓` or `roslyn ✗ <reason>` in the status line, toasts the fix once, and while roslyn is down tells Claude to fall back to Grep/Read and say so. `/dnp-mcp` shows the state, `/dnp-mcp retry` re-checks. Toggle plugin option `mcp_health` |
 | **Dashboard** *(mod)* | `/dnp-dashboard [telemetry\|review\|architecture]` | Opens a pane with three tabs. Telemetry shows the pressure score and its events, the build-fail streak and Roslyn health, live. Review shows the last `quality:review` run (counts, then confirmed findings by severity), saved per folder under `~/.claude/projects/<flattened-cwd>/dnp-review-latest.json`. Architecture lists projects by layer from `solution-map.json` and flags references the clean-architecture rules forbid (Domain referencing anything, Application referencing Infrastructure). Always on; it only opens when you run the command |
+| **Agents page** *(mod)* | `/dnp-agents` | Writes `~/.claude/projects/<flattened-cwd>/dnp-agents.html` and opens it in the default browser. Panels: live agents (status, model, effort, elapsed, tokens, cost), the last 50 finished runs with their outcome and `HALT`/`PARTIAL`/`ROUTING` verdict, per-agent-type stats for this session (runs, success rate, average duration, tokens, cost), and the `agents/dnp-*.md` roster. While the page is open the mod rewrites it on every agent start and end, and every 5 s while an agent runs; the page reloads every 5 s while an agent runs and every 30 s when idle. Nothing is written before the command runs. Option `agents` (default on) |
 | **Pixel band** *(mod, opt-in)* | Terminal only, above the prompt | Animated pixel-art band with four scenes: `city`, `beach`, `dino` and `sunset`. The sky follows your local clock, a failed build brings a storm and the next green run a rainbow. Switch scenes with `/city <scene>` (`/city status` lists every option). Needs a terminal with at least 5 free rows. Off by default: enable `pixel_city`, and pick the starting scene with `pixel_city_scene` |
 | **Statusline Sync** | On session start/resume/clear/compact | Refreshes the installed statusline script at `~/.claude/dnp-statusline.js` when the plugin ships a newer version. Only wires `~/.claude/settings.json` when `statusline.auto_enable: true` (default off) — never clobbers an existing statusLine without opt-in |
 
