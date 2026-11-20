@@ -9,6 +9,7 @@ skills:
   - convention-learner
 model: opus
 effort: medium
+memory: project
 color: blue
 ---
 

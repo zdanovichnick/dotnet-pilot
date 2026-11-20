@@ -7,6 +7,7 @@ skills:
   - convention-learner
 model: sonnet
 effort: low
+memory: project
 color: green
 ---
 

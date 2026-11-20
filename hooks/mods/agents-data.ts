@@ -1,4 +1,5 @@
 import type { AgentRun, AgentRunStatus } from '../../types'
+import { flattenCwd } from './dashboard-data'
 
 export type AgentSnapshot = {
   id: string
@@ -193,6 +194,153 @@ export const parseAgentFrontmatter = (text: string): RosterAgent | undefined => 
     toolCount: list(fields.get('tools')).length,
   }
 }
+
+export type TypeTotals = { runs: number; completed: number; totalMs: number; tokens: number; usd: number }
+
+// One project's finished runs across sessions, kept in $.store under historyKey(cwd).
+export type AgentHistory = { v: 1; updatedMs: number; totals: Record<string, TypeTotals>; recent: AgentRun[] }
+
+export const HISTORY_KEEP = 50
+const STORED_DESCRIPTION_MAX = 160
+export const HISTORY_KEY_PREFIX = 'agentHistory:'
+
+export const historyKey = (cwd: string) => `${HISTORY_KEY_PREFIX}${flattenCwd(cwd)}`
+
+export const emptyHistory = (): AgentHistory => ({ v: 1, updatedMs: 0, totals: {}, recent: [] })
+
+const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+const num = (v: unknown) => (typeof v === 'number' && Number.isFinite(v) ? v : 0)
+const STATUSES: readonly AgentRunStatus[] = ['running', 'waiting', 'completed', 'failed', 'aborted']
+
+const storedRun = (v: unknown): AgentRun | undefined => {
+  if (!isRecord(v) || typeof v.id !== 'string' || typeof v.type !== 'string') return undefined
+  const status = STATUSES.find(s => s === v.status)
+  if (status === undefined) return undefined
+  const text = (x: unknown) => (typeof x === 'string' ? x : undefined)
+  return {
+    id: v.id,
+    type: v.type,
+    description: text(v.description) ?? '',
+    status,
+    startMs: num(v.startMs),
+    endMs: typeof v.endMs === 'number' ? v.endMs : undefined,
+    durationMs: num(v.durationMs),
+    model: text(v.model),
+    effort: text(v.effort),
+    parentId: text(v.parentId),
+    verdict: text(v.verdict),
+    tokens: num(v.tokens),
+    usd: typeof v.usd === 'number' ? v.usd : undefined,
+  }
+}
+
+// The store is plain JSON another version may have written, so every field is checked.
+export const parseHistory = (value: unknown): AgentHistory => {
+  if (!isRecord(value) || value.v !== 1) return emptyHistory()
+  const totals: Record<string, TypeTotals> = {}
+  if (isRecord(value.totals)) {
+    for (const [type, t] of Object.entries(value.totals)) {
+      if (!isRecord(t)) continue
+      totals[type] = { runs: num(t.runs), completed: num(t.completed), totalMs: num(t.totalMs), tokens: num(t.tokens), usd: num(t.usd) }
+    }
+  }
+  const recent = Array.isArray(value.recent) ? value.recent.map(storedRun).filter((r): r is AgentRun => r !== undefined) : []
+  return { v: 1, updatedMs: num(value.updatedMs), totals, recent: recent.slice(0, HISTORY_KEEP) }
+}
+
+// Finished runs that are new, or whose outcome changed, between two states: the ones the store must hear about.
+export const changedFinished = (before: readonly AgentRun[], after: readonly AgentRun[]): AgentRun[] =>
+  after.filter(r => {
+    if (isLive(r)) return false
+    const prev = before.find(b => b.id === r.id)
+    return (
+      prev === undefined ||
+      isLive(prev) ||
+      prev.status !== r.status ||
+      prev.verdict !== r.verdict ||
+      prev.durationMs !== r.durationMs ||
+      prev.tokens !== r.tokens ||
+      prev.usd !== r.usd
+    )
+  })
+
+const contribution = (r: AgentRun): TypeTotals => ({
+  runs: 1,
+  completed: r.status === 'completed' ? 1 : 0,
+  totalMs: r.durationMs,
+  tokens: r.tokens,
+  usd: r.usd ?? 0,
+})
+
+const addTotals = (t: TypeTotals | undefined, d: TypeTotals, sign: 1 | -1): TypeTotals => ({
+  runs: Math.max(0, (t?.runs ?? 0) + sign * d.runs),
+  completed: Math.max(0, (t?.completed ?? 0) + sign * d.completed),
+  totalMs: Math.max(0, (t?.totalMs ?? 0) + sign * d.totalMs),
+  tokens: Math.max(0, (t?.tokens ?? 0) + sign * d.tokens),
+  usd: Math.max(0, (t?.usd ?? 0) + sign * d.usd),
+})
+
+// A run already in `recent` is replaced, its old contribution taken back first, so a resumed or
+// re-merged run is counted once. A run older than `recent` cannot be found, so it would count again.
+export const addToHistory = (history: AgentHistory, runs: readonly AgentRun[], nowMs: number): AgentHistory => {
+  const totals = { ...history.totals }
+  let recent = [...history.recent]
+  for (const run of runs) {
+    const prev = recent.find(r => r.id === run.id)
+    if (prev !== undefined) totals[prev.type] = addTotals(totals[prev.type], contribution(prev), -1)
+    totals[run.type] = addTotals(totals[run.type], contribution(run), 1)
+    const stored = { ...run, description: run.description.slice(0, STORED_DESCRIPTION_MAX) }
+    recent = [stored, ...recent.filter(r => r.id !== run.id)]
+  }
+  recent.sort((a, b) => (b.endMs ?? 0) - (a.endMs ?? 0))
+  return { v: 1, updatedMs: nowMs, totals, recent: recent.slice(0, HISTORY_KEEP) }
+}
+
+export const statsFromTotals = (totals: Readonly<Record<string, TypeTotals>>): TypeStats[] =>
+  Object.entries(totals)
+    .filter(([, t]) => t.runs > 0)
+    .map(([type, t]) => ({
+      type,
+      runs: t.runs,
+      finished: t.runs,
+      completed: t.completed,
+      successRate: t.completed / t.runs,
+      avgMs: t.totalMs / t.runs,
+      tokens: t.tokens,
+      usd: t.usd,
+    }))
+    .sort((a, b) => b.runs - a.runs || a.type.localeCompare(b.type))
+
+// Session runs win over stored ones with the same id; newest end first.
+export const finishedRuns = (session: readonly AgentRun[], stored: readonly AgentRun[]): AgentRun[] => {
+  const ids = new Set(session.map(r => r.id))
+  return [...session.filter(r => !isLive(r)), ...stored.filter(r => !ids.has(r.id))].sort((a, b) => (b.endMs ?? 0) - (a.endMs ?? 0))
+}
+
+export type MemoryEntry = { file: string; name: string; type: string; description: string }
+
+// Reads a memory file's frontmatter: `name`, `description`, and `type` at the top level or under `metadata:`.
+export const parseMemoryFile = (file: string, text: string): MemoryEntry => {
+  const block = (text.charCodeAt(0) === 0xfeff ? text.slice(1) : text).match(/^---\r?\n([\s\S]*?)\r?\n---/)
+  const fields = new Map<string, string>()
+  for (const line of (block?.[1] ?? '').split(/\r?\n/)) {
+    const pair = line.match(/^\s*([A-Za-z_-]+):\s*(.*)$/)
+    if (pair && pair[2] !== '' && !fields.has(pair[1]!)) fields.set(pair[1]!, pair[2]!.trim().replace(/^["']|["']$/g, ''))
+  }
+  return {
+    file,
+    name: fields.get('name') ?? file.replace(/\.md$/i, ''),
+    type: fields.get('type') ?? '—',
+    description: fields.get('description') ?? '',
+  }
+}
+
+export type AgentMemory = { agent: string; folder: string; notes: number; hasIndex: boolean }
+
+// Which roster agent a `.claude/agent-memory/<folder>` belongs to. The folder may carry the plugin
+// prefix (`dotnet-pilot-dnp-x`, `dotnet-pilot:dnp-x`), so a suffix match is accepted too.
+export const agentOfMemoryFolder = (folder: string, names: readonly string[]): string | undefined =>
+  names.find(n => folder === n || folder.endsWith(`-${n}`) || folder.endsWith(`:${n}`))
 
 export const formatDuration = (ms: number) => {
   const s = Math.max(0, Math.round(ms / 1000))

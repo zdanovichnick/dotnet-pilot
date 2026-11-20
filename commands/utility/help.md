@@ -8,7 +8,7 @@ effort: low
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v4.0.0 — .NET development plugin for Claude Code
+DotnetPilot v4.1.0 — .NET development plugin for Claude Code
 Usage: /dotnet-pilot:<category>:<command> [args]      e.g. /dotnet-pilot:dotnet:create-entity Product
 
 COMMANDS (16)
@@ -96,7 +96,7 @@ MODS — Claude Code builds with mod support only; set the option in /config (no
   /dnp-mcp [retry]   (mcp_health)       roslyn server state, reason, fix; retry re-checks after a /mcp Reconnect
   /dnp-pressure      (pressure)         what raised the 0-100 session pressure score
   /dnp-dashboard [tab]                  pane: telemetry, last review, architecture map (always on)
-  /dnp-agents        (agents)           browser page: live agents, run history + verdicts, per-agent stats, roster
+  /dnp-agents        (agents)           browser page: live agents, run history + verdicts across sessions, per-agent stats, roster + agent memory, project memory
   /city [scene|status] (pixel_city)    pixel band above the prompt, off by default; scenes city, beach, dino, sunset
   Also: build_status (failure toasts), routing (routing roster), pressure_test_guard_block (deny test-loosening edits at 60+),
         pixel_city_scene (starting scene)

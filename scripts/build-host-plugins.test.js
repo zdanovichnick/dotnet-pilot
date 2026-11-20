@@ -40,6 +40,18 @@ test('both packages preserve migration safety and replace host assumptions', () 
   assert(!packageFiles('codex').has('agents/dnp-architect.md'));
 });
 
+test('specialist checklists carry the shared memory folder; workflows do not', () => {
+  for (const host of ['codex', 'cursor']) {
+    const files = packageFiles(host);
+    const architect = files.get('skills/dotnet-pilot/references/agents/dnp-architect.md');
+    assert.match(architect, /\.claude\/agent-memory\/dnp-architect\//);
+    assert.match(architect, /only place a read-only checklist writes/);
+    assert.doesNotMatch(architect, /\{\{name\}\}/);
+    assert.doesNotMatch(files.get('skills/dotnet-pilot/references/commands/dotnet/tdd.md'), /agent-memory/);
+  }
+  assert.match(packageFiles('cursor').get('agents/dnp-security-auditor.md'), /\.claude\/agent-memory\/dnp-security-auditor\//);
+});
+
 test('check detects tampering, missing files, and stale discoverable components', t => {
   const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-host-packages-'));
   t.after(() => fs.rmSync(temp, { recursive: true, force: true }));

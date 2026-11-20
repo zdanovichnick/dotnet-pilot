@@ -40,6 +40,12 @@ skills. Cursor additionally exposes the workflows as commands and the nine speci
 native agents. Codex uses specialist reference checklists in the active agent. Workflows
 run directly by default, with no dependency on Claude tools or Anthropic model aliases.
 
+Each specialist checklist also carries a memory section (`packaging/hosts/memory.md`): it reads
+and updates `<solution-root>/.claude/agent-memory/<agent>/`, the folder Claude Code uses for the
+same agent's `memory: project`, so all three hosts share one memory per repository. Neither host's
+own memory feature is used; the section is written instructions, and a user who does not want the
+folder committed can tell the agent to skip it.
+
 ## Prerequisites
 
 Install the .NET 10 SDK and the Roslyn global tool:
@@ -103,6 +109,7 @@ They do not touch Claude's user settings. State should be ignored by Git.
 | .NET pattern skills and references | Included | Included |
 | 13 core workflows, including init | Skills | Skills and commands |
 | Nine specialist roles | Reference checklists | Checklists and native agents |
+| Specialist memory in `.claude/agent-memory/` | Written instructions | Written instructions |
 | Roslyn MCP | Local stdio configuration | Local stdio configuration |
 | Build, test, DI, migration verification | Explicit workflow steps | Explicit workflow steps |
 | Automatic hooks, mods, statusline, pixel city | Excluded | Excluded |

@@ -1,7 +1,7 @@
 {
   "name": "dotnet-pilot",
   "displayName": "DotnetPilot",
-  "version": "4.0.0",
+  "version": "4.1.0",
   "description": ".NET development plugin for Claude Code — Roslyn semantic analysis, DI/architecture/EF Core guards, convention-aware scaffolding, TDD agents, security and performance review, and project lifecycle commands.",
   "author": {
     "name": "Nick Zdanovych",
@@ -70,7 +70,7 @@
     "agents": {
       "type": "boolean",
       "title": "Agents dashboard page",
-      "description": "Track subagent and workflow agent runs in the session (status, duration, tokens, cost, HALT/PARTIAL/ROUTING verdicts). /dnp-agents writes a local HTML page with live agents, run history, per-agent stats and the dotnet-pilot roster, opens it in the browser and keeps it refreshed. Nothing is written to disk before the command runs (requires a Claude Code build with mods).",
+      "description": "Track subagent and workflow agent runs in the session (status, duration, tokens, cost, HALT/PARTIAL/ROUTING verdicts). Finished runs are saved to the plugin store (last 50 per project) for stats across sessions. /dnp-agents writes a local HTML page with live agents, run history, per-agent stats, the dotnet-pilot roster with each agent's memory notes, and the project's Claude memory entries, opens it in the browser and updates it live in place, about once a second, without reloading. The page files are written only after the command runs (requires a Claude Code build with mods).",
       "default": true
     }
   }

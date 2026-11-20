@@ -5,6 +5,39 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [4.1.0] - 2026-11-20
+
+### Added
+
+- Per-agent memory. All nine `dnp-*` agents set `memory: project`, so Claude Code keeps each
+  agent's notes in the consumer repository under `.claude/agent-memory/` and loads the agent's
+  `MEMORY.md` into its prompt. Nothing is written when `autoMemoryEnabled` is false.
+- The Codex and Cursor packages get the same folder as written instructions
+  (`packaging/hosts/memory.md`): each specialist checklist reads and updates
+  `<solution-root>/.claude/agent-memory/<agent>/`, so every host shares one memory per repository.
+  Workflows do not get the section.
+- `/dnp-agents` keeps finished runs across sessions. Each finished run is saved to the plugin's
+  `$.store` under `agentHistory:<flattened-cwd>` (the last 50 runs, plus per-type totals), whether
+  or not the page is open. A rejected write (the store is capped at 4 MiB for all projects) evicts
+  the project saved longest ago and tries once more.
+- The page shows run history from all sessions, a second per-agent stats panel for all sessions,
+  each roster agent's memory notes, and a project memory panel that lists the entries in
+  `~/.claude/projects/<flattened-cwd>/memory/`.
+
+### Changed
+
+- `dnp-architect`, `dnp-di-wiring-checker`, `dnp-ef-migration-planner`, `dnp-nuget-auditor`,
+  `dnp-performance-analyst` and `dnp-security-auditor` now list `Write` and `Edit`, which memory
+  needs. Their prompts limit both to the memory folder. This is an instruction, not an enforced
+  limit.
+- The `/dnp-agents` page updates live instead of reloading. The command writes the page once; after
+  that the mod rewrites only `dnp-agents-data.js` beside it, on every agent start and end and every
+  2 s (was 5 s) while an agent runs. The page adds that file as a `<script>` once a second (a
+  `fetch()` is refused on `file://`), replaces only the panels whose HTML changed, counts elapsed
+  time up in the browser, and shows a warning when a live agent gets no update for 10 s. The
+  `<meta http-equiv="refresh">` (5 s live, 30 s idle) is gone, except inside `<noscript>`. The
+  review file and memory folders are re-read at most every 10 s, not on every tick.
+
 ## [4.0.0] - 2026-11-20
 
 ### Added

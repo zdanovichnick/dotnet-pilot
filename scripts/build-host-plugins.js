@@ -12,6 +12,7 @@ const read = file => fs.readFileSync(path.join(ROOT, file), 'utf8').replace(/\r\
 const json = value => JSON.stringify(value, null, 2) + '\n';
 const source = JSON.parse(read('.claude-plugin/plugin.json'));
 const runtime = read('packaging/hosts/runtime.md');
+const memory = read('packaging/hosts/memory.md').trim();
 const excluded = new Set(['quality/review.md', 'utility/help.md', 'utility/statusline.md']);
 const slug = file => `dnp-${file.replace(/\.md$/, '').replaceAll('/', '-')}`;
 
@@ -107,7 +108,9 @@ function packageFiles(host) {
   for (const file of agents) {
     const fm = frontmatter(read(`agents/${file}`));
     const skills = /\nskills:\n((?:  - .*\n)+)/.exec('\n' + fm.header + '\n')?.[1].trim();
-    const body = `${runtime}\n\n${skills ? `Relevant pattern skills (load as needed):\n${skills}\n\n` : ''}${adapt(fm.body)}\n`;
+    // Claude Code reads `memory:` itself; the hosts get the same folder as written instructions.
+    const memoryRule = /^memory: project$/m.test(fm.header) ? `${memory.replaceAll('{{name}}', fm.field('name'))}\n\n` : '';
+    const body = `${runtime}\n\n${memoryRule}${skills ? `Relevant pattern skills (load as needed):\n${skills}\n\n` : ''}${adapt(fm.body)}\n`;
     put(`${referenceRoot}/agents/${file}`, body);
     if (host === 'cursor') put(`agents/${file}`, `---\nname: ${fm.field('name')}\ndescription: ${JSON.stringify(fm.field('description'))}\n---\n\n${body}`);
   }
