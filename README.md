@@ -577,6 +577,32 @@ Every `hooks.*` key is on by default and only switches a hook off: `adr_nudge`, 
 `subagent_result`, `sync_global_claude_md`. The one opt-in key is `stop_verify_block`.
 Claude hooks also read a repository-local `.planning/config.json` when one exists.
 
+`dnp-git-autoapprove` stays silent in the `auto`, `dontAsk` and `bypassPermissions` permission
+modes. Those modes already skip the prompt, and in Auto mode the classifier, not the hook, decides
+whether a push or a pull request may go out.
+
+### Sandboxing `dotnet build` and `dotnet test`
+
+A build or test run executes code that NuGet packages bring with them: MSBuild `.targets`,
+analyzers, source generators and test adapters. A permission rule decides whether the command may
+start. Only the sandbox limits what that code can read, write and reach while it runs. Claude
+Code's sandbox runs on macOS, Linux and WSL2, not on native Windows.
+
+A starting point for `settings.json`:
+
+```json
+{
+  "sandbox": {
+    "enabled": true,
+    "network": { "allowedDomains": ["api.nuget.org"] },
+    "filesystem": { "allowWrite": ["~/.nuget/packages"] }
+  }
+}
+```
+
+Add the host of every private feed in your `nuget.config` to `allowedDomains`. If restore still
+fails, run `dotnet nuget locals all --list` and add the cache folders it prints to `allowWrite`.
+
 ## Troubleshooting
 
 | Problem | What to check |

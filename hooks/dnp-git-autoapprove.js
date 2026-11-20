@@ -26,6 +26,7 @@
 //     is approved only as `checkout -b <branch> [<start>]`.
 //   - Only the Bash tool is handled; PowerShell's `;`/`&` semantics differ and
 //     its commands keep the normal prompt.
+//   - Silent in the `auto`, `dontAsk` and `bypassPermissions` permission modes.
 //
 // Gated by `.planning/config.json` -> `hooks.git_autoapprove` (default-on when
 // the file is absent). Set it to `false` to restore manual confirmation.
@@ -33,6 +34,8 @@
 const { hookEnabled } = require('./_lib/config');
 
 const HOOK_NAME = 'dnp-git-autoapprove';
+
+const PROMPTLESS_MODES = ['auto', 'dontAsk', 'bypassPermissions'];
 
 const GLOBAL_BANNED_LONG = ['output', 'ext-diff', 'exec', 'upload-pack', 'receive-pack'];
 
@@ -196,6 +199,9 @@ process.stdin.on('end', () => {
     const data = JSON.parse(input);
     if (!data || typeof data !== 'object' || !('tool_input' in data)) process.exit(0);
     if (data.tool_name && data.tool_name !== 'Bash') process.exit(0);
+    // These modes already skip the prompt; an "allow" here would only override the
+    // Auto-mode classifier, which blocks push and PR creation by default.
+    if (PROMPTLESS_MODES.includes(data.permission_mode)) process.exit(0);
 
     const cwd = data.cwd || process.cwd();
     if (!hookEnabled(cwd, 'git_autoapprove')) process.exit(0);

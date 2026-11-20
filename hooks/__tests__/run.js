@@ -1016,6 +1016,22 @@ const CASES = [
     expectExit: 0,
     expectEmpty: true,
   },
+  ...['auto', 'dontAsk', 'bypassPermissions'].map(mode => ({
+    name: `git-autoapprove: silent in ${mode} permission mode`,
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'Bash', permission_mode: mode, tool_input: { command: 'git push origin HEAD' } },
+    expectExit: 0,
+    expectEmpty: true,
+  })),
+  {
+    name: 'git-autoapprove: still approves in default permission mode',
+    hook: 'dnp-git-autoapprove.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_name: 'Bash', permission_mode: 'default', tool_input: { command: 'git push origin HEAD' } },
+    expectExit: 0,
+    expectPermission: 'allow',
+  },
   ...[
     'git push',
     'git push -u origin feat/x',

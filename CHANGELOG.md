@@ -5,6 +5,23 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [4.2.1] - 2026-11-20
+
+### Fixed
+
+- `dnp-git-autoapprove` is silent in the `auto`, `dontAsk` and `bypassPermissions` permission
+  modes. These modes already skip the prompt. In Auto mode, the hook's `allow` for `git push` and
+  `gh pr create` could get in ahead of the classifier, which blocks pushes and pull requests by
+  default.
+
+### Changed
+
+- `CLAUDE.md`: the mods entry and the Hook Behaviors table keep only the purpose of each part and
+  the engine constraints the code does not show. Matchers, regex lists and file paths stay in
+  `hooks.json` and the hook headers.
+- `README.md`: a section on sandboxing `dotnet build` and `dotnet test` (NuGet network and cache
+  paths; macOS, Linux and WSL2 only).
+
 ## [4.2.0] - 2026-11-20
 
 ### Added
