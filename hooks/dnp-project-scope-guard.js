@@ -7,7 +7,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const crypto = require('crypto');
-const { hookEnabled, resolvePlanningDir } = require('./_lib/config');
+const { hookEnabled, resolvePlanningDir, frontendRoot, isUnder } = require('./_lib/config');
 
 const HOOK_NAME = 'dnp-scope-guard';
 const EXPECTED_PROTOCOL_VERSION = 1;
@@ -82,6 +82,10 @@ process.stdin.on('end', () => {
     if (solutionLevel.includes(fileName)) process.exit(0);
     if (filePath.includes('.planning')) process.exit(0);
 
+    // The paired frontend is not a .NET project, so focus_projects cannot name it.
+    const frontend = frontendRoot(cwd);
+    if (frontend && isUnder(path.resolve(cwd, filePath), frontend)) process.exit(0);
+
     // Use solution-map.json for exact project boundary matching
     const editedProject = resolveProject(normalizedPath, cwd);
     if (!editedProject) process.exit(0);
@@ -149,7 +153,9 @@ function resolveProject(filePath, cwd) {
     } catch {}
   }
 
-  // Fallback: guess from path structure
+  // Fallback: guess from path structure. Only inside cwd — a `src/<name>` folder
+  // in another checkout is not one of this solution's projects.
+  if (!isUnder(path.resolve(filePath), path.resolve(cwd))) return null;
   const match = filePath.match(/(?:src|tests?)[/\\]([^/\\]+)/);
   return match ? match[1] : null;
 }

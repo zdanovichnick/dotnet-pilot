@@ -8,10 +8,10 @@ effort: low
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v4.1.0 — .NET development plugin for Claude Code
+DotnetPilot v4.2.0 — .NET development plugin for Claude Code
 Usage: /dotnet-pilot:<category>:<command> [args]      e.g. /dotnet-pilot:dotnet:create-entity Product
 
-COMMANDS (16)
+COMMANDS (17)
 
   project — lifecycle
     project:init            [--refresh]
@@ -38,6 +38,11 @@ COMMANDS (16)
     dotnet:health-check     [--fix]
         Build, tests, NuGet, project references, DI completeness
 
+  fullstack — ASP.NET API + React/TypeScript UI
+    fullstack:feature       <task> [--ui <path>] [--complexity easy|hard]
+        Contract first, then a backend and a frontend agent in parallel; regenerates the TypeScript
+        types from the API's OpenAPI document and type-checks the UI. The UI may be another repository
+
   quality — safety checks
     quality:review          [--base <ref> | --staged | --last-commit | --scope <glob>]
                             [--depth quick|standard|deep]
@@ -55,9 +60,10 @@ COMMANDS (16)
     utility:statusline      [--manual]
         Install the .NET-aware statusline; --manual prints the settings.json snippet instead
 
-AGENTS (9) — spawned by commands; a decision they cannot make returns as [HALT: <question>]
+AGENTS (10) — spawned by commands; a decision they cannot make returns as [HALT: <question>]
   dnp-tdd-developer-easy     sonnet / low    Routine TDD; also runs dotnet:scaffold and dotnet:add-endpoint
   dnp-tdd-developer-hard     opus / medium   Complex TDD: architectural choices, cross-layer changes
+  dnp-frontend-developer     sonnet / medium React + TypeScript UI against a fixed API contract; designs the screen when asked
   dnp-refactor-cleaner       sonnet / high   Dead code, naming, duplication; behavior verified by tests
   dnp-architect              opus / high     Layer boundaries, project references, package placement
   dnp-ef-migration-planner   sonnet / low    Migration chain, data-loss risk, DbContext targeting
@@ -66,11 +72,12 @@ AGENTS (9) — spawned by commands; a decision they cannot make returns as [HALT
   dnp-di-wiring-checker      sonnet / low    Constructor injection cross-checked against DI registrations
   dnp-nuget-auditor          sonnet / low    Vulnerable, outdated and version-inconsistent packages
 
-SKILLS (15) — knowledge packs agents load on demand
+SKILLS (18) — knowledge packs agents load on demand
   architecture     clean-architecture · vertical-slice · ddd · convention-learner · dotnet-project-init
   api & data       aspnet-api-patterns · ef-core-patterns · error-handling · authentication
   cross-cutting    caching · resilience · logging · opentelemetry
   language & test  modern-csharp · testing-dotnet
+  frontend         react-typescript · api-contract · ui-ux-design
 
 HOOKS (14) — advisory (exit 0) except dnp-git-autoapprove, which grants permission; switch one
             off with hooks.<key>: false in .planning/config.json

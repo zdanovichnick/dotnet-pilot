@@ -331,6 +331,14 @@ fs.writeFileSync(path.join(scopeAbsWorkspace, '.planning', 'solution-map.json'),
     { name: 'Demo.Worker', path: path.join(scopeAbsWorkspace, 'app', 'Demo.Worker', 'Demo.Worker.csproj') },
   ] }));
 
+// Scope-guard workspace with a paired frontend (`frontend.path`) and no solution
+// map, so project names come from the `src/<name>` path fallback.
+const scopeFrontendWorkspace = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-scopefe-'));
+fs.mkdirSync(path.join(scopeFrontendWorkspace, '.planning'), { recursive: true });
+fs.writeFileSync(path.join(scopeFrontendWorkspace, '.planning', 'STATE.md'), '---\nfocus_projects: [Demo.Api]\n---\n');
+fs.writeFileSync(path.join(scopeFrontendWorkspace, '.planning', 'config.json'),
+  JSON.stringify({ frontend: { path: 'web' } }));
+
 // post-edit-format: a relative file_path under a dir with no .csproj must exit promptly.
 const relFormatDir = fs.mkdtempSync(path.join(os.tmpdir(), 'dnp-hook-test-relfmt-'));
 fs.writeFileSync(path.join(relFormatDir, 'Loose.cs'), 'public class Loose {}\n');
@@ -530,6 +538,19 @@ const CASES = [
     expectExit: 0,
     expectEmpty: true,
   },
+  {
+    name: 'build-verify: a tsc error chained after a green dotnet build is not a .NET failure',
+    hook: 'dnp-build-verify.js',
+    runtime: 'node',
+    input: {
+      cwd: buildDir, hook_event_name: 'PostToolUseFailure', tool_name: 'Bash',
+      tool_input: { command: 'dotnet build Demo.slnx && npx tsc --noEmit -p web' },
+      error: 'Error: Exit code 2\nBuild succeeded.\n    0 Error(s)\nweb/src/api.ts(4,7): error TS2322: Type \'string\' is not assignable to type \'number\'.',
+    },
+    expectExit: 0,
+    expectEmpty: true,
+    expectFiles: [{ path: buildStateFile, includes: ['"count":0'] }],
+  },
 
   // --- dnp-project-scope-guard ---
   // No .planning/ in workspace → hook should exit silently.
@@ -644,6 +665,14 @@ const CASES = [
     hook: 'dnp-code-analyzer-redirect.js',
     runtime: 'node',
     input: { cwd: nonDotnetDir, tool_input: { file_path: 'a.py' } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'redirect: a TypeScript target inside a .NET solution is left to code-analyzer',
+    hook: 'dnp-code-analyzer-redirect.js',
+    runtime: 'node',
+    input: { cwd: workspace, tool_input: { file_path: 'web/src/App.tsx', project_path: workspace } },
     expectExit: 0,
     expectEmpty: true,
   },
@@ -818,6 +847,30 @@ const CASES = [
     input: { cwd: scopeAbsWorkspace, tool_input: { file_path: path.join(scopeAbsWorkspace, 'app', 'Demo.Worker', 'Job.cs') } },
     expectExit: 0,
     expectSubstrings: ['[dnp-scope-guard]', 'SCOPE ADVISORY', 'Demo.Worker'],
+  },
+  {
+    name: 'scope-guard: a file under frontend.path is not a .NET project',
+    hook: 'dnp-project-scope-guard.js',
+    runtime: 'node',
+    input: { cwd: scopeFrontendWorkspace, tool_input: { file_path: path.join(scopeFrontendWorkspace, 'web', 'src', 'components', 'Button.tsx') } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'scope-guard: a src/<name> folder in another checkout is not guessed as a project',
+    hook: 'dnp-project-scope-guard.js',
+    runtime: 'node',
+    input: { cwd: scopeFrontendWorkspace, tool_input: { file_path: path.join(nonDotnetDir, 'src', 'widgets', 'Card.tsx') } },
+    expectExit: 0,
+    expectEmpty: true,
+  },
+  {
+    name: 'scope-guard: the path fallback still advises inside the repo',
+    hook: 'dnp-project-scope-guard.js',
+    runtime: 'node',
+    input: { cwd: scopeFrontendWorkspace, tool_input: { file_path: path.join(scopeFrontendWorkspace, 'src', 'Demo.Loose', 'Thing.cs') } },
+    expectExit: 0,
+    expectSubstrings: ['[dnp-scope-guard]', 'SCOPE ADVISORY', 'Demo.Loose'],
   },
   {
     name: 'post-edit-format: a relative file_path with no project exits promptly',
@@ -1583,12 +1636,13 @@ for (const f of [slnFailFile, slnGreenFile, buildStateFile,
                  ...stopDirs.map(buildStatePath), ...stopDirs.map(editMarkerPath),
                  editMarkerPath(nonDotnetDir), scopeAdvisedPath(scopeWorkspace, 'Demo.Other'),
                  scopeAdvisedPath(scopeAbsWorkspace, 'Demo.Worker'),
+                 scopeAdvisedPath(scopeFrontendWorkspace, 'Demo.Loose'),
                  ...adrRepos.map(r => adrAdvisedPath(r.dir))]) {
   try { fs.unlinkSync(f); } catch {}
 }
 for (const dir of [workspace, nonDotnetDir, scopeWorkspace, fakeHome, buildDir,
                    slnFailDir, slnGreenDir, slEffortHome, slHomeDefault, slHomeAuto, slAutoWorkspace, ...stopDirs,
-                   slHomeMalformed, scopeAbsWorkspace, relFormatDir, ...syncHomes, ...adrRepos.map(r => r.dir)]) {
+                   slHomeMalformed, scopeAbsWorkspace, scopeFrontendWorkspace, relFormatDir, ...syncHomes, ...adrRepos.map(r => r.dir)]) {
   try { fs.rmSync(dir, { recursive: true, force: true }); } catch {}
 }
 

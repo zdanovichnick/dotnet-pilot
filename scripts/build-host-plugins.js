@@ -13,7 +13,7 @@ const json = value => JSON.stringify(value, null, 2) + '\n';
 const source = JSON.parse(read('.claude-plugin/plugin.json'));
 const runtime = read('packaging/hosts/runtime.md');
 const memory = read('packaging/hosts/memory.md').trim();
-const excluded = new Set(['quality/review.md', 'utility/help.md', 'utility/statusline.md']);
+const excluded = new Set(['fullstack/feature.md', 'quality/review.md', 'utility/help.md', 'utility/statusline.md']);
 const slug = file => `dnp-${file.replace(/\.md$/, '').replaceAll('/', '-')}`;
 
 function walk(dir, base = dir) {

@@ -24,12 +24,18 @@ function emit(message) {
   }));
 }
 
+const ANALYZER_SOURCE = /\.(py|pyi|tsx?|jsx?|mjs|cjs)$/i;
+
 // Does this code-analyzer call target C#? Either the call points at a `.cs`
-// file, or its project_path / the session cwd is a .NET solution.
+// file, or its project_path / the session cwd is a .NET solution. A file the
+// analyzer does support is never a C# target, whatever solution surrounds it.
 function targetsDotNet(toolInput, cwd) {
   const filePath = toolInput.file_path || '';
   if (typeof filePath === 'string' && filePath.toLowerCase().endsWith('.cs')) {
     return true;
+  }
+  if (typeof filePath === 'string' && ANALYZER_SOURCE.test(filePath)) {
+    return false;
   }
   const projectPath = toolInput.project_path;
   if (projectPath && isDotNetProject(projectPath)) {

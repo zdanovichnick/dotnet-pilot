@@ -5,7 +5,7 @@ const DOTNET_CMD = /\bdotnet(?:\.exe)?\s+(build|test)\b/g
 
 const FAIL_MARKERS = [
   /Build FAILED/,
-  /\berror\s+[A-Z]{2,6}\d{3,5}\b/,
+  /\berror\s+(?!TS\d)[A-Z]{2,6}\d{3,5}\b/,
   /Failed!\s+-\s+Failed:\s+[1-9]/,
   /Test Run Failed\./,
   /Test summary:.*\bfailed:\s*[1-9]/i,

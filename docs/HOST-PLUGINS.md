@@ -35,8 +35,8 @@ dist/plugins/cursor/
   dotnet-pilot/commands/
 ```
 
-Both packages include the license, 15 pattern skills, a navigation skill, and 13 workflow
-skills. Cursor additionally exposes the workflows as commands and the nine specialists as
+Both packages include the license, 18 pattern skills, a navigation skill, and 13 workflow
+skills. Cursor additionally exposes the workflows as commands and the ten specialists as
 native agents. Codex uses specialist reference checklists in the active agent. Workflows
 run directly by default, with no dependency on Claude tools or Anthropic model aliases.
 
@@ -108,12 +108,13 @@ They do not touch Claude's user settings. State should be ignored by Git.
 | --- | --- | --- |
 | .NET pattern skills and references | Included | Included |
 | 13 core workflows, including init | Skills | Skills and commands |
-| Nine specialist roles | Reference checklists | Checklists and native agents |
+| Ten specialist roles | Reference checklists | Checklists and native agents |
 | Specialist memory in `.claude/agent-memory/` | Written instructions | Written instructions |
 | Roslyn MCP | Local stdio configuration | Local stdio configuration |
 | Build, test, DI, migration verification | Explicit workflow steps | Explicit workflow steps |
 | Automatic hooks, mods, statusline, pixel city | Excluded | Excluded |
 | Claude sharded review workflow | Excluded | Excluded |
+| Full-stack feature command (two agents in parallel) | Excluded | Excluded |
 
 Package generation and content validation are automated. The Codex CLI smoke checks below
 were run on Windows on 2026-11-08 in a disposable `CODEX_HOME`, each step as its own

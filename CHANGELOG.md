@@ -5,6 +5,36 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [4.2.0] - 2026-11-20
+
+### Added
+
+- `/dotnet-pilot:fullstack:feature` — one feature across an ASP.NET API and its React + TypeScript
+  client. The command writes the API contract, spawns a TDD agent and the frontend agent in the
+  same message so they run in parallel, then builds and tests the API, regenerates the TypeScript
+  types from the API's OpenAPI document, points the client's seam module at them and runs the
+  type check, tests and lint. A type error at that point is reported as contract drift. Claude
+  Code only; the Codex and Cursor packages do not include it.
+- The UI may be a separate repository. The frontend root comes from `--ui <path>`, then
+  `frontend.path` in `.planning/config.json`, then a React `package.json` in the API repository.
+  A root outside the session's working directories stops the command with an `/add-dir`
+  instruction before any agent starts. `project:init` writes `frontend.path`.
+- `dnp-frontend-developer` agent (sonnet, effort medium): test-first React + TypeScript work in an
+  existing Next.js or Vite app, against a fixed contract, inside the frontend root only.
+- Three skills: `react-typescript` (frontend convention detection, Next.js and Vite references),
+  `api-contract` (contract format, type generation, C#-to-JSON mismatches) and `ui-ux-design`
+  (design system first, the four data states, WCAG 2.1 AA, UX copy, a design note in the report).
+  The design skill applies only when the task designs a screen, form or component.
+
+### Fixed
+
+- `dnp-build-verify` and the build-status mod no longer count a TypeScript compiler error
+  (`error TS2322`) as a .NET build failure when `dotnet build` and `tsc` share one command.
+- `dnp-code-analyzer-redirect` no longer redirects a call on a TypeScript, JavaScript or Python
+  file to Roslyn because the surrounding folder is a .NET solution.
+- `dnp-project-scope-guard` ignores files under `frontend.path`, and its `src/<name>` path
+  fallback no longer names a project for a file outside the solution folder.
+
 ## [4.1.0] - 2026-11-20
 
 ### Added

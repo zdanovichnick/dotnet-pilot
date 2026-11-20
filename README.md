@@ -14,6 +14,16 @@ review architecture boundaries, and generate EF Core migrations with Roslyn-back
 
 [Install](#install) · [First steps](#first-steps) · [Compatibility](#compatibility) · [Workflows](#workflows) · [Troubleshooting](#troubleshooting)
 
+> **New in 4.2.0**
+> - **Full-stack features:** `/dotnet-pilot:fullstack:feature` builds a feature that needs both an
+>   ASP.NET API change and a React + TypeScript UI change. It writes the API contract first, runs
+>   a backend agent and the new `dnp-frontend-developer` agent in parallel, then regenerates the
+>   TypeScript types from the API's OpenAPI document and type-checks the UI. The UI can be a folder
+>   in the API repository or a separate repository. [Details](#fullstack--api--ui-together).
+> - **UI/UX design skill:** when the task designs a screen, form or component, the frontend agent
+>   builds from the app's design system, designs the loading, empty, error and success states, checks
+>   WCAG 2.1 AA, and reports a design note before the code.
+>
 > **New in 4.1.0**
 > - **Agent memory:** every `dnp-*` agent keeps project notes in `.claude/agent-memory/<agent>/`
 >   (Claude Code's `memory: project`). The Codex and Cursor packages read and write the same folder.
@@ -275,12 +285,12 @@ migration and SQL before applying a database change.
 
 | Capability | Claude Code | Codex | Cursor |
 | --- | --- | --- | --- |
-| 15 .NET pattern skills | Included | Included | Included |
+| 18 pattern skills (15 .NET, 3 frontend) | Included | Included | Included |
 | Core workflows | 13 commands | 13 workflow skills | 13 commands + workflow skills |
-| Nine specialist roles | Native agents | Reference checklists | Checklists + native agents |
+| Ten specialist roles | Native agents | Reference checklists | Checklists + native agents |
 | Roslyn MCP configuration | Included | Included | Included |
 | Build, test, DI, migration checks | Workflow steps + hooks | Explicit workflow steps | Explicit workflow steps |
-| Sharded review, help, statusline commands | Included | — | — |
+| Full-stack feature (parallel agents), sharded review, help, statusline commands | Included | — | — |
 | Automatic hooks and UI mods | Included | — | — |
 | Validation status | Hook, mod and Roslyn suites in CI | 12/12 smoke checks (CLI) | 12/12 smoke checks (CLI; step 11 migration taken from Codex) |
 
@@ -300,9 +310,9 @@ and UI features are not installed in those packages.
 | Keep project boundaries clean | Find forbidden references and circular dependencies |
 | Prepare changes for review | Run build, test, security, and architecture checks |
 
-**15 pattern skills · 9 specialist roles · Roslyn semantic tools**
+**18 pattern skills · 10 specialist roles · Roslyn semantic tools**
 
-Claude Code includes 16 commands and automatic hooks. Codex and Cursor packages include
+Claude Code includes 17 commands and automatic hooks. Codex and Cursor packages include
 13 core workflows; see [compatibility](#compatibility) for the differences.
 
 ![Example solution health check](assets/demo-health-check.svg)
@@ -313,7 +323,7 @@ The reference below uses **Claude Code command names**. For the 13 shared workfl
 replace `category:name` with `$dnp-category-name` in Codex or `/dnp-category-name` in Cursor.
 For example, `quality:security-scan` becomes `$dnp-quality-security-scan` in Codex.
 
-`quality:review`, `utility:help`, and `utility:statusline` are Claude Code only.
+`fullstack:feature`, `quality:review`, `utility:help`, and `utility:statusline` are Claude Code only.
 
 ### Project — project lifecycle
 
@@ -334,6 +344,24 @@ For example, `quality:security-scan` becomes `$dnp-quality-security-scan` in Cod
 | `dotnet:tdd` | `<task> [--complexity easy\|hard] [--existing <target>]` | Write failing tests first, then the production code. `--existing` adds tests to existing code without changing it |
 | `dotnet:run-tests` | `[project] [--coverage] [--filter ...]` | Run tests with coverage and diagnose failures |
 | `dotnet:health-check` | `[--fix]` | Check build, tests, NuGet, project references and DI completeness |
+
+### Fullstack — API + UI together
+
+| Command | Arguments | What it does |
+| --- | --- | --- |
+| `fullstack:feature` | `<task> [--ui <path>] [--complexity easy\|hard]` | Write the API contract, then run `dnp-tdd-developer-easy` or `dnp-tdd-developer-hard` on the API and `dnp-frontend-developer` on the React + TypeScript UI at the same time. Afterwards build and test the API, regenerate the TypeScript types from its OpenAPI document, and type-check, test and lint the UI |
+
+Start the session in the API repository. The UI is found from `--ui`, then `frontend.path` in
+`.planning/config.json`, then a `package.json` in the repository that depends on `react`. When the
+UI is a separate repository, add it to the session first (`claude --add-dir <ui-repo>` or
+`/add-dir`). Next.js (App Router) and React + Vite are detected from `package.json`; the app's own
+package manager, test runner and API client are used. The command creates no frontend app and
+makes no commit in either repository.
+
+A type error after the types are regenerated means the API and the UI disagree about the contract.
+If the project has no way to generate types, the command asks once whether to set one up
+(`Microsoft.Extensions.ApiDescription.Server` + `openapi-typescript`) or to continue with
+hand-written types and report the contract check as unverified.
 
 ### Quality — safety checks
 
@@ -365,6 +393,7 @@ Codex reads checklists in the current agent, and Cursor also includes native def
 | --- | --- |
 | `dnp-tdd-developer-easy` | Routine features and scaffolding with RED → GREEN → REFACTOR |
 | `dnp-tdd-developer-hard` | Complex features, cross-layer changes, architectural decisions |
+| `dnp-frontend-developer` | React + TypeScript UI built test-first against a fixed API contract; UI/UX design when the task needs it |
 | `dnp-refactor-cleaner` | Behavior-preserving cleanup, naming, and duplication |
 | `dnp-architect` | Layer boundaries, project references, architecture decisions |
 | `dnp-ef-migration-planner` | Migration chains, DbContext selection, data-loss risks |
@@ -375,7 +404,7 @@ Codex reads checklists in the current agent, and Cursor also includes native def
 
 ## Pattern skills
 
-All three packages include these 15 skills. Detailed references load only when relevant.
+All three packages include these 18 skills. Detailed references load only when relevant.
 
 | Skill | What it teaches |
 | --- | --- |
@@ -394,6 +423,9 @@ All three packages include these 15 skills. Detailed references load only when r
 | `convention-learner` | 6-step protocol: detect naming, folder structure, DI style, test framework, DTO style, error handling before writing any code |
 | `logging` | Serilog setup, message templates (not interpolation), `LogContext`, request logging, PII rules |
 | `opentelemetry` | `ActivitySource`, `IMeterFactory`, OTLP config, Aspire `AddServiceDefaults()`, Serilog correlation |
+| `react-typescript` | Detect Next.js or Vite, package manager, test runner and conventions; server/client boundary, env variables, dev proxy vs CORS |
+| `api-contract` | Contract format, build-time OpenAPI document, `openapi-typescript`, the seam module, C#-to-JSON mismatches (casing, enums, dates, `long`, nullability) |
+| `ui-ux-design` | Design-system-first UI, the four data states, forms that mirror the contract, WCAG 2.1 AA checklist, UX copy, the design note |
 
 ## Claude Code extras
 

@@ -81,7 +81,24 @@ function statuslineAutoEnable(cwd) {
   return config.statusline?.auto_enable === true;
 }
 
+// Absolute path of the React/TypeScript frontend that pairs with this solution,
+// from `frontend.path`. It may sit inside the repo or in a separate checkout;
+// a relative value resolves against cwd. Null when none is configured.
+function frontendRoot(cwd) {
+  const configured = loadConfig(cwd)?.frontend?.path;
+  if (typeof configured !== 'string' || !configured.trim()) return null;
+  return path.resolve(cwd, configured.trim());
+}
+
+// True when `filePath` is `dir` itself or lies beneath it.
+function isUnder(filePath, dir) {
+  const rel = path.relative(dir, filePath);
+  return !rel.startsWith('..') && !path.isAbsolute(rel);
+}
+
 module.exports = {
+  frontendRoot,
+  isUnder,
   flattenCwd,
   resolveConfigPath,
   loadConfig,

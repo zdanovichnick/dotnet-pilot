@@ -36,6 +36,13 @@ Holds the detected `dotnet.*` values — `solution_path`, `target_framework`, `t
 default on/off as `hooks/_lib/config.js` documents; do not write them unless the user wants a
 non-default.
 
+`frontend.path` names the React/TypeScript client that pairs with this solution. Write it when a
+`package.json` in the repository (outside `node_modules`) depends on `react`, as a path relative
+to the solution root, or when the user names a UI checkout elsewhere, as given. Do not go looking
+for one outside the repository. `/dotnet-pilot:fullstack:feature` reads it, and
+`dnp-project-scope-guard` treats files under it as outside the .NET project list. It lives here
+and not in `solution-map.json` because a separate checkout's location differs per machine.
+
 ## `solution-map.json`
 
 The cached project graph. `dotnet:*` commands and the `dnp-project-scope-guard` hook read it

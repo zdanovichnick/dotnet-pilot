@@ -23,7 +23,7 @@ const DOTNET_CMD = /\bdotnet(?:\.exe)?\s+(build|test)\b/g;
 
 const FAIL_MARKERS = [
   /Build FAILED/,
-  /\berror\s+[A-Z]{2,6}\d{3,5}\b/,
+  /\berror\s+(?!TS\d)[A-Z]{2,6}\d{3,5}\b/,
   /Failed!\s+-\s+Failed:\s+[1-9]/,
   /Test Run Failed\./,
   /Test summary:.*\bfailed:\s*[1-9]/i,
@@ -36,7 +36,9 @@ const SUCCESS_MARKERS = [
   /Test Run Successful\./,
   /Test summary:.*\bfailed:\s*0\b/i,
 ];
-const ERROR_LINE = /\berror\s+[A-Z]{2,6}\d{3,5}\b|Build FAILED|Failed!\s+-\s+Failed:|Test summary:|Test Run Failed/;
+// `error TS2322` is the TypeScript compiler's, not MSBuild's: a command that chains
+// `dotnet build` with `tsc` must not record a .NET failure for it.
+const ERROR_LINE = /\berror\s+(?!TS\d)[A-Z]{2,6}\d{3,5}\b|Build FAILED|Failed!\s+-\s+Failed:|Test summary:|Test Run Failed/;
 
 function emit(eventName, message) {
   process.stdout.write(JSON.stringify({

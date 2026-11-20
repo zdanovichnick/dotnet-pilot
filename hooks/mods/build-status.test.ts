@@ -48,6 +48,13 @@ test('ignores commands that are not dotnet build or test', async ($, on) => {
   expect(toasts).toEqual([])
 })
 
+test('a TypeScript error chained after a green dotnet build is not a .NET failure', async ($, on) => {
+  const text = 'Build succeeded.\n    0 Error(s)\nweb/src/api.ts(4,7): error TS2322: Type \'string\' is not assignable to type \'number\'.'
+  const toasts = stubEngine(on, { text, isError: true })
+  for (let i = 0; i < 3; i++) await $.tool.call({ tool: 'Bash', command: 'dotnet build App.slnx && npx tsc --noEmit -p web' })
+  expect(toasts).toEqual([])
+})
+
 test('build_status:false registers nothing', { options: { build_status: false } }, async ($, on) => {
   const toasts = stubEngine(on, { text: FAILED, isError: true })
   for (let i = 0; i < 3; i++) await $.tool.call({ tool: 'Bash', command: 'dotnet build App.slnx' })
