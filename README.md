@@ -14,6 +14,16 @@ review architecture boundaries, and generate EF Core migrations with Roslyn-back
 
 [Install](#install) · [First steps](#first-steps) · [Compatibility](#compatibility) · [Workflows](#workflows) · [Troubleshooting](#troubleshooting)
 
+> **New in 4.3.0**
+> - **`lean-dotnet` skill:** the TDD agents and `dnp-refactor-cleaner` look for an existing answer
+>   before they write code: the codebase, then the BCL and ASP.NET Core, then an installed package.
+>   A deliberate simplification gets one `// shortcut: <limit>, <when to upgrade>` comment.
+> - **Review verdict:** `quality:review` numbers its findings, opens with a `Verdict:` line, and adds
+>   a `lean` category for code the codebase or framework already provides. It treats a
+>   `// shortcut:` line as a recorded decision, not a finding.
+> - **Agent reports:** agents that write code add only critical comments, and they end with what
+>   they skipped and what they could not check.
+>
 > **New in 4.2.0**
 > - **Full-stack features:** `/dotnet-pilot:fullstack:feature` builds a feature that needs both an
 >   ASP.NET API change and a React + TypeScript UI change. It writes the API contract first, runs
@@ -367,7 +377,7 @@ hand-written types and report the contract check as unverified.
 
 | Command | Arguments | What it does |
 | --- | --- | --- |
-| `quality:review` | `[--base <ref> \| --staged \| --last-commit \| --scope <glob>] [--depth quick\|standard\|deep]` | .NET review of your changes. Fast scouts read each part of the diff, a stronger model tries to refute every finding against the source, and the report lists confirmed findings and anything it could not cover |
+| `quality:review` | `[--base <ref> \| --staged \| --last-commit \| --scope <glob>] [--depth quick\|standard\|deep]` | .NET review of your changes. Fast scouts read each part of the diff, a stronger model tries to refute every finding against the source, and the report opens with a verdict, then lists numbered confirmed findings and anything it could not cover |
 | `quality:check-architecture` | — | Find layer violations: forbidden project references, DI issues, misplaced packages |
 | `quality:security-scan` | `[--scope <Project>]` | Run `dotnet list package --vulnerable`, then an OWASP review by `dnp-security-auditor`, and report the combined findings |
 | `quality:de-sloppify` | `[--scope path]` | Remove dead code, normalize naming and remove duplication. Tests must pass first |
