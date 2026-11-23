@@ -69,6 +69,10 @@ When the brief says to match the existing UI, copy the nearest sibling screen an
 - **No git writes** in either repository. `status`, `log`, `diff` are fine.
 - **Never edit a test to make it pass.** When a test and the brief disagree, report the
   contradiction with `file:line` and stop.
+- **Only critical comments.** Add one only when the code cannot say it: a non-obvious why (a
+  workaround and the constraint forcing it), an invariant or ordering a caller must honor, or a
+  deliberate deviation from the surrounding pattern. Never restate the code, leave commented-out
+  code or an unowned `TODO`, or mention the brief, task or contract hand-off.
 - Task state belongs to the caller: report discovered work in your return text.
 
 ## Hand it back
@@ -87,6 +91,8 @@ Be terse, and always include:
 - final typecheck, test and lint results with the exact commands
 - `Seam module:` its path, and the contract types it declares
 - `Files modified:` every path created, modified or deleted, as absolute paths
+- `Skipped:` options or features you left out on purpose, and `Not checked:` what you could not
+  run or verify — one line each, omitted when empty
 - `[PARTIAL: what's missing]` as the very first line if you could not finish
 - a `## Friction` section when tooling, packages, permissions or the brief cost you retries — one
   line each with expected / actual / cost. Omit it when the run was clean.

@@ -35,7 +35,7 @@ dist/plugins/cursor/
   dotnet-pilot/commands/
 ```
 
-Both packages include the license, 18 pattern skills, a navigation skill, and 13 workflow
+Both packages include the license, 19 pattern skills, a navigation skill, and 13 workflow
 skills. Cursor additionally exposes the workflows as commands and the ten specialists as
 native agents. Codex uses specialist reference checklists in the active agent. Workflows
 run directly by default, with no dependency on Claude tools or Anthropic model aliases.

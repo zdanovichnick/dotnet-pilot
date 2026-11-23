@@ -8,7 +8,7 @@ effort: low
 Print the following block **exactly as-is** — do not summarize, paraphrase, or add any other text:
 
 ```
-DotnetPilot v4.2.1 — .NET development plugin for Claude Code
+DotnetPilot v4.3.0 — .NET development plugin for Claude Code
 Usage: /dotnet-pilot:<category>:<command> [args]      e.g. /dotnet-pilot:dotnet:create-entity Product
 
 COMMANDS (17)
@@ -72,11 +72,11 @@ AGENTS (10) — spawned by commands; a decision they cannot make returns as [HAL
   dnp-di-wiring-checker      sonnet / low    Constructor injection cross-checked against DI registrations
   dnp-nuget-auditor          sonnet / low    Vulnerable, outdated and version-inconsistent packages
 
-SKILLS (18) — knowledge packs agents load on demand
+SKILLS (19) — knowledge packs agents load on demand
   architecture     clean-architecture · vertical-slice · ddd · convention-learner · dotnet-project-init
   api & data       aspnet-api-patterns · ef-core-patterns · error-handling · authentication
   cross-cutting    caching · resilience · logging · opentelemetry
-  language & test  modern-csharp · testing-dotnet
+  language & test  modern-csharp · testing-dotnet · lean-dotnet
   frontend         react-typescript · api-contract · ui-ux-design
 
 HOOKS (14) — advisory (exit 0) except dnp-git-autoapprove, which grants permission; switch one

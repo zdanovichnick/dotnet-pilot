@@ -5,6 +5,33 @@ All notable changes to the DotnetPilot plugin are recorded here. The format foll
 [Semantic Versioning](https://semver.org/). The Roslyn MCP companion
 (`mcp/dotnet-pilot-mcp-roslyn`) is versioned separately in its `.csproj`.
 
+## [4.3.0] - 2026-11-23
+
+### Added
+
+- `lean-dotnet` skill: the smallest complete change in a .NET solution. It gives the reuse ladder
+  (the codebase, then the BCL and ASP.NET Core, then an installed package, then new code), a table
+  of what the framework already ships, when a single-implementation interface is the layer rule
+  and not waste, the `// shortcut: <limit>, <when to upgrade>` comment, and what is never cut.
+  `dnp-tdd-developer-easy`, `dnp-tdd-developer-hard` and `dnp-refactor-cleaner` load it. Ideas
+  adapted from the Ponytail plugin's ruleset.
+- `dnp-review`: a `lean` category, confirmed against `lean-dotnet`. Findings are numbered across
+  Confirmed and Unconfirmed, and a `Verdict:` line comes first. Scouts, lenses and confirmers treat
+  a `// shortcut:` line as a recorded decision, not a finding.
+- `dnp-refactor-cleaner` reports hand-rolled code that the framework ships as a candidate. It does
+  not replace that code itself.
+
+### Changed
+
+- The TDD agents and `dnp-frontend-developer` end their reports with `Skipped:` and `Not checked:`
+  lines when either has content.
+- `rules/global-claude-md.md`: the Comments rule names the `// shortcut:` form.
+
+- The four agents that write project files (`dnp-tdd-developer-easy`, `dnp-tdd-developer-hard`,
+  `dnp-frontend-developer`, `dnp-refactor-cleaner`) add only critical comments. The same rule is
+  in `rules/global-claude-md.md` for the main session, but the Codex and Cursor packages ship the
+  agent bodies without that global block.
+
 ## [4.2.1] - 2026-11-20
 
 ### Fixed

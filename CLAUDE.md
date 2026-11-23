@@ -32,7 +32,7 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 - `workflows/dnp-review.js` — the review Workflow, auto-discovered as `/dotnet-pilot:dnp-review`; started only by `quality:review` (see Review Workflow)
 - `scripts/dnp-review-preflight.js` — Node preflight that shards a diff and writes the manifest the review Workflow consumes
 - `rules/global-claude-md.md` — template block injected into `~/.claude/CLAUDE.md` by `dnp-sync-global-claude-md.js` when the plugin version is newer than the installed block (versioned markers keep it idempotent)
-- `skills/<name>/SKILL.md` — 18 skill packs loaded on demand via an agent's `skills:` list. Every `SKILL.md` carries `when_to_use:`; `authentication`, `caching`, `ddd`, `error-handling`, `resilience`, `react-typescript` and `ui-ux-design` keep their detail in `references/*.md`
+- `skills/<name>/SKILL.md` — 19 skill packs loaded on demand via an agent's `skills:` list. Every `SKILL.md` carries `when_to_use:`; `authentication`, `caching`, `ddd`, `error-handling`, `resilience`, `react-typescript` and `ui-ux-design` keep their detail in `references/*.md`
 - `docs/` — `HOST-PLUGINS.md` (Codex/Cursor packaging and smoke checks) and `proposals/` (specs for candidate features and their status; each spec names what is verified and what is not)
 - `packaging/hosts/` — `init.md` (the host version of `project:init`) and `runtime.md` (host runtime notes), both read by `scripts/build-host-plugins.js` when it builds the Codex and Cursor packages; `scripts/smoke-codex-plugin.js` installs the Codex package in a disposable profile
 - `knowledge/` (package recommendations, antipatterns, ADRs, breaking changes) and `templates/` (per-archetype `CLAUDE.md` starters) — reference content the host packages copy; `assets/` holds the README images
@@ -206,7 +206,11 @@ findings route to `dnp-security-auditor`, `dnp-performance-analyst`, `dnp-di-wir
 `dnp-architect` at `standard`+ — every confirmer, routed or not, runs on `opus` via the `agent()`
 model override, and a routed confirmer is told to judge the one finding, not audit the solution), and a sonnet
 narrator only when three or more findings survive. `renderMarkdown()` builds the digest in JS, so the
-same manifest yields the same section order every run. Depth caps total agents: `quick` 6 (scouts only),
+same manifest yields the same section order every run; it numbers findings across Confirmed and
+Unconfirmed and puts a `Verdict:` line first. The `lean` category (code the codebase or framework
+already provides, a package for a few lines, new code with no caller) is confirmed against the
+`lean-dotnet` pack, and every scout, lens and confirmer treats a `// shortcut: <limit>, <upgrade>`
+line as a recorded decision. Depth caps total agents: `quick` 6 (scouts only),
 `standard` 11, `deep` 20 (adds four lens sweeps). The result always carries
 `{ok, runId, requested, returned, failed, broken, confirmed, refuted, unconfirmed, markdown, summary}`;
 skipped paths (generated code, `Migrations/`, `bin`/`obj`, lockfiles, non-.NET assets), failed scouts

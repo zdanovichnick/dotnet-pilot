@@ -2,6 +2,8 @@
 name: dnp-refactor-cleaner
 description: "🧹 Safe refactoring — dead code removal, naming normalization, duplication elimination. Never changes behavior; every cleanup step verified by test suite."
 tools: Read, Write, Edit, Bash, Glob, Grep, mcp__roslyn__get_class_outline, mcp__roslyn__find_references, mcp__roslyn__find_symbol, mcp__roslyn__find_dead_code, mcp__roslyn__detect_circular_dependencies, mcp__roslyn__check_architecture_violations
+skills:
+  - lean-dotnet
 model: sonnet
 effort: high
 memory: project
@@ -36,6 +38,9 @@ Before touching any code:
 ## Refactoring Categories
 
 Apply as atomic steps. Run `dotnet test` after each step and undo that step on failure (above).
+Add no comments except a critical one the code cannot say: a non-obvious why, an invariant a
+caller must honor, or a deliberate deviation from the surrounding pattern. An extracted method
+gets none.
 
 ### 1. Dead Code Removal
 
@@ -67,6 +72,15 @@ Apply as atomic steps. Run `dotnet test` after each step and undo that step on f
 - Apply dependency inversion: the higher-level project depends on the interface; the lower-level project implements it
 - Verify with `mcp__roslyn__detect_circular_dependencies` after the change
 
+### 5. Framework Replacements (report only)
+
+Hand-rolled code that the framework already ships (the `lean-dotnet` table: a custom rate limiter,
+retry loop, cache wrapper, guard helper, clock abstraction) goes in the report as a candidate with
+the replacement named. Do not swap it yourself: the framework version differs in edge cases
+(window semantics, exception types, time zones) that the suite may not cover.
+
+A `// shortcut:` comment marks a recorded decision. Leave the code and the comment in place.
+
 ## What Looks Safe But Isn't
 
 "Clearly unused" and "safe rename" are the two claims that break builds here. Runtime consumers
@@ -89,7 +103,8 @@ when in doubt, leave it.
 Return:
 - Pass count before refactor / pass count after refactor (they match)
 - Removed (dead code): list of members removed
-- Candidates left for the developer: public members with zero references, public renames
+- Candidates left for the developer: public members with zero references, public renames,
+  framework replacements (hand-rolled code → the built-in that replaces it)
 - Renamed (normalization): old name → new name list
 - Extracted (duplication): description of extracted methods
 - Architecture: circular dependency and violation counts before/after

@@ -28,7 +28,7 @@ allowed-tools: Bash(node:*), Workflow, ToolSearch
    ```
    `args` is a JSON object, never a stringified one; `shards` and `files` go in as the manifest's arrays, which the workflow checks against `fileCount` before assigning scouts. If the tool asks for permission on every run, the permission rule `Workflow(dnp-review)` silences it.
 
-5. **Save, then report.** When `result.ok` is true, write `result` as JSON without its `markdown` key to the manifest's `latestPath`; `/dnp-dashboard` reads that file. Print `result.markdown` verbatim, then `result.summary` as the closing line. The digest is the deliverable: do not re-summarize or re-rank its findings. `result.ok === false` means the workflow did not start; its `markdown` says why. `result.broken === true` means some shards were never read; say so and point at the Coverage gaps section.
+5. **Save, then report.** When `result.ok` is true, write `result` as JSON without its `markdown` key to the manifest's `latestPath`; `/dnp-dashboard` reads that file. Print `result.markdown` verbatim, then `result.summary` as the closing line. The digest is the deliverable: do not re-summarize or re-rank its findings. Its findings are numbered across Confirmed and Unconfirmed, and its `Verdict:` line names the critical and high ones by number, so the developer can answer "fix 2 and 5". `result.ok === false` means the workflow did not start; its `markdown` says why. `result.broken === true` means some shards were never read; say so and point at the Coverage gaps section.
 
 ## Depth
 

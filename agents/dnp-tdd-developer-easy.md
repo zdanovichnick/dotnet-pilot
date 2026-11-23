@@ -5,6 +5,7 @@ tools: Read, Write, Edit, Bash, Glob, Grep, mcp__roslyn__get_solution_structure,
 skills:
   - testing-dotnet
   - convention-learner
+  - lean-dotnet
 model: sonnet
 effort: low
 memory: project
@@ -24,6 +25,8 @@ A red *new* test is expected; pre-existing tests must stay green. For a bug fix,
 reproduce the reported failure exactly, not a simplified stand-in.
 
 **🟢 GREEN** — the minimum code that passes, then `dotnet build --no-restore` and the test project.
+"Minimum" follows the `lean-dotnet` reuse ladder: the codebase, then the framework, then an
+installed package, and only then new code.
 
 **🔵 REFACTOR** — clean up with the suite green, then `dotnet format`.
 
@@ -53,6 +56,11 @@ only when an answer contradicts code you just wrote.
   report the contradiction with `file:line` and stop.
 - **Bare commands** — you are already in the project directory. `dotnet build --no-restore`, not
   `cd /path && dotnet build`.
+- **Only critical comments.** Add one only when the code cannot say it: a non-obvious why (a
+  workaround and the constraint forcing it), an invariant or ordering a caller must honor, or a
+  deliberate deviation from the surrounding pattern. Never restate the code, leave commented-out
+  code or an unowned `TODO`, or mention the brief or task. `///` docs only on public API. A
+  deliberate simplification with a known limit gets a `// shortcut: <limit>, <when to upgrade>` line.
 - Task state belongs to the caller: report discovered work in your return text rather than
   creating or closing tasks yourself.
 
@@ -70,6 +78,8 @@ Be terse, and always include:
 - the RED → GREEN → REFACTOR trail, one line per behavior, naming the test
 - final `dotnet test` and `dotnet build` results, plus the DI check where you added a service
 - `Files modified:` followed by a bulleted list of every path created, modified, or deleted
+- `Skipped:` options or features you left out on purpose, and `Not checked:` what you could not
+  run or verify — one line each, omitted when empty
 - `[PARTIAL: what's missing]` as the very first line if you could not finish
 - a `## Friction` section when tooling, packages, permissions, or the brief itself cost you
   retries — one line each with expected / actual / cost. Omit it when the run was clean.

@@ -285,7 +285,7 @@ migration and SQL before applying a database change.
 
 | Capability | Claude Code | Codex | Cursor |
 | --- | --- | --- | --- |
-| 18 pattern skills (15 .NET, 3 frontend) | Included | Included | Included |
+| 19 pattern skills (16 .NET, 3 frontend) | Included | Included | Included |
 | Core workflows | 13 commands | 13 workflow skills | 13 commands + workflow skills |
 | Ten specialist roles | Native agents | Reference checklists | Checklists + native agents |
 | Roslyn MCP configuration | Included | Included | Included |
@@ -310,7 +310,7 @@ and UI features are not installed in those packages.
 | Keep project boundaries clean | Find forbidden references and circular dependencies |
 | Prepare changes for review | Run build, test, security, and architecture checks |
 
-**18 pattern skills · 10 specialist roles · Roslyn semantic tools**
+**19 pattern skills · 10 specialist roles · Roslyn semantic tools**
 
 Claude Code includes 17 commands and automatic hooks. Codex and Cursor packages include
 13 core workflows; see [compatibility](#compatibility) for the differences.
@@ -404,7 +404,7 @@ Codex reads checklists in the current agent, and Cursor also includes native def
 
 ## Pattern skills
 
-All three packages include these 18 skills. Detailed references load only when relevant.
+All three packages include these 19 skills. Detailed references load only when relevant.
 
 | Skill | What it teaches |
 | --- | --- |
@@ -420,6 +420,7 @@ All three packages include these 18 skills. Detailed references load only when r
 | `authentication` | JWT bearer, ASP.NET Identity, OIDC, policy-based auth, `IAuthorizationHandler` |
 | `vertical-slice` | Feature folders, `IEndpointGroup`, endpoint filters, no shared base classes |
 | `ddd` | `AggregateRoot<TId>`, value objects (`ComplexProperty` mapping), strongly-typed IDs, domain events via `TimeProvider`, repository-placement variants |
+| `lean-dotnet` | The smallest complete change: reuse ladder (codebase → BCL/ASP.NET Core → installed package → new code), what the framework already ships, `// shortcut:` comments for known limits, what is never cut |
 | `convention-learner` | 6-step protocol: detect naming, folder structure, DI style, test framework, DTO style, error handling before writing any code |
 | `logging` | Serilog setup, message templates (not interpolation), `LogContext`, request logging, PII rules |
 | `opentelemetry` | `ActivitySource`, `IMeterFactory`, OTLP config, Aspire `AddServiceDefaults()`, Serilog correlation |

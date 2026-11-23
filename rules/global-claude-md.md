@@ -16,7 +16,8 @@ the intent. A comment is critical only when the code cannot say it: a non-obviou
 workaround and the constraint forcing it), an invariant or ordering a caller must honor, or a
 deliberate deviation from the surrounding pattern. Never restate the line below it; never leave
 commented-out code or an unowned `// TODO`. `///` XML docs belong on public API surface other
-teams consume, not on internals.
+teams consume, not on internals. A deliberate simplification with a known limit gets one
+`// shortcut: <the limit>, <when to upgrade>` line.
 
 ## Error Handling
 - `Result<TValue, TError>` for expected/business failures in domain and application code;

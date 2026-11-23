@@ -62,6 +62,10 @@ const CATEGORIES = {
     packs: ['modern-csharp'],
     hint: 'Confirm only when the code contradicts the convention of the surrounding file.',
   },
+  lean: {
+    packs: ['lean-dotnet'],
+    hint: 'Confirm only when the codebase or the framework already provides it (name the path or type), a new package does what a few lines can, or the new code has no caller. A single-implementation interface at a layer boundary or substituted in tests is the convention, not a finding.',
+  },
 }
 const CATEGORY_NAMES = Object.keys(CATEGORIES)
 
@@ -106,7 +110,9 @@ const LENSES = [
   { name: 'testing', categories: ['testing'], packs: ['testing-dotnet'] },
 ]
 
-const REQUIRED_ARGS = ['manifestPath', 'diffPath', 'shardsDir', 'repoRoot', 'skillsDir', 'runId', 'fileCount', 'depth', 'roslynAvailable']
+const SHORTCUT_RULE = 'A line marked "// shortcut: <limit>, <when to upgrade>" is a recorded decision, not a finding, unless the change already crosses the limit it names.'
+
+const REQUIRED_ARGS =['manifestPath', 'diffPath', 'shardsDir', 'repoRoot', 'skillsDir', 'runId', 'fileCount', 'depth', 'roslynAvailable']
 // Two readers rarely agree on the exact line of one issue; findings in the same
 // file and category this close together are treated as one.
 const DEDUP_LINE_TOLERANCE = 2
@@ -250,7 +256,8 @@ function scoutPrompt(unit, ctx, attempt) {
     ...kept.map(p => `- ${skillFile(ctx.skillsDir, p)}`),
     '',
     `Categories (exactly one per finding): ${CATEGORY_NAMES.join(', ')}. Severity: ${SEVERITIES.join(' | ')}.`,
-    'Rules: only issues introduced or touched by the changed lines; one finding per issue; "title" in twelve words or fewer; "evidence" quotes the offending line; "skill" names the pack a finding rests on when one applies; a missing test counts only when new behaviour has no covering test in the diff or repository; a style finding only when it contradicts the surrounding file. An empty findings array is the correct answer for a clean shard.',
+    'Rules: only issues introduced or touched by the changed lines; one finding per issue; "title" in twelve words or fewer; "evidence" quotes the offending line; "skill" names the pack a finding rests on when one applies; a missing test counts only when new behaviour has no covering test in the diff or repository; a style finding only when it contradicts the surrounding file; a lean finding only when the codebase or framework already provides the code, or the new code has no caller. An empty findings array is the correct answer for a clean shard.',
+    SHORTCUT_RULE,
     `Set "shard" to "${unit.name}".`,
     attempt ? 'Second attempt; the first returned nothing.' : null,
   ].filter(Boolean).join('\n')
@@ -266,6 +273,7 @@ function lensPrompt(lens, ctx, attempt) {
     ...lens.packs.map(p => `- ${skillFile(ctx.skillsDir, p)}`),
     `Categories allowed: ${lens.categories.join(', ')}. Severity: ${SEVERITIES.join(' | ')}.`,
     'Rules: only issues introduced or touched by the changed lines; one finding per issue; "title" in twelve words or fewer; "evidence" quotes the offending line. An empty findings array is the correct answer when the lens finds nothing.',
+    SHORTCUT_RULE,
     `Set "shard" to "lens:${lens.name}".`,
     attempt ? 'Second attempt; the first returned nothing.' : null,
   ].filter(Boolean).join('\n')
@@ -281,6 +289,7 @@ function confirmPrompt(f, ctx, attempt) {
     `Source file: ${joinPath(ctx.repoRoot, ...f.file.split('/'))}`,
     `Diff context: ${f.shardPath || ctx.diffPath}`,
     `Category guidance: ${cat.hint}`,
+    SHORTCUT_RULE,
     `Reference: ${cat.packs.map(p => skillFile(ctx.skillsDir, p)).join(', ')}`,
     f.routedTo ? `Scope: you are the ${shortAgent(f.routedTo)} specialist for this one finding; judge it alone, with no solution-wide audit or report.` : null,
     ctx.roslyn
@@ -588,24 +597,39 @@ function coverageGaps(state) {
   return gaps
 }
 
-function renderFinding(f, withVerification) {
-  const lines = [`- **${f.severity.toUpperCase()}** \`${location(f)}\` ${f.category} — ${f.title}${!withVerification && f.note ? ` _(${f.note})_` : ''}`]
-  if (f.evidence) lines.push(`  - evidence: ${f.evidence}`)
-  if (withVerification && f.method) lines.push(`  - verified: ${f.method}${f.routedTo ? ` (${shortAgent(f.routedTo)})` : ''}`)
-  if (withVerification && f.fix) lines.push(`  - fix: ${f.fix}`)
+function renderFinding(f, n, withVerification) {
+  const lines = [`${n}. **${f.severity.toUpperCase()}** \`${location(f)}\` ${f.category} — ${f.title}${!withVerification && f.note ? ` _(${f.note})_` : ''}`]
+  if (f.evidence) lines.push(`   - evidence: ${f.evidence}`)
+  if (withVerification && f.method) lines.push(`   - verified: ${f.method}${f.routedTo ? ` (${shortAgent(f.routedTo)})` : ''}`)
+  if (withVerification && f.fix) lines.push(`   - fix: ${f.fix}`)
   return lines
+}
+
+// Numbers run across Confirmed and Unconfirmed so "fix 2 and 5" names one finding.
+function verdict(state) {
+  if (state.broken) return 'Verdict: coverage incomplete — rerun before deciding.'
+  const blocking = state.confirmed
+    .map((f, i) => (SEVERITY_RANK[f.severity] <= SEVERITY_RANK.high ? i + 1 : 0))
+    .filter(Boolean)
+  if (blocking.length) return `Verdict: fix ${blocking.join(', ')} first.`
+  if (state.depth === 'quick') return 'Verdict: none — depth quick verifies nothing; rerun at standard to confirm.'
+  if (state.unconfirmed.length) return `Verdict: no confirmed critical or high finding, but ${state.unconfirmed.length} finding(s) were never verified — read Unconfirmed first.`
+  return state.confirmed.length
+    ? `Verdict: nothing critical or high; weigh the ${state.confirmed.length} medium or low finding(s).`
+    : 'Verdict: ship.'
 }
 
 function renderMarkdown(state) {
   const out = []
   out.push(`## dnp-review ${state.runId} — depth ${state.depth} · ${state.fileCount} files · ${state.shardCount} shards · agents ${state.returned}/${state.requested} returned · ${state.confirmed.length} confirmed · ${state.refuted.length} refuted · ${state.unconfirmed.length} unconfirmed${state.broken ? ' · COVERAGE INCOMPLETE' : ''}`)
+  out.push('', verdict(state))
   out.push('', `### Confirmed (${state.confirmed.length})`)
   if (!state.confirmed.length) out.push('none')
-  for (const f of state.confirmed) out.push(...renderFinding(f, true))
+  state.confirmed.forEach((f, i) => out.push(...renderFinding(f, i + 1, true)))
   out.push('', `### Refuted: ${state.refuted.length}`)
   out.push('', `### Unconfirmed (${state.unconfirmed.length})`)
   if (!state.unconfirmed.length) out.push('none')
-  for (const f of state.unconfirmed) out.push(...renderFinding(f, false))
+  state.unconfirmed.forEach((f, i) => out.push(...renderFinding(f, state.confirmed.length + i + 1, false)))
   out.push('', '### Coverage gaps')
   const gaps = coverageGaps(state)
   if (!gaps.length) out.push('none')
