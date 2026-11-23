@@ -67,6 +67,7 @@ This repo IS the DotnetPilot plugin source — not a .NET project. There is no `
 ```bash
 node hooks/__tests__/run.js                # hook harness
 node hooks/__tests__/check-consistency.js  # versions, frontmatter, README tables, command/agent references
+node --test scripts/build-host-plugins.test.js  # Codex/Cursor packages; pins the shipped SKILL.md count
 ```
 The harness runs every hook against fixture JSON payloads and asserts: exit code 0, stdout is empty or valid `hookSpecificOutput` JSON, and expected `[dnp-<name>]` message fragments appear. The consistency check fails on a version mismatch, a missing `effort:`/`description:`, a `/dotnet-pilot:<cat>:<name>` reference to a command file that does not exist, a backticked `dnp-*` name that is neither an agent nor a hook, or a `utility:help` roster whose banner version, counts, or names disagree with the directories. Run both before publishing or after editing any hook, command, or agent.
 

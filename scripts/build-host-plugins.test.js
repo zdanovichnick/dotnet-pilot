@@ -29,7 +29,7 @@ test('both packages preserve migration safety and replace host assumptions', () 
     const mcp = JSON.parse(files.get('mcp.json')).mcpServers.roslyn;
     assert.equal(mcp.type, 'stdio');
     assert.equal(mcp.command, 'dnp-roslyn');
-    assert.equal([...files.keys()].filter(f => /skills\/[^/]+\/SKILL.md$/.test(f)).length, 32);
+    assert.equal([...files.keys()].filter(f => /skills\/[^/]+\/SKILL.md$/.test(f)).length, 33);
     assert(![...files.keys()].some(f => /^(hooks|mods|workflows)\//.test(f)));
     assert(!files.has(`${refs}/quality/review.md`));
     assert(!files.has(`${refs}/utility/statusline.md`));
